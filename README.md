@@ -59,6 +59,7 @@ curl.exe -X POST http://127.0.0.1:8000/v1/search -H "Content-Type: application/j
 - `docs/01-前期调研与可行性分析.md`：同类产品调研、免费搜索源与引擎级实测、性能瓶颈分析、实测延迟
 - `docs/02-技术方案与开发计划.md`：分层架构、MCP 接口设计、速度策略、里程碑与验收指标
 - `docs/03-客户端接入指南.md`：Claude Desktop / Codex / Cursor / Cherry Studio / Dify / n8n / 自研 Agent 接入示例
+- `docs/04-后续路线图.md`：M4 上线就绪（SSRF 防护 / 云部署 / 客户端联调）、M5 质量与时效、M6 能力扩展
 - `checklist.md`：各阶段可勾选的验收清单与实测记录
 
 ## 当前状态
