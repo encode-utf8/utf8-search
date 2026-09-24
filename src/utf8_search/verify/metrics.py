@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import os
 import statistics
+from datetime import datetime
 from pathlib import Path
 
 # 内存「持续增长」的判定门槛：相对增长与绝对增长必须**同时**超过才算，
@@ -305,6 +306,284 @@ def evaluate_engine_health_ab(
         "adaptive": dict(adaptive),
     }
     return passed, notes, details
+
+
+# 结果「卫生度」判定门槛（M5-5.3）。质量过滤的目标是**减少可疑结果**，
+# 因此容差给得很小：可疑项不允许变多，查询词覆盖率不允许实质下降。
+HYGIENE_COVERAGE_TOLERANCE = 0.05
+
+
+def summarize_result_hygiene(
+    items: list[dict[str, object]],
+    query: str,
+    *,
+    max_per_host: int = 2,
+    empty_content_chars: int = 40,
+) -> dict[str, float]:
+    """统计一轮结果的「卫生度」指标（M5-5.3，客观、可自动化）。
+
+    `items` 每项至少包含 `title` / `url` / `content` 三个键。
+    返回的指标直接对应 2-9 抽检暴露的几类问题：
+    同站重复、聚合页（首页/栏目页）、非中文/非英文脚本、查询词覆盖度、空内容。
+    """
+    from ..models import SearchResult
+    from ..rank.diversity import (
+        has_script_mismatch,
+        is_aggregator_page,
+        query_coverage,
+        registrable_domain,
+    )
+    from ..rank.fusion import tokenize
+
+    results = [
+        SearchResult(
+            title=str(item.get("title") or ""),
+            url=str(item.get("url") or ""),
+            content=str(item.get("content") or ""),
+        )
+        for item in items
+    ]
+    total = len(results)
+    if total == 0:
+        return {
+            "total": 0.0, "distinct_hosts": 0.0, "same_host_excess": 0.0,
+            "aggregator": 0.0, "script_mismatch": 0.0, "empty_content": 0.0,
+            "coverage_mean": 0.0, "coverage_min": 0.0, "low_coverage": 0.0,
+        }
+
+    per_host: dict[str, int] = {}
+    for result in results:
+        host = registrable_domain(result.url)
+        if host:
+            per_host[host] = per_host.get(host, 0) + 1
+    same_host_excess = sum(max(0, count - max_per_host) for count in per_host.values())
+
+    coverages = [query_coverage(query, result) for result in results]
+    wanted = set(tokenize(query or ""))
+
+    return {
+        "total": float(total),
+        "distinct_hosts": float(len(per_host)),
+        "same_host_excess": float(same_host_excess),
+        "aggregator": float(sum(1 for r in results if is_aggregator_page(r))),
+        "script_mismatch": float(
+            sum(1 for r in results if has_script_mismatch(query, r.title))
+        ),
+        "empty_content": float(
+            sum(1 for r in results if len((r.content or "").strip()) < empty_content_chars)
+        ),
+        "coverage_mean": statistics.fmean(coverages),
+        "coverage_min": min(coverages),
+        "low_coverage": float(sum(1 for c in coverages if c < 0.34)),
+        "_has_query_tokens": 1.0 if wanted else 0.0,
+    }
+
+
+def evaluate_hygiene_delta(
+    *, before: dict[str, float], after: dict[str, float]
+) -> tuple[bool, list[str], dict[str, object]]:
+    """对比改动前后的卫生度（M5-5.3），返回 (是否通过, 结论, 明细)。
+
+    通过标准（三项都要满足）：
+    1. 同站冗余不增加；
+    2. 聚合页 / 非中文脚本结果不增加；
+    3. 查询词覆盖率不实质下降（容差 `HYGIENE_COVERAGE_TOLERANCE`）。
+    """
+    if before.get("total", 0) <= 0 or after.get("total", 0) <= 0:
+        return False, ["没有结果样本，无法比较卫生度"], {"before": dict(before), "after": dict(after)}
+
+    notes: list[str] = []
+    passed = True
+    for key, label in (("same_host_excess", "同站冗余"), ("aggregator", "聚合页"), ("script_mismatch", "非中英文脚本")):
+        old, new = float(before.get(key, 0.0)), float(after.get(key, 0.0))
+        if new > old:
+            passed = False
+            notes.append(f"{label}增加：{old:.0f} -> {new:.0f}")
+        else:
+            notes.append(f"{label}不增加：{old:.0f} -> {new:.0f}")
+
+    old_cov, new_cov = float(before.get("coverage_mean", 0.0)), float(after.get("coverage_mean", 0.0))
+    if new_cov < old_cov - HYGIENE_COVERAGE_TOLERANCE:
+        passed = False
+        notes.append(f"查询词覆盖率下降：{old_cov:.3f} -> {new_cov:.3f}")
+    else:
+        notes.append(f"查询词覆盖率不下降：{old_cov:.3f} -> {new_cov:.3f}")
+
+    return passed, notes, {"before": dict(before), "after": dict(after)}
+
+
+SOAK_TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S"
+
+
+def _as_bool(value: object) -> bool:
+    """把 CSV 里的布尔列解析成 bool（容忍 True/true/1/yes）。"""
+    return str(value).strip().lower() in {"1", "true", "yes", "y", "t"}
+
+
+def _as_float(value: object) -> float | None:
+    """把 CSV 单元格解析成 float；空值或脏值返回 None。"""
+    text = "" if value is None else str(value).strip()
+    if not text:
+        return None
+    try:
+        return float(text)
+    except ValueError:
+        return None
+
+
+def _parse_timestamp(value: object) -> datetime | None:
+    """解析长稳样本的时间戳（格式与 scripts/soak.py 写入的一致）。"""
+    text = "" if value is None else str(value).strip()
+    if not text:
+        return None
+    try:
+        return datetime.strptime(text, SOAK_TIMESTAMP_FORMAT)
+    except ValueError:
+        return None
+
+
+def load_soak_rows(path: str | Path) -> list[dict[str, object]]:
+    """读取长稳明细 CSV 并做类型归一。
+
+    刻意做成容错的：挂机进程被强杀时最后一行可能是半截的，直接 `csv.DictReader`
+    会给出一堆字符串与空值；这里丢弃「没有时间戳或没有延迟」的行，保证**用已有样本
+    也能复算结论**（这正是 24h 首轮挂机失败后暴露出来的需求）。
+    """
+    import csv
+
+    file = Path(path)
+    rows: list[dict[str, object]] = []
+    if not file.exists():
+        return rows
+
+    with file.open(encoding="utf-8", newline="") as handle:
+        for raw in csv.DictReader(handle):
+            timestamp = (raw.get("timestamp") or "").strip()
+            latency = _as_float(raw.get("latency_ms"))
+            if not timestamp or latency is None:
+                continue
+            rows.append(
+                {
+                    "index": int(_as_float(raw.get("index")) or 0),
+                    "timestamp": timestamp,
+                    "elapsed_s": _as_float(raw.get("elapsed_s")) or 0.0,
+                    "warmup": _as_bool(raw.get("warmup")),
+                    "ok": _as_bool(raw.get("ok")),
+                    "latency_ms": latency,
+                    "results": int(_as_float(raw.get("results")) or 0),
+                    "pages_read": int(_as_float(raw.get("pages_read")) or 0),
+                    "cached": _as_bool(raw.get("cached")),
+                    "rss_bytes": _as_float(raw.get("rss_bytes")),
+                    "query": str(raw.get("query") or ""),
+                    "error": str(raw.get("error") or ""),
+                }
+            )
+    return rows
+
+
+def summarize_soak_rows(
+    rows: list[dict[str, object]],
+    *,
+    min_availability: float = MIN_AVAILABILITY,
+    growth_ratio: float = MEMORY_GROWTH_RATIO,
+    growth_floor_bytes: float = MEMORY_GROWTH_FLOOR_BYTES,
+) -> dict[str, object]:
+    """汇总长稳样本并给出判定（在线采样与事后复算共用这一条路径）。
+
+    判定沿用 `evaluate_soak`（可用率 ≥ 99% + 内存头尾中位数无持续增长），
+    另外额外给出**覆盖窗口**：24h 长稳允许中断后续跑，因此「时长」按 CSV 首末
+    时间戳计算，而不是单个进程的 `elapsed_s`（后者重启后会归零）。
+    """
+    measured = [row for row in rows if not row.get("warmup")]
+    succeeded = [row for row in measured if row.get("ok")]
+    rss_series = [float(row["rss_bytes"]) for row in measured if row.get("rss_bytes")]
+    latencies = [float(row["latency_ms"]) for row in succeeded if row.get("latency_ms") is not None]
+
+    passed, notes, details = evaluate_soak(
+        total=len(measured),
+        succeeded=len(succeeded),
+        rss_series=rss_series,
+        min_availability=min_availability,
+        growth_ratio=growth_ratio,
+        growth_floor_bytes=growth_floor_bytes,
+    )
+
+    first = _parse_timestamp(measured[0]["timestamp"]) if measured else None
+    last = _parse_timestamp(measured[-1]["timestamp"]) if measured else None
+    window_seconds = max(0.0, (last - first).total_seconds()) if (first and last) else 0.0
+
+    return {
+        "samples": len(measured),
+        "warmup_rows": len(rows) - len(measured),
+        "succeeded": len(succeeded),
+        "failed": len(measured) - len(succeeded),
+        "availability": float(details.get("availability", 0.0)),
+        "latency": summarize_latencies(latencies),
+        "rss": {
+            "samples": len(rss_series),
+            "min": min(rss_series) if rss_series else None,
+            "last": rss_series[-1] if rss_series else None,
+            "max": max(rss_series) if rss_series else None,
+            "head_median": details.get("rss_head_bytes"),
+            "tail_median": details.get("rss_tail_bytes"),
+            "growth_ratio": details.get("rss_growth_ratio"),
+        },
+        "window_seconds": window_seconds,
+        "window_hours": window_seconds / 3600.0,
+        "first_timestamp": measured[0]["timestamp"] if measured else None,
+        "last_timestamp": measured[-1]["timestamp"] if measured else None,
+        "passed": passed,
+        "notes": notes,
+        "failures": [row for row in measured if not row.get("ok")],
+    }
+
+
+def process_alive(pid: int) -> bool:
+    """进程是否仍在运行（长稳挂机的存活检查）。
+
+    用标准库实现，不引入 psutil：
+    - Windows：`OpenProcess` + `GetExitCodeProcess == STILL_ACTIVE(259)`；
+    - Linux：`/proc/<pid>` 是否存在；
+    - 其他：`os.kill(pid, 0)`。
+
+    注意 PID 会被系统复用，因此判定存活只作为「粗判」；脚本里同时要求心跳新鲜，
+    两者一起看才能确认挂机真的在跑。
+    """
+    if pid <= 0:
+        return False
+    if os.name == "nt":
+        return _process_alive_windows(pid)
+    if Path(f"/proc/{pid}").exists():
+        return True
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return False
+    return True
+
+
+def _process_alive_windows(pid: int) -> bool:
+    """Windows 下的存活检测（ctypes 直调 kernel32）。"""
+    import ctypes
+    from ctypes import wintypes
+
+    process_query_limited_information = 0x1000
+    still_active = 259
+    try:
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    except OSError:
+        return False
+
+    handle = kernel32.OpenProcess(process_query_limited_information, False, pid)
+    if not handle:
+        return False
+    try:
+        code = wintypes.DWORD()
+        if not kernel32.GetExitCodeProcess(handle, ctypes.byref(code)):
+            return False
+        return code.value == still_active
+    finally:
+        kernel32.CloseHandle(handle)
 
 
 def read_rss_bytes(pid: int) -> int | None:

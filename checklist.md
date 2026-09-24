@@ -145,7 +145,225 @@ SearXNG 引擎可用性（本镜像 2026.9.23，均已写入 `searxng/settings.y
   - 对照组 `https://example.com` → 正常返回正文（131 字符），未误伤
 - 日志佐证：`WARNING 拒绝抓取 http://127.0.0.1:8888/search：目标 IP 127.0.0.1 属于保留网段`。
 
-## 11. M5-5.1 引擎健康度自适应（当前任务）
+## 13. M4-4.3 真实客户端联调（✅ 自动化已完成 2026-09-24；4.3-12 待人工回填）
+
+**背景**：`docs/04-后续路线图.md` 第 4.3 节要求「按 `docs/03` 逐个跑通并记录：Claude Desktop、Codex、
+Cursor、Cherry Studio、Dify、n8n、自研 Agent；任一跑不通则回修文档或代码」。
+
+**可行性分析（先说清界限）**：
+
+- **可自动化**：这些客户端与服务的交互最终只有三条通道 —— ① MCP stdio（Claude Desktop / Codex / Cursor /
+  Cherry Studio 本地）、② MCP Streamable HTTP（`/mcp`，Cursor / Cherry Studio 远程、Codex 新版本）、
+  ③ Tavily 兼容 REST（Dify / n8n / 自研 Agent）。三条通道都能用**官方 MCP SDK 客户端**（`mcp` 2.2.0，
+  客户端内部实现与真实客户端同源）与 HTTP 客户端跑完整的端到端验证，含握手、能力协商、工具调用、鉴权、限流。
+- **不可自动化**：各客户端自身的「配置界面 / 配置文件名 / 参数名」是否正确，必须在客户端里点一次。
+  本任务交付一份**逐客户端人工联调清单**（`docs/03`），把点击步骤收敛到最小（每客户端 1-3 步 + 一句预期现象）。
+- 结论：自动化部分全部纳入本轮验收；人工部分交给用户按清单执行，结果回填清单表。
+
+**设计（`scripts/mcp_selfcheck.py`）**：
+
+| 通道 | 检查项 |
+| --- | --- |
+| A. MCP stdio（SDK 客户端） | 启动 `utf8-search stdio` 子进程；`initialize`（服务名/版本）；`tools/list`（`web_search`/`web_fetch` 及其必填参数与枚举）；`tools/call web_search`（general basic）；`tools/call web_search`（news + time_range）；`tools/call web_fetch` |
+| B. MCP stdio 原始帧 | 绕过 SDK 直接读写子进程管道：断言 stdout 里每一行非空输出都是合法 JSON-RPC（**防日志/`print()` 污染协议通道**，这是 stdio 客户端「连上了但工具调不通」的头号原因） |
+| C. MCP Streamable HTTP | 起本地 `serve`（临时端口 + 临时 Key）；SDK 客户端连 `/mcp`：`initialize` / `tools/list` / `tools/call`；无 Key 时 `/mcp` 应 401；伪造 Host 应 421 |
+| D. REST / Tavily 兼容 | `GET /health`；`POST /v1/search`（X-API-Key）、`POST /search`（body `api_key`）；无 Key 应 401；`days=1` 应映射为 `time_range=day`；`include_domains` 生效；`POST /v1/extract` 返回正文；`include_raw_content` 生效 |
+| E. 限流 | 单独起一个 `RATE_LIMIT_RPM=1` 的实例：第 1 次 200、第 2 次 429 |
+
+**范围**：新增 `scripts/mcp_selfcheck.py`、`tests/test_mcp_selfcheck.py`（离线：握手 + tools/list）；
+改动 `docs/03-客户端接入指南.md`（联调清单 + 自研 Agent 示例 + 修掉 Q6 损坏的代码块）、
+`docs/04-后续路线图.md`、`README.md`、`docs/reports/`；
+
+| 编号 | 验收项 | 验证方式 | 通过标准 | 状态 |
+| --- | --- | --- | --- | --- |
+| 4.3-1 | MCP stdio 握手与工具发现 | `scripts/mcp_selfcheck.py --mode stdio` | `initialize` 返回服务名/版本；`tools/list` 含 `web_search`、`web_fetch` 且参数 schema 正确 | [x] |
+| 4.3-2 | MCP stdio 工具调用 | 同上 | `web_search`（general/basic、news/time_range）与 `web_fetch` 均返回可用结果 | [x] |
+| 4.3-3 | stdio 协议通道纯净 | `--mode stdio-raw` | stdout 每一行都是合法 JSON-RPC，无日志/print 污染 | [x] |
+| 4.3-4 | MCP Streamable HTTP | `--mode http` | `/mcp` 握手 + 工具发现 + 工具调用全通 | [x] |
+| 4.3-5 | `/mcp` 鉴权 | 同上 | 无 Key 返回 401；伪造 Host 返回 421 | [x] |
+| 4.3-6 | REST 搜索（Tavily 兼容） | `--mode rest` | `/v1/search`、`/search` 均 200 且字段与 Tavily 对齐 | [x] |
+| 4.3-7 | REST 鉴权与 Key 传递三种方式 | 同上 | Header `X-API-Key`、`Authorization: Bearer`、body `api_key` 都放行；缺失 401 | [x] |
+| 4.3-8 | `days` → `time_range` 映射 | 同上 | `days=1` 请求的 `time_range` 生效（结果带日期/时效处理） | [x] |
+| 4.3-9 | REST 抽取 | 同上 | `/v1/extract` 返回 `results[].raw_content` | [x] |
+| 4.3-10 | 限流 | `--mode ratelimit`（独立实例 RPM=1） | 第 2 次请求 429 | [x] |
+| 4.3-11 | 离线单测不回归 | `pytest -q -m "not net"` | 全绿（新增 stdio 握手测试） | [x] |
+| 4.3-12 | 人工联调清单可执行 | 用户按 `docs/03` 清单逐客户端点一次 | 每个客户端记录「跑通/失败」；失败项回修文档或代码 | [ ] |
+
+**通过标准**：4.3-1 ~ 4.3-11 自动通过；4.3-12 由用户执行并回填 `docs/reports/` 里的联调记录表。
+
+**验收记录（2026-09-24，分支 `feature/m4-4.3-client-verify`）**：
+
+- 命令：`.\.venv\Scripts\python.exe -u scripts\mcp_selfcheck.py --out docs\reports\m4-4.3-client-selfcheck-20260924.md`
+  → **退出码 0：24/24 项通过，0 失败 0 跳过**（stdio 5 / stdio-raw 1 / http-mcp 6 / rest 10 / ratelimit 2）。
+- 关键实测值：
+  - stdio：`initialize` → `utf8-search 0.1.0`（协商协议 `2025-11-25`）；`tools/list` 的参数名/必填项/枚举全部符合契约；
+    `web_search`（basic）5 条结果、（news + `time_range=week`）5 条全带日期；`web_fetch` → 131 字符。
+  - stdio-raw：stdout 共 2 行、全为合法 JSON-RPC，**无任何日志污染协议通道**。
+  - http-mcp：无 Key → 401、错误 Key → 401、伪造 Host → 421（未配置 `UTF8SEARCH_MCP_ALLOWED_HOSTS` 时
+    SDK 自带的防 DNS 重绑定已在生效）；SDK 客户端握手 + 工具发现 + 工具调用全通。
+  - rest：`/health` 200（status=ok、SearXNG=ok、鉴权开）；三种 Key 传法（`X-API-Key` / Bearer / body）全部 200；
+    无 Key、错误 Key → 401；`days=1` → 5/5 条带日期、最旧 0.6 天；`include_domains=["post.smzdm.com"]` 1/1 命中；
+    `/v1/extract` → 131 字符；`advanced + include_raw_content` → 读 3 页、3/3 条附带正文。
+  - ratelimit：RPM=1 实例第 1 次 200、第 2 次 **429**（`Retry-After: 60`）。
+- 离线单测：`pytest -q -m "not net"` → **203 passed**（新增 `tests/test_mcp_selfcheck.py` 7 项：参数解析 /
+  纯函数 / 报告结构 + **真实子进程 stdio 握手**与原始帧纯净度回归）；联网 `-m net` 仍 4 passed。
+- 文档回修（本轮真正修掉的问题）：`docs/03` Q6 里的 `failed_results` 乱码字符与被吃掉的
+  `$env:UTF8SEARCH_BLOCK_PRIVATE_HOSTS` 代码块；新增 §9 自研 Agent 示例（stdio / HTTP / REST 三段可复制）、
+  §10 自检用法与人工联调清单；`README.md` 验收脚本区补 `mcp_selfcheck.py`、测试数 196 → 203。
+- **待办（4.3-12）**：用户按 `docs/03` §10.2 逐客户端点一次（每客户端 1 条最小操作 + 预期现象），
+  把「跑通」列回填到 `docs/reports/m4-4.3-client-selfcheck-20260924.md` 第 4 节的表里。
+
+**风险 / 遗留**：
+
+- 无法替代客户端自身的配置解析（例如 Codex 版本不支持 `streamable_http` 类型）；清单里对这类
+  「依版本而定」的项给出备选方案（stdio + `mcp-remote` 桥接，或直接走 REST）。
+- Dify / n8n 需要用户在各自 UI 里导入 OpenAPI / 建 HTTP 节点，本轮只保证「请求形状」与服务端行为一致。
+
+## 12. M5-5.3 中文源强化与查询质量（已完成 2026-09-24，5.3-12 待人工打分）
+
+**背景**：`docs/04-后续路线图.md` 第 5.3 节。2-9 相关性抽检 20 条查询 75% 达标（门槛 90%），
+未达标的 5 条集中在**中文商品类与强时效类**（#2 混入无关产品页/社区首页、#4 同站重复、
+#11 混入展会与跑车新闻、#16 混入俄语开箱与官网首页、#18 混入乐高攻略/净水器等垃圾结果）。
+
+**本次调研实测（2026-09-24）**：
+
+1. **`360search` 是可用且高质的中文源**。它此前被我们自己的 `keep_only` 白名单挡住，
+   加入白名单后逐引擎隔离实测（4 条中文查询）：每查询 **4 条**结果，查询词覆盖率 **0.67-0.93**
+   （同时刻 12 引擎混合结果里 naver 只有 0.32），域名全部是一手中文站
+   （中关村在线 / 太平洋电脑网 / 汽车之家 / 浙江水利厅台风路径 / 天气网）。
+   忽略 `time_range`（带 `day`/`week` 仍返回 4 条，不会变空），可安全用于新闻的通用兜底那一路。
+2. **加入 360search 的延迟代价可忽略**：交替配对实测（n=12）每查询多 **4-7 条**结果，
+   配对延迟差中位 **+24ms**、13 引擎更快的比例 42%（即无实质影响）。
+3. **`baidu` 不可用**：`SearxEngineCaptchaException`（`suspended_time=3600`），加入白名单后
+   4/4 查询 0 条、22-511ms 快速失败 —— 与 `quark` 同一处境。
+4. **`bilibili` 可用但不适合默认启用**：每查询返回 **20 条全部来自 bilibili.com 的视频**，
+   会以同站结果淹没结果集，对「给 LLM 提供文字资料」无价值 → 不采用。
+5. **`chinaso` 在本镜像注册失败**：`The "engine" field is missing for the engine named "chinaso"`，
+   需自行补 `engine` 字段（API 形态），暂不采用。
+6. **意外发现（工程健壮性）**：点名**全部未注册**的引擎时，SearXNG 会**静默回退到整个默认引擎集合**
+   ——`engines=baidu` 返回的是 `fynd/naver/yandex/yahoo` 的结果（`engines=nonexistent_xyz` 同样）。
+   有效名字仍在时不会回退（`engines=baidu,yandex` 只跑 yandex）。这意味着**配置里写错引擎名会静默失去约束**，
+   与我们 5.2/5.1 维护 `engines` 约束的努力相冲突，需要可观测。
+7. **本机 IP 下真正出结果的引擎只有 6 个**（`/metrics` 的 `result_count_total` 只有
+   fynd/google/yandex/yahoo/naver/zapmeta）。**但这不构成裁剪名单的理由**：换个出口 IP
+   （如用户自己的服务器）google/brave 等可能恢复，裁剪反而固化损失。取舍是「保留候选 + 5.1 健康度自适应」，
+   而不是「按当前 IP 手工精简」。`quark` 同理保留。
+
+**实现设计**：
+
+- **E1 中文源接入**：`searxng/settings*.yml` 的 `keep_only` 与显式启用列表加入 `360search`；
+  `config.default_engines` 与 `news_general_engines` 加入 `360search`。
+- **E2 同站限流（多样性）**：新增 `rank/diversity.py: limit_per_host` —— 最终 top-N 里同一可注册域
+  最多保留 `rank_max_per_host`（默认 2）条。依据：#4（中央气象台/中国天气网）、bilibili 单站 20 条。
+- **E3 脚本一致性过滤**：`rank/diversity.py: filter_script_mismatch` —— 查询主体为 CJK 时，
+  剔除「标题与摘要都不含 CJK、也不含拉丁字母」的结果（西里尔/阿拉伯/泰文等）。
+  依据：#16 的俄语 YouTube 开箱。英文结果必须保留（用户明确需要外网英文信息）。
+- **E4 查询词覆盖度下限**：`rank/fusion.py: filter_low_coverage` —— 候选充足时剔除
+  查询词覆盖率低于 `rank_min_query_coverage`（默认 0.34）的结果。复用已有的中文二元组分词，零额外成本。
+  依据：#2 的德语无关页（覆盖率 0）、#11 的展会页、#18 的乐高攻略/净水器。
+- **E5 聚合页识别**：`rank/diversity.py: is_aggregator_page` —— URL 路径为空/极浅，
+  或标题含「首页/频道/栏目/分类/导航/新闻中心」等，判为栏目页；候选充足时剔除。
+  依据：#11 的盖世汽车栏目页、#16 的 apple.com.cn 官网首页、#2 的 www.ai.ch 首页。
+- **E6 通用主题的时间词感知**：`rank/recency.py: has_recency_intent`（最近/最新/今日/本周/近期/今天/
+  latest/recent/this week）——`topic=general` 且命中时，先用 **URL 内嵌日期（零网络开销）** 补日期，
+  再按新鲜度轻排序（**不丢弃**无日期结果、不抓页面，保持 basic 的速度）。
+  依据：#4「台风 最新消息 路径」此前返回 2021 旧闻、#2「最近一周 AI 行业动态」。
+- **E7 约束被忽略的可观测**：`SearxngProvider` 检测「结果来源引擎不在请求集合内」并告警，
+  避免配置写错引擎名时静默失去约束（发现 6）。
+- **兜底原则**：E2/E4/E5 一律遵循「候选充足才过滤」——过滤后若不足 `max_results`，
+  按原顺序补回被过滤的结果，绝不让质量过滤把结果掏空（与 5.1 的覆盖率下限同思路）。
+
+**范围**：新增 `src/utf8_search/rank/diversity.py`、`tests/test_diversity.py`；
+改动 `rank/fusion.py`、`rank/recency.py`、`core/pipeline.py`、`providers/searxng.py`、`config.py`、
+`verify/metrics.py`、`scripts/relevance.py`、`searxng/settings*.yml`、`.env.example`、`README.md`、`docs/04`。
+
+| 编号 | 验收项 | 验证方式 | 通过标准 | 状态 |
+| --- | --- | --- | --- | --- |
+| 5.3-1 | 360search 可用且高质 | 逐引擎隔离实测 | 中文查询返回结果、覆盖度 >= 0.6、域名为一手中文站 | [x] |
+| 5.3-2 | 同站限流 | `tests/test_diversity.py` | 同域最多保留 `rank_max_per_host` 条；候选不足时不过度过滤 | [x] |
+| 5.3-3 | 脚本一致性过滤 | 单测 | CJK 查询剔除纯西里尔结果；保留英文结果 | [x] |
+| 5.3-4 | 查询词覆盖度下限 | 单测 + 实网 | 低覆盖结果在候选充足时被剔除；候选不足时补回 | [x] |
+| 5.3-5 | 聚合页识别 | 单测 | 首页/栏目页在候选充足时被剔除 | [x] |
+| 5.3-6 | 时间词感知重排 | 单测 | general 主题命中时间词时按新鲜度重排且不丢无日期结果 | [x] |
+| 5.3-7 | 约束被忽略可观测 | 单测（假 httpx） | 结果来源不在请求集合内时告警并置标志 | [x] |
+| 5.3-8 | 卫生度自动化指标 | `verify/metrics.py` + 单测 | 可输出同站重复/覆盖率/聚合页/脚本不匹配/空内容比例 | [x] |
+| 5.3-9 | 不回归：离线 + 联网单测 | `pytest -q -m "not net"` / `-m net` | 全绿 | [x] |
+| 5.3-10 | 不回归：时效性 | `scripts/news_check.py --time-range day` | 带 7 日内日期比例 >= 80% | [x] |
+| 5.3-11 | 不回归：引擎健康度 A/B | `scripts/bench_engines.py` | 判定通过（覆盖率不下降、延迟不劣化） | [x] |
+| 5.3-12 | 相关性达标（2-9 门槛） | 重跑 `scripts/relevance.py` + **人工打分** | top5 相关 >=4 的查询占比 >= 90% | [ ] **待人工打分** |
+
+**通过标准**：以上全部通过。5.3-12 是官方门槛，**打分仍需人工**（脚本只负责采集与判定）；
+本轮会同时给出 5.3-8 的自动化「卫生度」前后对比作为客观证据。
+
+**风险 / 遗留**：
+
+- 质量过滤存在**过拟合到 2-9 这 20 条查询**的风险。对策：全部规则只用客观信号
+  （URL 结构、字符脚本、查询词覆盖度、发布日期的存在性），不维护站点黑名单、不写查询特例，
+  且一律「候选充足才过滤」。
+- `360search` 每查询只返回 4 条（上游只解析首页），是**高精度低召回**的补充源，不是主力。
+- 本机出口 IP 下 12 个通用引擎仅 6 个出结果；这不是裁剪名单的依据（见调研第 7 条），
+  部署到其他 IP 后实际贡献面可能不同。
+- `baidu` / `bilibili` / `chinaso` 本次评估结论为不采用，已从白名单移除并记录原因。
+### 实现修正与补充（相对上面的设计稿）
+
+本轮实现依据实测对设计稿做了 6 处修正/补充（全部记录理由，避免后人误以为实现跑偏）：
+
+1. **候选池 `rank_candidate_pool`（默认 24）——设计稿漏掉的最关键前提**。
+   旧代码 general 主题向上游索取的条数 = `max_results`，即「候选数 = 结果数」，
+   于是过滤一删结果就必然触发「不足 max_results 就补回」，**过滤形同虚设**
+   （2-9 的聚合页/官网首页正是这样漏进 top5 的）。SearXNG 本来就一次返回整批结果，
+   扩大候选**零额外上游请求、零额外延迟**（受控 A/B：结果条数 100 → 100）。
+2. **脚本一致性判据收窄**：设计稿写的是「标题与摘要都不含 CJK、也不含拉丁字母」，
+   实现改为「含西里尔/阿拉伯/泰文/韩文 **且不含汉字/假名**」→ 英文结果一定保留，
+   且能识别「俄语 + 拉丁字母混排」的标题（#16 的真实形态，按设计稿口径会漏判）。
+3. **落地位置与「分级补回」**：同站/覆盖度/聚合页统一实现在 `rank/diversity.py`
+   （设计稿把 E4 写在 `fusion.py`）；补回顺序改为「覆盖度低 → 同站冗余 → 聚合页 → 脚本不匹配」，
+   否则排在最前的聚合页会被第一个补回来，过滤白做。
+4. **新闻路径只做结构性过滤**：`topic=news` 只保留同站冗余与脚本不匹配两项。
+   依据是配对 A/B（`news_check.py --ab`，逐条交替两种口径，抵消上游漂移）：
+   全套过滤会把各站「当天更新的日报/栏目页」连同日期一起剔除，
+   时效性 **39/40 (98%) → 32/40 (80%)**（逐条配对差 −2/−3/0/0/0/0/−1/−1）；
+   收敛为结构性过滤后复测 **40/40 vs 40/40，配对差中位 0**。
+5. **标题跨年年份 → 陈旧信号**（`rank/recency.py: mark_stale_by_title_year`）：
+   设计稿只从 URL 取日期，而 #4 的 2021 台风页 URL 里没有日期（年份写在标题里）。
+   补上这一零成本信号后，通用主题的分层顺序调整为「新鲜 > 无日期 > 过期」（`apply_recency(stale_last=True)`）
+   —— 无日期结果多是实时页面（台风实时路径、官网专题），不该排在已知跨年旧闻之后。
+6. **聚合页判据补充通用 URL 形态**：`/tags/xxx`、`/topic/xxx`、`/zhuanti/xxx`、`/category/xxx`，
+   以及以 `/news`、`/list`、`/index` 结尾的浅路径（段数 ≤2 且无 `.html/.shtml/.jsp` 等文章后缀）。
+   这不是站点黑名单，而是各站点通行的 URL 约定；`/news/2026824/172470.shtm` 这类文章页不受影响（有单测覆盖）。
+
+### 验收记录（2026-09-24）
+
+**完整证据与复现命令：`docs/reports/m5-5.3-verification-20260924.md`**（报告索引：`docs/reports/README.md`）。
+
+| 验收项 | 结果 | 证据（留痕文件 / 命令） |
+| --- | --- | --- |
+| 5.3-1 | ✅ `360search` 每查询 4 条、覆盖率 0.67-0.93、域名为一手中文站 | `searxng/settings*.yml`；`/config` 返回 16 引擎 |
+| 5.3-2 | ✅ 同站冗余（端到端）1 → 0 | `docs/reports/m5-5.3-hygiene-compare-raw-20260924.txt` |
+| 5.3-3 | ✅ 非中英文脚本 2 → 0 | 同上 |
+| 5.3-4 | ✅ 覆盖率均值 0.595 → 0.831 | 同上 |
+| 5.3-5 | ✅ 聚合页 11 → 0 | 同上 |
+| 5.3-6 | ✅ #4 的 2021 旧闻被挤出 top5 | `docs/reports/m5-5.3-relevance-after-20260924.md` |
+| 5.3-7 | ✅ `constraint_ignored` + 告警（单测） | `tests/test_searxng_engine_health.py` |
+| 5.3-8 | ✅ 受控 A/B **通过**：聚合页 10 → 0、同站冗余 2 → 0、结果条数 100 → 100 | `docs/reports/m5-5.3-rank-ab-same-candidates-20260924.md` |
+| 5.3-9 | ✅ 离线 **196 passed** / 联网 **4 passed** | `pytest -q -m "not net"` / `-m net` |
+| 5.3-10 | ✅ **40/40 = 100%**（门槛 80%） | `docs/reports/m5-5.2-news-timeliness-20260924.md`；配对回归 `m5-5.3-news-timeliness-ab-20260924.md` |
+| 5.3-11 | ✅ 判定通过：结果数中位 10.0 → 10.0、配对延迟 −163ms、上游异常 131 → 2 | `docs/reports/m5-5.1-bench-engines-20260924.md` |
+| 5.3-12 | ⏳ **待人工打分** | 明细 `m5-5.3-relevance-after-20260924.md` + 模板 `m5-5.3-relevance-scores-20260924.csv` |
+
+**方法学修正（重要）**：免费引擎的上游漂移极大（同一查询隔几秒跑两次 top1 都可能不同；
+时效性单跑在 10 分钟内波动过 80% / 85% / 95% / 100%），因此**凡涉及前后对比一律用配对或受控方法**：
+
+- 排序侧改动 → `scripts/rank_ab.py`（先采候选快照，再对**同一批候选**跑两种排序口径）；
+- 时效性 → `scripts/news_check.py --ab`（逐条交替开/关过滤）。
+  端到端单跑对比（`relevance.py --legacy` vs 默认）只作为参考，不作为判定依据。
+
+### 后续（不在 5.3 范围）
+
+- **5.3-12 人工打分**：门槛 ≥ 90%；若未达标，先看是「上游没给出好候选」还是「排序选错」——
+  前者需要查询改写/多路召回（M6），后者才动质量过滤。
+
+## 11. M5-5.1 引擎健康度自适应（已完成 2026-09-24）
 
 **背景**：`docs/04-后续路线图.md` 第 5.1 节。文档写的是「剔除连续失败的引擎、按成功率排序，
 让被限流引擎不再占用聚合等待时间，basic P50 进一步下降」。用户要求：**不是一味做防御性降级，要稳健的运行效果**。
@@ -224,7 +442,8 @@ SearXNG 引擎可用性（本镜像 2026.9.23，均已写入 `searxng/settings.y
   39 条带 7 日内日期，**98%**（门槛 80%），结论通过。
 - A/B 基准（5.1-13）：`scripts/bench_engines.py --rounds 3`，24 对配对样本 ——
   结果数中位 **10.0 → 10.0**（不下降）、配对延迟差中位 **−16 ms**（自适应更快的比例 62%）、
-  上游「不可用引擎」报告次数 **142 → 0**；判定**通过**。报告：`data/bench-engines-20260924.md`。
+  上游「不可用引擎」报告次数 **142 → 0**；判定**通过**。报告：`data/bench-engines-20260924.md`
+（复测版已归档：`docs/reports/m5-5.1-bench-engines-20260924.md`）。
 - 端到端行为核验（本机 8127 端口，用唯一查询避开结果缓存）：
   第 1 次查询上游报告 6 个引擎不可用（`resulthunter`/`brave` 限流、`privacywall`/`yep` 拒绝访问、
   `google`/`quark` 验证码），第 2 次查询 `failed_engines` 已为**空** —— 自适应把已挂引擎摘掉了。
@@ -364,7 +583,7 @@ SearXNG 引擎可用性（本镜像 2026.9.23，均已写入 `searxng/settings.y
   max_results 时，用 2-7 天的近期新闻补位，而不是补「无日期」的结果）。新鲜度以每条结果的
   `published_date` 为准；这条语义已写进 README。
 
-## 9. M4-4.4 补完 M3 验收（3-3 并发压测 / 3-4 24h 长稳 / 2-9 相关性抽检）（当前任务）
+## 9. M4-4.4 补完 M3 验收（3-3 并发压测 / 3-4 24h 长稳 / 2-9 相关性抽检）（2026-09-24 续做：24h 长稳重跑）
 
 **背景**：`docs/04-后续路线图.md` 第 4.4 节。M3 主体功能已完成，但三项验收（并发压测、24h 长稳、结果相关性抽检）一直未做，
 导致「稳定性」缺少数据支撑。本任务补齐这三项，并沉淀可复用的验收脚本。
@@ -387,6 +606,11 @@ SearXNG 引擎可用性（本镜像 2026.9.23，均已写入 `searxng/settings.y
 | 4.4-11 | 判定逻辑单测 | `pytest -q -m "not net"` | 分位 / 判定 / RSS 解析用例全绿 | [x] |
 | 4.4-12 | 回归 | `pytest -q -m "not net"` | 既有测试全绿 | [x] |
 | 4.4-13 | 文档同步 | 查看 `docs/04`、`README.md` | 验收结论与脚本用法已记录 | [x] |
+| 4.4-14 | 挂机进程可脱离终端 | `Start-Process -WindowStyle Hidden` 启动后关掉终端，另开窗口跑 `soak.py --status` | 状态显示「存活」，且心跳随采样刷新 | [x] |
+| 4.4-15 | 结论可事后复算 | `soak.py --summarize --out data\soak-24h.csv` | 不需要挂机进程存活，直接从 CSV 得出「通过 / 不通过」 | [x] |
+| 4.4-16 | 断点续跑不丢样本 | 中断后用同一 `--out` 重启 | 序号接续、历史样本保留、仅本次进程的冷启动样本计为预热 | [x] |
+| 4.4-17 | 周期落盘心跳与汇总 | 查看 `data/soak-24h.meta.json` 与 `--json` 产物 | 每次采样都刷新，进程被强杀也不丢结论 | [x] |
+| 4.4-18 | 新增判定逻辑单测 | `pytest -q -m "not net"` | CSV 解析 / 汇总判定 / 存活检测用例全绿 | [x] |
 
 **验收记录（2026-09-24，分支 `feature/m4-4.4-verification`）**
 
@@ -421,6 +645,8 @@ SearXNG 引擎可用性（本镜像 2026.9.23，均已写入 `searxng/settings.y
 
 - 采集：20 条中英查询（新闻/技术/政策/商品 各 5 条）全部返回 5 条结果，明细见 `data/relevance-20260924.md`；
   打分表 `data/relevance-20260924-scores.csv`，判定报告 `data/relevance-20260924-scores-judge.md`。
+  （已归档：`docs/reports/m2-9-relevance-judge-baseline-20260924.md` 与
+  `docs/reports/m2-9-relevance-scores-20260924.csv`；这 5 条未达标查询是 M5-5.3 的输入。）
 - 结果：**15/20 条查询达标（75%），未达 90% 门槛 -> 判定不通过**；平均相关条数 4.25（该口径 ≥ 4）。
 - 未达标 5 条及根因：
   - #2 最近一周 AI 行业动态：混入产品页与社区首页（缺时效性重排）。
@@ -431,6 +657,56 @@ SearXNG 引擎可用性（本镜像 2026.9.23，均已写入 `searxng/settings.y
 - 结论：技术/政策/英文类查询质量良好（技术 5 条仅 1 条不达标、政策 4/5 全面达标），
   **短板集中在中文商品类与强时效类**，正好对应 `docs/04` 的 5.2（时效性增强）与 5.3（中文源强化）。
   建议把「时效性重排 + 品类/垃圾结果过滤 + 结果去重加强」列为 M5 的验收输入。
+
+**本轮续做（2026-09-24 晚）：24h 长稳重跑**
+
+- **首轮为什么失败**：`data/soak-24h.csv` 只有 2 行（12:48、12:53），`soak-24h.err.log` 为空、
+  `soak-24h.json` 从未生成 → 进程是被**外部终止**（终端/会话结束），而不是抛异常退出。
+  两处结构性缺陷：① 汇总 JSON 只在正常结束时写 → 中途死掉就拿不到判定产物；
+  ② PID 文件里记的是启动器 PID（34080）而非挂机进程 PID（18080），事后无法判断存活。
+- **续跑设计（只动脚本与判定模块，不动搜索逻辑）**：
+  1. `verify/metrics.py` 新增 `load_soak_rows` / `summarize_soak_rows` / `process_alive`
+     —— 把「CSV 解析 + 汇总判定」从脚本里抽出来，在线采样与事后复算走**同一条判定路径**（可单测）；
+  2. `scripts/soak.py` 新增 `--status`（存活 / 心跳 / 进度 / 当前结论）与 `--summarize`（从 CSV 复算结论）；
+  3. 每次采样后刷新 `--meta`（PID、启动时间、心跳、已写样本数）与 `--json` 汇总 → **强杀也不丢结论**；
+  4. 续跑：启动时读回已有 CSV 的序号继续编号，仅把**本次进程**的前 `--warmup` 个样本标为预热；
+  5. 用 `Start-Process -WindowStyle Hidden` 启动，并断言 `meta.pid` 与进程自身 PID 一致。
+- **判定标准不变**（docs/04 §4.4）：覆盖 ≥ 24h、可用率 ≥ 99%、内存无持续增长。
+  其中「覆盖 ≥ 24h」按 CSV 首末时间戳计算（跨重启累计），避免用单进程 `elapsed_s` 误判。
+
+**本轮续做验收记录（2026-09-24 晚，分支 `feature/m4-4.4-soak`）**
+
+实现（只动脚本与判定模块，未改搜索逻辑）：
+
+- `src/utf8_search/verify/metrics.py` 新增 `load_soak_rows`（CSV 容错解析，丢弃挂机被强杀时的半截行）、
+  `summarize_soak_rows`（汇总 + 判定，**在线采样与事后复算共用**）、`process_alive`（存活检测，标准库实现）。
+- `scripts/soak.py` 新增 `--status`（存活 / 心跳 / 进度 / 当前结论）与 `--summarize`（从 CSV 复算结论）；
+  每次采样原子写 `--meta` 与 `--json`；启动时读回已有 CSV 续编号（断点续跑）。
+
+验证结果（全部实测）：
+
+| 验收项 | 证据 |
+| --- | --- |
+| 4.4-14 挂机可脱离终端 | `Start-Process -WindowStyle Hidden` 启动后**关掉终端**；2 分钟后另开会话 `--status` 仍显示「存活」，`tasklist` 确认 PID 30424 常驻（66MB） |
+| 4.4-15 结论可事后复算 | 短跑样本上 `--summarize` 复算结果与在线采样结论完全一致（2 个计入统计、可用率 100%、延迟 P50 1058ms） |
+| 4.4-16 断点续跑 | 同一 `--out` 连跑两次（各 2 采样）：CSV 4 行、序号 1→4 连续、每进程首个样本各自计预热、JSON 含全部 4 行 |
+| 4.4-17 周期落盘 | 每次采样刷新 `data/soak-24h.meta.json`（PID/心跳/已写样本数）与 `--json` 汇总 —— 强杀也不丢结论 |
+| 4.4-18 新增单测 | `pytest -q -m "not net"` → **213 passed**（新增 10 项：CSV 解析 2 / 汇总判定 5 / 存活检测 3） |
+
+**24h 长稳重跑（进行中）**：
+
+- 启动：2026-09-24 21:53:11；`--duration-hours 24 --interval 300 --warmup 2`（进程内流水线，独立缓存 `data/soak-cache.db`）。
+- 真实进程 PID **30424**（`data/soak-24h.meta.json` 的 `pid` 字段），预计 2026-09-25 21:53 结束（约 288 个采样）。
+- 产物：明细 `data/soak-24h.csv`、汇总 `data/soak-24h.json`、日志 `data/soak-24h.out.log`（UTF-8）。
+- ⚠ **踩坑记录**：`Start-Process -PassThru` 返回的 PID（31916）**不是** python 进程的真实 PID（30424），
+  首轮挂机就是因为按启动器 PID 找进程而失联；现在以 `meta.pid` 为准（`--status` 读的就是它）。
+- 读取结论（明天跑完或中途想看）：
+  ```powershell
+  .\.venv\Scripts\python.exe -X utf8 scripts\soak.py --status --out data\soak-24h.csv
+  .\.venv\Scripts\python.exe -X utf8 scripts\soak.py --summarize --out data\soak-24h.csv --json data\soak-24h.json
+  ```
+- 判定：覆盖 ≥ 24h（按 CSV 首末时间戳）+ 可用率 ≥ 99% + 内存无持续增长（`4.4-8` 仍待跑满后勾选）。
+- 首轮（12:48 启动、仅 2 个采样后失联）的残留已归档为 `data/soak-24h-attempt1.{csv,pid,out.log,err.log}`。
 
 **风险 / 已知限制**：
 

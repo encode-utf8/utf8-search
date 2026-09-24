@@ -53,6 +53,11 @@ use_default_settings:
       - "duckduckgo news"
       - "sogou wechat"
       - "google news"
+      # 中文补充源（M5-5.3 实测采用）：每查询 4 条高精度中文结果，查询词覆盖率 0.67-0.93，
+      # 域名均为中关村在线 / 太平洋电脑网 / 汽车之家 / 浙江水利厅台风路径等一手站。
+      # 实测已排除：baidu（CAPTCHA，suspended_time=3600）、bilibili（单站 20 条视频会淹没结果集）、
+      # chinaso（本镜像注册失败：The "engine" field is missing）
+      - 360search
 
 general:
   debug: false
@@ -121,4 +126,6 @@ engines:
   - name: "sogou wechat"
     disabled: false
   - name: "google news"
+    disabled: false
+  - name: 360search
     disabled: false

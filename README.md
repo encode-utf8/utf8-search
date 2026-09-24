@@ -4,7 +4,12 @@
 
 ## 核心思路
 
-- **搜索聚合**：自建 SearXNG 聚合 **12 个免费通用引擎**（`resulthunter` / `google` / `yandex` / `naver` / `privacywall` / `zapmeta` / `yahoo` / `fynd` + 机会型 `reloado` / `yep` / `brave` / `quark`），单次查询可拿 80+ 条原始结果，完全免费、可自托管
+- **搜索聚合**：自建 SearXNG 聚合 **13 个免费通用引擎**（`resulthunter` / `google` / `yandex` / `naver` / `privacywall` / `zapmeta` / `yahoo` / `fynd` / `360search` + 机会型 `reloado` / `yep` / `brave` / `quark`），单次查询可拿 80+ 条原始结果，完全免费、可自托管
+- **质量与多样性过滤**：向上游要**候选池**（默认 24 条，SearXNG 一次就返回整批，零额外请求、零额外延迟），
+  再按客观信号处理：同站限流（同域最多 2 条）、聚合页/标签页识别（首页、`/tags/`、`/topic/`）、
+  非中文脚本剔除（俄/阿/韩文标题）、查询词覆盖度下限。**候选不足时按「缺陷轻重」分级补回，绝不把结果掏空**。
+  `topic=news` 只做同站与脚本这两项结构性过滤（实测全套过滤会把「当天更新的日报页」连同日期一起剔除，
+  时效性 39/40 → 32/40，详见 `docs/reports/m5-5.3-verification-20260924.md`）
 - **新闻时效性**：`topic=news` 走 3 个免费新闻源（`duckduckgo news` / `sogou wechat` / `google news`），并用通用引擎的 `time_range` 过滤补最新候选；发布日期缺失时先读 URL 内嵌日期、再抓页面用 `htmldate` 回补
 - **引擎健康度自适应**：把每个引擎的失败按原因分级冷却（CAPTCHA 30 分钟 / 拒绝访问 15 分钟 /
   限流 3 分钟 / 超时 90 秒），连续失败指数退避、到期自动恢复；被挂掉的引擎不再进入查询，
@@ -13,7 +18,9 @@
 - **兜底源**：SearXNG 返回 0 条时自动切换 Bing HTML 直取 Provider
 - **正文抽取**：本地并发抓取 + trafilatura 正文提取，失败时降级到 Jina Reader
 - **融合重排**：RRF 多路融合 + URL 归一化去重 + BM25 重排 + 中文二元组分词 + 低质结果过滤（无标题 / 裸域名标题）
-- **时效性处理**：新闻结果按「新鲜 > 过期 > 无日期」分层稳定排序，剔除已知过期结果（2-9 抽检暴露的「台风查询返回 2021 年旧闻」问题已知修复）
+- **时效性处理**：新闻结果按「新鲜 > 过期 > 无日期」分层稳定排序，剔除已知过期结果；通用主题命中
+  「最新/最近/latest」等时间词时，用 URL 内嵌日期 + 标题里的跨年年份（零网络开销）做「新鲜 > 无日期 > 过期」
+  重排 —— 2-9 抽检里「台风 最新消息 路径」把 2021 年旧闻排在第 1 位的问题由此修复
 - **`time_range` / `days` 是「强偏好」而不是硬过滤**：`topic=news` 下丢弃阈值取
   `max(time_range 对应天数, news_fresh_days)`（默认 7 天）。原因是免费源给不出足够的当天结果，
   若拿 1 天当硬阈值会把 2-7 天的近期新闻丢掉、再用「无日期」结果补位（实测反而更差）。
@@ -64,30 +71,49 @@ curl.exe -X POST http://127.0.0.1:8000/v1/search -H "Content-Type: application/j
 
 基准脚本：`.\.venv\Scripts\python.exe scripts\bench.py --n 5 --fresh`
 
+> 各里程碑的验收报告（含前后对比数据与复现命令）留痕在 `docs/reports/`，索引见 `docs/reports/README.md`。
+
 ## 测试
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest -q -m "not net"   # 177 项离线测试
+.\.venv\Scripts\python.exe -m pytest -q -m "not net"   # 213 项离线测试（含 MCP stdio 握手回归）
 .\.venv\Scripts\python.exe -m pytest -q -m net         # 4 项联网冒烟测试（需 SearXNG + 可出网）
 ```
 
 ## 验收脚本
 
 ```powershell
+# 客户端联调自检（M4-4.3）：stdio / Streamable HTTP / REST 三条通道 24 项检查，输出 Markdown 报告
+#   --mode 可选 stdio / stdio-raw / http-mcp（别名 http）/ rest / ratelimit / all
+#   已有服务在跑时可加 --base-url http://127.0.0.1:8000 --api-key <key> 复用，跳过临时实例
+.\.venv\Scripts\python.exe -u scripts\mcp_selfcheck.py --out data\selfcheck43.md
+
 # 并发压测（先起服务；压测期间建议 UTF8SEARCH_RATE_LIMIT_RPM=0 关闭限流）
 .\.venv\Scripts\python.exe scripts\loadtest.py --concurrency 10 --n 50 --api-key test123
 
 # 24h 长稳（定时查询，逐行记录成功率与 RSS）
 .\.venv\Scripts\python.exe scripts\soak.py --duration-hours 24 --interval 300
+#   挂机期间/之后不用猜 PID：--status 看存活与进度，--summarize 从明细 CSV 复算结论（强杀也不丢结论）
+.\.venv\Scripts\python.exe scripts\soak.py --status --out data\soak-24h.csv
+.\.venv\Scripts\python.exe scripts\soak.py --summarize --out data\soak-24h.csv --json data\soak-24h.json
 
 # 相关性抽检（生成 20 条中英查询的 top5 明细与打分模板，填好后用 --score-file 判定）
 .\.venv\Scripts\python.exe scripts\relevance.py --depth basic
+.\.venv\Scripts\python.exe scripts\relevance.py --compare-hygiene data\rel-before.json data\rel-after.json
+
+# 排序改动受控 A/B（先采候选快照，再用同一批候选比较「改动前 / 改动后」，
+# 避免把上游漂移误判成改动效果 —— 免费引擎每次返回的候选差异很大）
+.\.venv\Scripts\python.exe scripts\rank_ab.py --snapshot-out data\rank-ab-candidates.json
+.\.venv\Scripts\python.exe scripts\rank_ab.py --snapshot-in data\rank-ab-candidates.json --out data\rank-ab.md
 
 # 引擎健康度自适应 A/B 基准（对比静态名单与自适应：覆盖率 / 延迟 / 上游异常次数）
 .\.venv\Scripts\python.exe scripts\bench_engines.py --rounds 3 --out data\bench-engines.md
 
 # 时效性验收（topic=news + time_range=day，输出逐条时效统计与 Markdown 报告）
 .\.venv\Scripts\python.exe scripts\news_check.py --time-range day --max-results 5 --no-cache --out data\news-check.md
+
+# 时效性配对 A/B（逐条交替「开/关质量过滤」，用于确认质量过滤没有挤掉新鲜结果）
+.\.venv\Scripts\python.exe scripts\news_check.py --ab --time-range day --max-results 5 --no-cache --out data\news-check-ab.md
 ```
 
 实测结论（2026-09-24，详见 `checklist.md` 第 9 节）：
@@ -104,11 +130,13 @@ curl.exe -X POST http://127.0.0.1:8000/v1/search -H "Content-Type: application/j
 - `docs/03-客户端接入指南.md`：Claude Desktop / Codex / Cursor / Cherry Studio / Dify / n8n / 自研 Agent 接入示例
 - `docs/04-后续路线图.md`：M4 上线就绪（SSRF 防护 / 云部署 / 客户端联调）、M5 质量与时效、M6 能力扩展
 - `checklist.md`：各阶段可勾选的验收清单与实测记录
+- `docs/reports/`：各里程碑验收报告留痕（含 M4-4.3 客户端自检报告），索引见 `docs/reports/README.md`
 
 ## 当前状态
 
 **M1 / M2 已完成并通过实测验收**，M3 主体完成（10 并发压测通过、24 h 长稳待补）；
-M4-4.1 SSRF 防护、M5-5.2 时效性增强已完成。下一步：M5-5.1 引擎健康度自适应、M4-4.3 真实客户端联调。
+M4-4.1 SSRF 防护、M4-4.3 真实客户端联调（自动化部分）、M5-5.1 引擎健康度自适应、M5-5.2 时效性增强、M5-5.3 中文源与查询质量均已完成。
+M4-4.3 的人工联调清单见 `docs/03` 第 10.2 节，待逐客户端点一次；下一步：4.4 的 24h 长稳复跑、4.2 云部署（需公网 VPS）。
 
 已知限制：免费搜索引擎会被上游限流，需配合缓存与兜底源使用；中文商品类查询的相关性（2-9 抽检 5 条未达标）仍待 5.3 处理；
 中国大陆网络下 SearXNG 需走 `searxng/settings.local.yml` 的代理配置才能访问 Google / DuckDuckGo。

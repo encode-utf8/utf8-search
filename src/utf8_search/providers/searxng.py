@@ -51,6 +51,8 @@ class SearxngProvider(BaseProvider):
         self.unresponsive_engines: list[str] = []
         # 引擎名 -> 失败原因：旧实现只取了名字、把原因丢掉了，而原因正是分级退避的依据
         self.unresponsive_reasons: dict[str, str] = {}
+        # 上一次查询的 engines 约束是否被 SearXNG 忽略（点名引擎全部未注册时会回退到默认引擎集合）
+        self.constraint_ignored = False
 
     async def search(
         self,
@@ -87,6 +89,7 @@ class SearxngProvider(BaseProvider):
             # 类目全部引擎的结果，导致「按引擎隔离实测」得出的结论全部不可信）。
             params["categories"] = "news" if topic == "news" else "general"
 
+        self.constraint_ignored = False
         payload, used_engines = await self._request(
             params, retry_engines=self._retry_engines(engine_names)
         )
@@ -100,8 +103,30 @@ class SearxngProvider(BaseProvider):
                 "SearXNG 不可用引擎: %s",
                 ", ".join(f"{name}({reason})" if reason else name for name, reason in unresponsive),
             )
+        # 约束校验（M5-5.3）：点名**全部**未注册的引擎时，SearXNG 会静默回退到整个默认引擎集合
+        # （实测 engines=baidu 返回的是 fynd/naver/yandex/yahoo 的结果）。这类「约束被忽略」
+        # 必须告警，否则配置里写错引擎名会悄悄失去约束，与 5.1/5.2 维护 engines 的努力相冲突。
+        sources = {
+            name
+            for item in payload.get("results") or []
+            for name in (item.get("engines") or [item.get("engine")])
+            if name
+        }
+        self.constraint_ignored = bool(
+            used_engines and sources and not (sources & set(used_engines))
+        )
+        if self.constraint_ignored:
+            logger.warning(
+                "SearXNG 忽略了 engines 约束：请求 %s，实际结果来自 %s"
+                "（点名引擎可能未注册，SearXNG 会退回默认引擎集合）",
+                ",".join(used_engines),
+                ",".join(sorted(sources)),
+            )
+
         if self.engine_health is not None:
-            self.engine_health.observe(used_engines, unresponsive)
+            # 约束被忽略时，被点名的引擎其实**没被查询**，不能记成功
+            # （否则一个写错的引擎名会永远显示为「健康」）。
+            self.engine_health.observe([] if self.constraint_ignored else used_engines, unresponsive)
 
         hits: list[SearchHit] = []
         for item in payload.get("results") or []:

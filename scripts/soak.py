@@ -10,7 +10,17 @@
     python scripts/soak.py --duration-hours 0.1 --interval 60     # 快速自检
     python scripts/soak.py --http-url http://127.0.0.1:8000 --api-key test123 --rss-pid 1234
 
-判定标准：可用率 ≥ 99% 且内存无持续增长（逻辑见 `utf8_search.verify.metrics.evaluate_soak`）。
+     # 挂机期间/之后随时可用（不启动采样）：
+    python scripts/soak.py --status --out data/soak-24h.csv        # 存活 / 心跳 / 进度 / 当前结论
+    python scripts/soak.py --summarize --out data/soak-24h.csv --json data/soak-24h.json
+
+挂机健壮性（首轮 24h 挂机被外部终止后补的）：
+- 每次采样刷新 `--meta`（PID / 启动时间 / 心跳 / 已写样本数）与 `--json` 汇总，
+  进程被强杀也能从已有样本复算结论，不再依赖「正常退出」；
+- 中断后用同一 `--out` 重启即可**续跑**：序号接着编，历史样本保留并一起参与判定，
+  只有本次进程的前 `--warmup` 个样本算预热；
+- 判定标准不变：覆盖 ≥ 24h（按 CSV 首末时间戳）、可用率 ≥ 99%、内存无持续增长
+  （逻辑见 `utf8_search.verify.metrics.summarize_soak_rows` / `evaluate_soak`）。
 """
 
 from __future__ import annotations
@@ -18,6 +28,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import csv
+import json
 import os
 import sys
 import time
@@ -30,10 +41,12 @@ from utf8_search.config import Settings  # noqa: E402
 from utf8_search.core.pipeline import SearchPipeline  # noqa: E402
 from utf8_search.models import SearchRequest  # noqa: E402
 from utf8_search.verify.metrics import (  # noqa: E402
-    evaluate_soak,
+    SOAK_TIMESTAMP_FORMAT,
     format_bytes,
+    load_soak_rows,
+    process_alive,
     read_rss_bytes,
-    summarize_latencies,
+    summarize_soak_rows,
 )
 
 # 中英混合查询池：轮换使用且**不加随机后缀**，让缓存发挥兜底作用，
@@ -89,7 +102,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--searxng", default="", help="覆盖 SearXNG 地址")
     parser.add_argument("--timeout", type=float, default=60.0, help="HTTP 模式下单请求超时（秒）")
     parser.add_argument("--unique", action="store_true", help="给查询加随机后缀，强制不回缓存（更狠，但会持续打上游）")
-    parser.add_argument("--json", dest="json_out", default="", help="把汇总结果写入该 JSON 文件")
+    parser.add_argument("--json", dest="json_out", default="", help="把汇总结果写入该 JSON 文件（每次采样刷新）")
+    parser.add_argument(
+        "--meta",
+        default="",
+        help="挂机元数据（PID / 启动时间 / 心跳）路径；默认取 --out 同名的 .meta.json",
+    )
+    parser.add_argument("--status", action="store_true", help="只打印挂机状态（存活 / 心跳 / 进度 / 当前结论），不采样")
+    parser.add_argument(
+        "--summarize",
+        action="store_true",
+        help="只从 --out 的明细 CSV 复算结论（挂机进程已退出 / 被强杀时用），不采样",
+    )
     return parser.parse_args()
 
 
@@ -156,40 +180,178 @@ class Probe:
             }
 
 
-def _print_summary(rows: list[dict[str, object]], args: argparse.Namespace) -> tuple[bool, list[str]]:
-    """打印并返回长稳结论（只统计非预热样本）。"""
-    measured = [row for row in rows if not row["warmup"]]
-    succeeded = [row for row in measured if row["ok"]]
-    rss_series = [float(row["rss_bytes"]) for row in measured if row.get("rss_bytes")]
-    latencies = [float(row["latency_ms"]) for row in succeeded]
-    stats = summarize_latencies(latencies)
+def _meta_path(args: argparse.Namespace) -> Path:
+    """挂机元数据路径：默认与明细 CSV 同名（`data/soak-24h.csv` -> `data/soak-24h.meta.json`）。"""
+    return Path(args.meta) if args.meta else Path(args.out).with_suffix(".meta.json")
 
-    passed, notes, details = evaluate_soak(total=len(measured), succeeded=len(succeeded), rss_series=rss_series)
+
+def _write_json(path: str | Path, payload: dict[str, object]) -> None:
+    """原子写 JSON（先写 .tmp 再替换），避免读方拿到半截文件。"""
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    tmp = target.with_name(target.name + ".tmp")
+    tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    os.replace(tmp, target)
+
+
+def _heartbeat_age(text: str) -> float | None:
+    """心跳距现在的秒数；无法解析返回 None。"""
+    try:
+        stamp = datetime.strptime(text, SOAK_TIMESTAMP_FORMAT)
+    except ValueError:
+        return None
+    return max(0.0, (datetime.now() - stamp).total_seconds())
+
+
+def _meta_payload(
+    args: argparse.Namespace, *, pid: int, started_at: str, samples: int, finished: bool
+) -> dict[str, object]:
+    """挂机元数据：每次采样刷新，用来回答「还在跑吗 / 跑到哪了」。"""
+    return {
+        "pid": pid,
+        "started_at": started_at,
+        "updated_at": datetime.now().strftime(SOAK_TIMESTAMP_FORMAT),
+        "finished": finished,
+        "planned_hours": args.duration_hours,
+        "interval_s": args.interval,
+        "mode": args.mode,
+        "csv": str(Path(args.out).resolve()),
+        "samples_written": samples,
+        "http_url": args.http_url or "",
+        "searxng": args.searxng or "",
+    }
+
+
+def _json_payload(
+    args: argparse.Namespace, summary: dict[str, object], rows: list[dict[str, object]]
+) -> dict[str, object]:
+    """汇总 JSON：判定结论 + 汇总指标 + 逐条样本（供报告与事后复核）。"""
+    return {
+        "generated_at": datetime.now().strftime(SOAK_TIMESTAMP_FORMAT),
+        "duration_hours": args.duration_hours,
+        "interval": args.interval,
+        "mode": args.mode,
+        "samples": summary["samples"],
+        "succeeded": summary["succeeded"],
+        "availability": summary["availability"],
+        "window_hours": summary["window_hours"],
+        "latency": summary["latency"],
+        "rss": summary["rss"],
+        "passed": summary["passed"],
+        "notes": summary["notes"],
+        "rows": rows,
+    }
+
+
+def _print_summary(
+    rows: list[dict[str, object]], args: argparse.Namespace
+) -> tuple[bool, list[str], dict[str, object]]:
+    """打印长稳结论（只统计非预热样本）。
+
+    判定与汇总全部走 `utf8_search.verify.metrics.summarize_soak_rows`，
+    因此「在线采样结束时的结论」与「事后 --summarize 复算的结论」必然一致。
+    """
+    summary = summarize_soak_rows(rows)
+    latency = summary["latency"]  # type: ignore[assignment]
+    rss = summary["rss"]  # type: ignore[assignment]
 
     print("\n== 长稳结果 ==")
-    if measured:
-        print(f"采样区间    : {measured[0]['timestamp']} -> {measured[-1]['timestamp']}（{float(measured[-1]['elapsed_s']) / 3600:.2f} h）")
-    print(f"采样点数    : {len(measured)}（预热 {len(rows) - len(measured)} 个已剔除）")
-    print(f"成功 / 失败 : {len(succeeded)} / {len(measured) - len(succeeded)}")
-    print(f"可用率      : {details['availability']:.2%}")
-    if stats["count"]:
+    if summary["first_timestamp"]:
         print(
-            f"延迟        : P50 {stats['p50']:.0f}ms  P95 {stats['p95']:.0f}ms  "
-            f"max {stats['max']:.0f}ms  mean {stats['mean']:.0f}ms"
+            f"采样区间    : {summary['first_timestamp']} -> {summary['last_timestamp']}"
+            f"（覆盖 {float(summary['window_hours']):.2f} h）"
         )
-    if rss_series:
+    print(f"采样点数    : {summary['samples']}（预热 {summary['warmup_rows']} 个已剔除）")
+    print(f"成功 / 失败 : {summary['succeeded']} / {summary['failed']}")
+    print(f"可用率      : {float(summary['availability']):.2%}")
+    if latency["count"]:
         print(
-            f"内存        : {format_bytes(min(rss_series))}（最低） / "
-            f"{format_bytes(rss_series[-1])}（末次） / {format_bytes(max(rss_series))}（峰值）"
+            f"延迟        : P50 {latency['p50']:.0f}ms  P95 {latency['p95']:.0f}ms  "
+            f"max {latency['max']:.0f}ms  mean {latency['mean']:.0f}ms"
         )
-    failures = [row for row in measured if not row["ok"]]
-    for row in failures[:10]:
+    if rss["samples"]:
+        print(
+            f"内存        : {format_bytes(rss['min'])}（最低） / "
+            f"{format_bytes(rss['last'])}（末次） / {format_bytes(rss['max'])}（峰值）"
+        )
+    for row in summary["failures"][:10]:  # type: ignore[index]
         print(f"  失败样本 #{row['index']}: {row['error']}")
-    print("\n结论：" + ("通过" if passed else "不通过 / 待定") + " — " + "；".join(notes))
-    if not measured:
+    print("\n结论：" + ("通过" if summary["passed"] else "不通过 / 待定") + " — " + "；".join(summary["notes"]))  # type: ignore[arg-type]
+    if not summary["samples"]:
         print("提示：没有任何有效采样，无法判定")
     print(f"明细 CSV: {Path(args.out).resolve()}")
-    return passed, notes
+    return bool(summary["passed"]), list(summary["notes"]), summary  # type: ignore[arg-type]
+
+
+def _print_status(args: argparse.Namespace) -> int:
+    """打印挂机状态：进程存活 / 心跳 / 进度 / 当前结论（随时可查，不影响挂机）。"""
+    meta_path = _meta_path(args)
+    csv_path = Path(args.out)
+    print("== 长稳状态 ==")
+
+    meta: dict[str, object] = {}
+    if meta_path.exists():
+        try:
+            meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            print(f"meta        : {meta_path.resolve()} 解析失败（{exc}）")
+    else:
+        print(f"meta        : 未找到 {meta_path.resolve()}")
+
+    if meta:
+        pid = int(meta.get("pid") or 0)
+        interval = float(meta.get("interval_s") or 0) or 300.0
+        heartbeat = str(meta.get("updated_at") or "")
+        age = _heartbeat_age(heartbeat)
+        print(f"进程 PID    : {pid}（{'存活' if process_alive(pid) else '已退出'}）")
+        print(
+            f"启动时间    : {meta.get('started_at')}（计划 {meta.get('planned_hours')} h，"
+            f"每 {meta.get('interval_s')} s 一次，mode={meta.get('mode')}，finished={meta.get('finished')}）"
+        )
+        print(f"心跳        : {heartbeat}（{'n/a' if age is None else f'{age:.0f}s 前'}）")
+        print(f"已写样本    : {meta.get('samples_written')}")
+        if age is not None and age > 3 * interval:
+            print(f"⚠ 心跳已超过 3 个采样周期（{3 * interval:.0f}s）：进程可能卡住或已被强杀")
+
+    rows = load_soak_rows(csv_path)
+    if not rows:
+        print(f"明细        : {csv_path.resolve()} 不存在或无有效样本")
+        return 2
+
+    summary = summarize_soak_rows(rows)
+    last = rows[-1]
+    print(f"明细        : {csv_path.resolve()}（{len(rows)} 行）")
+    print(
+        f"最近采样    : #{last['index']} {last['timestamp']} {'OK' if last['ok'] else 'FAIL'} "
+        f"{float(last['latency_ms']):.0f}ms 结果 {last['results']} 读页 {last['pages_read']} "
+        f"RSS {format_bytes(last.get('rss_bytes'))}"
+    )
+    print(
+        f"覆盖窗口    : {summary['first_timestamp']} -> {summary['last_timestamp']}"
+        f"（{float(summary['window_hours']):.2f} h）"
+    )
+    print(f"累计可用率  : {float(summary['availability']):.2%}（{summary['succeeded']}/{summary['samples']}）")
+    print(
+        f"当前结论    : {'通过' if summary['passed'] else '不通过 / 待定'} — "
+        + "；".join(summary["notes"])  # type: ignore[arg-type]
+    )
+    if args.json_out:
+        _write_json(args.json_out, _json_payload(args, summary, rows))
+    return 0
+
+
+def _summarize_from_csv(args: argparse.Namespace) -> int:
+    """从已有明细 CSV 复算结论（挂机进程已退出 / 被强杀时用）。"""
+    print("== 长稳结论复算（--summarize：不启动任何采样） ==")
+    rows = load_soak_rows(args.out)
+    if not rows:
+        print(f"未找到有效样本：{Path(args.out).resolve()}")
+        return 2
+    passed, _notes, summary = _print_summary(rows, args)
+    if args.json_out:
+        _write_json(args.json_out, _json_payload(args, summary, rows))
+        print(f"汇总 JSON: {args.json_out}")
+    return 0 if passed else 1
 
 
 async def run(args: argparse.Namespace) -> int:
@@ -216,31 +378,45 @@ async def run(args: argparse.Namespace) -> int:
     if args.http_url and not args.rss_pid:
         rss_pid = 0
 
+    # 续跑：读回已有样本继续编号（历史样本保留，最终判定会把它们一起算上）
+    existing = load_soak_rows(out)
+    resume_from = max((int(row["index"]) for row in existing), default=0)
+    need_header = not out.exists() or out.stat().st_size == 0
+
+    pid = os.getpid()
+    started_at = datetime.now().strftime(SOAK_TIMESTAMP_FORMAT)
+    meta_path = _meta_path(args)
+    print(f"本次进程 PID: {pid}；meta 写入 {meta_path.resolve()}")
     print(f"计划: 每 {args.interval:.0f}s 查询一次，共 {args.duration_hours:.2f} h，模式 {args.mode}")
+    if existing:
+        print(f"续跑: 已有 {len(existing)} 个样本，从 #{resume_from + 1} 继续（历史样本仍参与判定）")
     print(f"明细写入: {out.resolve()}\n")
+    _write_json(meta_path, _meta_payload(args, pid=pid, started_at=started_at, samples=len(existing), finished=False))
 
     rows: list[dict[str, object]] = []
     started = time.perf_counter()
     deadline = started + args.duration_hours * 3600
-    new_file = not out.exists()
+    finished = False
 
     try:
         with out.open("a", encoding="utf-8", newline="") as handle:
             writer = csv.writer(handle)
-            if new_file:
+            if need_header:
                 writer.writerow(COLUMNS)
 
-            index = 0
+            index = resume_from
+            proc_sample = 0
             while time.perf_counter() < deadline:
-                if args.max_samples and index >= args.max_samples:
+                if args.max_samples and proc_sample >= args.max_samples:
                     break
                 index += 1
+                proc_sample += 1
                 result = await probe.run(index)
                 row = {
                     "index": index,
-                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "timestamp": datetime.now().strftime(SOAK_TIMESTAMP_FORMAT),
                     "elapsed_s": round(time.perf_counter() - started, 3),
-                    "warmup": index <= args.warmup,
+                    "warmup": proc_sample <= args.warmup,
                     "rss_bytes": read_rss_bytes(rss_pid) if rss_pid else None,
                     **result,
                 }
@@ -256,10 +432,21 @@ async def run(args: argparse.Namespace) -> int:
                     f"RSS {format_bytes(row['rss_bytes'])} {'' if row['ok'] else row['error']}"
                 )
 
-                next_at = started + index * args.interval
+                # 每次采样刷新心跳与汇总：进程被强杀也不丢结论（首轮挂机就是这么丢的）
+                all_rows = existing + rows
+                _write_json(
+                    meta_path,
+                    _meta_payload(args, pid=pid, started_at=started_at, samples=len(all_rows), finished=False),
+                )
+                if args.json_out:
+                    _write_json(args.json_out, _json_payload(args, summarize_soak_rows(all_rows), all_rows))
+
+                next_at = started + proc_sample * args.interval
                 wait = next_at - time.perf_counter()
                 if wait > 0:
                     await asyncio.sleep(wait)
+            else:
+                finished = True
     except (KeyboardInterrupt, asyncio.CancelledError):
         print("\n已中断，输出已有采样汇总")
     finally:
@@ -268,23 +455,13 @@ async def run(args: argparse.Namespace) -> int:
         if client is not None:
             await client.aclose()
 
-    passed, notes = _print_summary(rows, args)
+    all_rows = existing + rows
+    passed, _notes, summary = _print_summary(all_rows, args)
+    _write_json(
+        meta_path, _meta_payload(args, pid=pid, started_at=started_at, samples=len(all_rows), finished=finished)
+    )
     if args.json_out:
-        import json
-
-        measured = [row for row in rows if not row["warmup"]]
-        payload = {
-            "duration_hours": args.duration_hours,
-            "interval": args.interval,
-            "mode": args.mode,
-            "samples": len(measured),
-            "succeeded": sum(1 for row in measured if row["ok"]),
-            "passed": passed,
-            "notes": notes,
-            "rows": rows,
-        }
-        Path(args.json_out).parent.mkdir(parents=True, exist_ok=True)
-        Path(args.json_out).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        _write_json(args.json_out, _json_payload(args, summary, all_rows))
         print(f"汇总 JSON: {args.json_out}")
 
     if not rows:
@@ -299,6 +476,10 @@ def main() -> int:
     _configure_stdout()
     args = parse_args()
     try:
+        if args.status:
+            return _print_status(args)
+        if args.summarize:
+            return _summarize_from_csv(args)
         return asyncio.run(run(args))
     except KeyboardInterrupt:
         print("\n已中断")

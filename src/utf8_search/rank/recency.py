@@ -36,6 +36,8 @@ _DATE_FORMATS = (
 FRESH = 0
 STALE = 1
 UNDATED = 2
+# 「已知过期排到最后」用的层号，只由 apply_recency(stale_last=True) 使用
+_RANK_STALE_LAST = UNDATED + 1
 
 # 时间戳下限（2000-01-01 UTC）：早于它的数字视为占位值而不是真实日期
 _MIN_TIMESTAMP = 946_684_800
@@ -107,7 +109,7 @@ def _valid_ymd(year: int, month: int, day: int) -> bool:
 
 
 def date_from_url(url: str | None) -> str | None:
-    """从 URL 路径里提取发布日期，返回 `YYYY-MM-DD`；提取不到返回 None。
+    r"""从 URL 路径里提取发布日期，返回 `YYYY-MM-DD`；提取不到返回 None。
 
     很多新闻站把日期编码进路径（`/2026/09/22/`、`/202609/t20260922_`、`/2026-09-22/`），
     但页面上并不声明日期，靠抓页面拿不到。这里用正则直接读 URL，零网络开销，
@@ -144,6 +146,57 @@ def age_days(published: str | None, *, now: datetime | None = None) -> float | N
     return (reference - parsed).total_seconds() / 86400
 
 
+# 「最近 / 最新」这类时间意图词。命中时，**通用主题**也值得按新鲜度重排：
+# 2-9 抽检的 #4「台风 最新消息 路径」在通用主题下把 2021 年旧闻排到了第 1 位。
+# 列表刻意保持克制（不包含「2026」这类年份：它更像限定词而不是时效诉求）。
+_RECENCY_WORDS = (
+    "最新", "最近", "今日", "今天", "本周", "这周", "近期", "实时", "进展", "动态", "新闻", "消息",
+    "latest", "recent", "recently", "today", "this week", "breaking", "update", "updates", "news",
+)
+
+
+# 标题里的年份线索：`2021年第13号康森台风最新消息` 这类页面把年份写在标题里，
+# URL 里没有任何日期，旧口径下被归到「无日期」层，于是「最新消息」类查询会把它排到最前。
+_TITLE_YEAR = re.compile(r"(?<!\d)(19|20)(\d{2})\s*年")
+
+
+def year_from_title(title: str) -> int | None:
+    """从标题里提取「YYYY年」形式的年份；取不到返回 None。"""
+    match = _TITLE_YEAR.search(title or "")
+    return int(match.group(1) + match.group(2)) if match else None
+
+
+def mark_stale_by_title_year(
+    results: list[SearchResult], *, now: datetime | None = None
+) -> int:
+    """用标题里的「跨年年份」给结果补一个陈旧日期，返回补了几条。
+
+    这是给「最新消息」这类时效查询准备的**陈旧信号**，零网络开销。
+    刻意只处理**严格早于今年**的年份：
+    - 同年（如 2026年9月）不标记，避免把近期页面按「年中」误判成过期；
+    - 只补空值，引擎/URL 已经给出的日期更精确，不覆盖。
+
+    补出来的日期取 `YYYY-07-01`（年中），只用于把结果分到「已知过期」层做排序，不参与丢弃。
+    """
+    reference = now or datetime.now(timezone.utc)
+    marked = 0
+    for result in results:
+        if result.published_date:
+            continue
+        year = year_from_title(result.title or "")
+        if year is None or year >= reference.year:
+            continue
+        result.published_date = f"{year:04d}-07-01"
+        marked += 1
+    return marked
+
+
+def has_recency_intent(query: str) -> bool:
+    """查询是否表达了「要新鲜的」这一诉求。"""
+    lowered = (query or "").lower()
+    return any(word in lowered for word in _RECENCY_WORDS)
+
+
 def freshness_rank(published: str | None, *, fresh_days: int, now: datetime | None = None) -> int:
     """新鲜度分层：FRESH / STALE / UNDATED。"""
     days = age_days(published, now=now)
@@ -160,6 +213,7 @@ def apply_recency(
     now: datetime | None = None,
     drop_stale: bool = True,
     drop_after_days: int | None = None,
+    stale_last: bool = False,
 ) -> list[SearchResult]:
     """按新鲜度重排新闻结果，必要时丢弃已知过旧的结果。
 
@@ -173,6 +227,10 @@ def apply_recency(
 
     排序为分层稳定排序：新鲜 > 过期 > 无日期，同层保持传入顺序（即原有相关性顺序）。
     只有在「保留结果已够 max_results」时才执行丢弃，宁可给旧闻也不返回空结果。
+
+    `stale_last=True` 时改成 新鲜 > 无日期 > 过期：新闻主题下「已知过期」好歹能靠丢弃阈值
+    兜住，而通用主题下「无日期」的结果多是实时页面（台风实时路径、官网专题），
+    把已知跨年旧闻排在它们前面是明确的错误（2-9 #4）。
     """
     if not results:
         return results
@@ -180,7 +238,8 @@ def apply_recency(
     threshold = fresh_days if drop_after_days is None else drop_after_days
 
     def rank_of(result: SearchResult) -> int:
-        return freshness_rank(result.published_date, fresh_days=fresh_days, now=now)
+        rank = freshness_rank(result.published_date, fresh_days=fresh_days, now=now)
+        return _RANK_STALE_LAST if (stale_last and rank == STALE) else rank
 
     def too_old(result: SearchResult) -> bool:
         """只把「有日期且超过丢弃阈值」的结果视为过旧；无日期不算（未知不等于陈旧）。"""

@@ -7,6 +7,9 @@
 from __future__ import annotations
 
 import os
+import subprocess
+import sys
+from datetime import datetime, timedelta
 
 import pytest
 
@@ -16,9 +19,12 @@ from utf8_search.verify.metrics import (
     evaluate_relevance,
     evaluate_soak,
     format_bytes,
+    load_soak_rows,
     percentile,
+    process_alive,
     read_rss_bytes,
     summarize_latencies,
+    summarize_soak_rows,
 )
 
 
@@ -165,6 +171,142 @@ def test_relevance_empty_scores_fails() -> None:
     passed, notes, _ = evaluate_relevance({})
     assert passed is False
     assert notes
+
+
+# ---------------------------------------------------------------- 长稳明细 CSV 解析与复算
+SOAK_HEADER = "index,timestamp,elapsed_s,warmup,ok,latency_ms,results,pages_read,cached,rss_bytes,query,error"
+
+
+def _synthetic_rows(
+    *, count: int = 12, warmup: int = 2, failures: int = 0, rss_growth: bool = False
+) -> list[dict[str, object]]:
+    """构造长稳样本：默认 12 个采样、其中 2 个预热、全部成功、内存平稳。"""
+    base = datetime(2026, 9, 24, 0, 0, 0)
+    rows: list[dict[str, object]] = []
+    for index in range(1, count + 1):
+        ok = index <= count - failures
+        rows.append(
+            {
+                "index": index,
+                "timestamp": (base + timedelta(minutes=5 * (index - 1))).strftime("%Y-%m-%d %H:%M:%S"),
+                "elapsed_s": 300.0 * (index - 1),
+                "warmup": index <= warmup,
+                "ok": ok,
+                "latency_ms": 1200.0,
+                "results": 5 if ok else 0,
+                "pages_read": 0,
+                "cached": False,
+                "rss_bytes": float((100 + (10 * index if rss_growth else index)) * 1024 * 1024),
+                "query": "q",
+                "error": "" if ok else "TimeoutError: 上游超时",
+            }
+        )
+    return rows
+
+
+def test_load_soak_rows_parses_types_and_skips_broken_lines(tmp_path) -> None:
+    """CSV 解析：类型归一，并丢弃「缺时间戳 / 缺延迟」的坏行（挂机被强杀时会出现）。"""
+    csv_path = tmp_path / "soak.csv"
+    csv_path.write_text(
+        "\n".join(
+            [
+                SOAK_HEADER,
+                "1,2026-09-24 22:00:00,0.1,True,True,1200.5,5,0,False,104857600,q1,",
+                "2,2026-09-24 22:05:00,300.2,False,false,60.0,0,0,false,105906176,q2,TimeoutError: 超时",
+                "3,2026-09-24 22:10:00,600.3,False,True,,0,0,False,,q3,",
+                ",,,,,,,,,,,",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    rows = load_soak_rows(csv_path)
+
+    assert len(rows) == 2
+    assert rows[0]["ok"] is True and rows[0]["warmup"] is True
+    assert rows[0]["latency_ms"] == pytest.approx(1200.5)
+    assert rows[0]["rss_bytes"] == pytest.approx(104857600.0)
+    assert rows[1]["ok"] is False and rows[1]["warmup"] is False
+    assert str(rows[1]["error"]).startswith("TimeoutError")
+
+
+def test_load_soak_rows_missing_file_returns_empty(tmp_path) -> None:
+    """文件不存在时返回空列表（首次挂机、路径写错都不应抛异常）。"""
+    assert load_soak_rows(tmp_path / "nope.csv") == []
+
+
+def test_summarize_soak_rows_passes_and_reports_window() -> None:
+    """样本充足且内存平稳 -> 通过，并给出覆盖窗口（24h 长稳按首末时间戳算）。"""
+    summary = summarize_soak_rows(_synthetic_rows())
+
+    assert summary["passed"] is True
+    assert summary["samples"] == 10
+    assert summary["warmup_rows"] == 2
+    assert summary["availability"] == 1.0
+    assert summary["failed"] == 0
+    # 10 个计入统计的样本，间隔 5 分钟 -> 覆盖 45 分钟
+    assert summary["window_hours"] == pytest.approx(45 / 60)
+    assert summary["first_timestamp"] == "2026-09-24 00:10:00"
+    assert summary["last_timestamp"] == "2026-09-24 00:55:00"
+    assert summary["latency"]["count"] == 10
+
+
+def test_summarize_soak_rows_fails_on_low_availability() -> None:
+    """失败样本拉低可用率 -> 不通过，并保留失败明细供定位。"""
+    summary = summarize_soak_rows(_synthetic_rows(failures=2))
+
+    assert summary["passed"] is False
+    assert summary["failed"] == 2
+    assert summary["availability"] == pytest.approx(0.8)
+    assert len(summary["failures"]) == 2
+    assert any("可用率" in note for note in summary["notes"])
+
+
+def test_summarize_soak_rows_fails_on_memory_growth() -> None:
+    """内存尾部中位数持续升高 -> 不通过。"""
+    summary = summarize_soak_rows(_synthetic_rows(rss_growth=True))
+    assert summary["passed"] is False
+    assert any("内存持续增长" in note for note in summary["notes"])
+
+
+def test_summarize_soak_rows_tolerates_bad_timestamps() -> None:
+    """时间戳解析不了时窗口记 0，但统计与判定照常进行（不能因此崩掉）。"""
+    rows = _synthetic_rows(count=10, warmup=0)
+    rows[0]["timestamp"] = "not-a-date"
+    rows[-1]["timestamp"] = ""
+
+    summary = summarize_soak_rows(rows)
+
+    assert summary["samples"] == 10
+    assert summary["window_hours"] == 0.0
+    assert summary["passed"] is True
+
+
+def test_summarize_soak_rows_without_samples_fails() -> None:
+    summary = summarize_soak_rows([])
+    assert summary["passed"] is False
+    assert summary["samples"] == 0
+    assert summary["notes"]
+
+
+# ---------------------------------------------------------------- 进程存活检测
+def test_process_alive_detects_current_process() -> None:
+    """当前进程必须判为存活（--status 的存活判定依赖它）。"""
+    assert process_alive(os.getpid()) is True
+
+
+def test_process_alive_false_for_invalid_pid() -> None:
+    assert process_alive(0) is False
+    assert process_alive(-1) is False
+    assert process_alive(999_999_999) is False
+
+
+def test_process_alive_false_after_child_exits() -> None:
+    """子进程退出后必须判为「已退出」，否则挂机死了也会显示存活。"""
+    child = subprocess.Popen([sys.executable, "-c", "pass"])
+    child.wait()
+    assert process_alive(child.pid) is False
 
 
 # ---------------------------------------------------------------- 内存采样与格式化

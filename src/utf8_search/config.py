@@ -21,13 +21,52 @@ class Settings(BaseSettings):
     # ---------- 上游搜索服务 ----------
     searxng_url: str = Field(default="http://127.0.0.1:8888", description="SearXNG 基础地址")
     default_engines: str = Field(
-        default="resulthunter,yandex,naver,privacywall,google,zapmeta,yahoo,fynd,reloado,yep,brave,quark",
+        default="resulthunter,yandex,naver,privacywall,google,zapmeta,yahoo,fynd,reloado,yep,brave,quark,360search",
         description="传给 SearXNG 的 engines 参数，逗号分隔；留空表示使用 SearXNG 默认引擎集合",
     )
     language: str = Field(default="all", description="搜索语言，all 表示不限（中英兼顾）")
     safe_search: int = Field(default=0, description="SearXNG 安全搜索等级 0/1/2")
     search_timeout_limit: float = Field(
         default=2.5, gt=0, description="SearXNG 聚合搜索的时间上限（秒）；到点即返回已拿到的结果，避免个别引擎拖慢整体"
+    )
+
+    # ---------- 查询质量与多样性（M5-5.3） ----------
+    # 说明：2-9 抽检未达标的查询暴露的问题（同站重复、聚合页、无关脚本、低覆盖结果）
+    # 全部用客观信号修掉，不维护站点黑名单。所有过滤都遵循「候选充足才过滤」：
+    # 过滤后不足 max_results 时会按原排序补回，绝不让质量过滤把结果掏空。
+    rank_max_per_host: int = Field(
+        default=2,
+        ge=0,
+        description="最终结果里同一可注册域最多保留几条（0=不限）；实测 bilibili 单查询会灌 20 条同站结果",
+    )
+    rank_min_query_coverage: float = Field(
+        default=0.34,
+        ge=0.0,
+        le=1.0,
+        description="查询词覆盖率下限：候选充足时剔除覆盖率低于该值的结果（0=关闭）",
+    )
+    rank_drop_aggregator_pages: bool = Field(
+        default=True, description="候选充足时剔除站点首页/栏目页这类聚合页（正文只是导航，对 LLM 无价值）"
+    )
+    rank_drop_script_mismatch: bool = Field(
+        default=True, description="查询含中文时，剔除标题为纯西里尔/阿拉伯/韩文等非中文/非英文脚本的结果"
+    )
+    general_recency_intent: bool = Field(
+        default=True,
+        description=(
+            "通用主题命中「最新/最近/latest」等时间词时按新鲜度重排。"
+            "只用 URL 内嵌日期与标题里的跨年年份（零网络开销），不抓页面、不丢弃无日期结果，"
+            "因此不影响 basic 速度"
+        ),
+    )
+    rank_candidate_pool: int = Field(
+        default=24,
+        ge=1,
+        description=(
+            "通用主题向上游索取的候选条数（M5-5.3）。必须是「候选池」而不是 top-N："
+            "SearXNG 本来就把整批结果一次返回给本地，多留候选不增加任何网络开销；"
+            "但候选数等于结果数时，质量过滤会因为「不足 max_results」被全部补回，等于失效"
+        ),
     )
 
     # ---------- 引擎健康度自适应（M5-5.1） ----------
@@ -191,7 +230,7 @@ class Settings(BaseSettings):
         ),
     )
     news_general_engines: str = Field(
-        default="resulthunter,naver,privacywall,google,zapmeta,yahoo,fynd,reloado,brave,quark",
+        default="resulthunter,naver,privacywall,google,zapmeta,yahoo,fynd,reloado,brave,quark,360search",
         description=(
             "新闻主题做「通用引擎新鲜候选补充」时用的引擎列表（逗号分隔）。"
             "默认排除 yandex：实测 yandex 配合 time_range 会返回大量垃圾农场内容"

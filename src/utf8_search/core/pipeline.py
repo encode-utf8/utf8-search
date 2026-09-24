@@ -35,8 +35,15 @@ from ..providers.bing_html import BingHtmlProvider
 from ..providers.jina_reader import JinaReader
 from ..providers.engine_health import EngineHealthTracker
 from ..providers.searxng import SearxngProvider
+from ..rank.diversity import apply_rank_filters
 from ..rank.fusion import filter_domains, filter_low_quality, fuse, rerank
-from ..rank.recency import age_days, apply_recency, date_from_url
+from ..rank.recency import (
+    age_days,
+    apply_recency,
+    date_from_url,
+    has_recency_intent,
+    mark_stale_by_title_year,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -155,21 +162,8 @@ class SearchPipeline:
         # 1) 取原始结果（多源并发 + 兜底）
         hits, engines_used, failed_engines = await self._collect_hits(request)
 
-        # 2) 融合、去重、重排、过滤
-        merged = fuse(_group_hits(hits)) if hits else []
-        # 剔除客观低质结果（无标题 / 标题是裸域名）：这类结果在「按时间过滤」的通用引擎
-        # 结果里占比不低，留着会挤掉真正切题的新闻
-        merged = filter_low_quality(merged)
-        merged = filter_domains(
-            merged,
-            include_domains=request.include_domains,
-            exclude_domains=request.exclude_domains,
-        )
-        merged = rerank(merged, request.query)
-
-        # 2.5) 时效性（M5-5.2）：新闻主题下补齐发布日期并按新鲜度重排，必要时剔除已知过期结果
-        if request.topic == "news":
-            merged = await self._apply_news_recency(request, merged)
+        # 2) 融合、去重、重排、过滤、时效分层（不含正文抓取）
+        merged = await self._rank_hits(hits, request)
 
         # 3) 深度模式：并发抓取正文（受总预算约束）
         pages_read = 0
@@ -191,6 +185,89 @@ class SearchPipeline:
         await self.cache.set(result_key, response.model_dump(mode="json"), self.settings.cache_result_ttl)
         return response
 
+    async def _rank_hits(
+        self, hits: list[SearchHit], request: SearchRequest
+    ) -> list[SearchResult]:
+        """把原始结果重组成最终排序（融合 → 过滤 → 重排 → 质量过滤 → 时效分层）。
+
+        单独抽出来有两个目的：
+        1. 正文抓取（深度模式）与排序解耦，basic 深度下这一步纯本地计算、零网络开销；
+        2. 允许用**同一批候选**离线复算「改动前 / 改动后」的排序结果（见 scripts/rank_ab.py）。
+           上游免费引擎每次返回的候选集差异很大，只有固定候选才能分清
+           「排序改动带来的差异」与「上游漂移带来的差异」。
+        """
+        merged = fuse(_group_hits(hits)) if hits else []
+        # 剔除客观低质结果（无标题 / 标题是裸域名）：这类结果在「按时间过滤」的通用引擎
+        # 结果里占比不低，留着会挤掉真正切题的新闻
+        merged = filter_low_quality(merged)
+        merged = filter_domains(
+            merged,
+            include_domains=request.include_domains,
+            exclude_domains=request.exclude_domains,
+        )
+        merged = rerank(merged, request.query)
+
+        # 2.5) 新闻主题（M5-5.2 在前，质量过滤在后）：先按新鲜度分层，再在同一顺序上过滤。
+        # 顺序是实测定的 —— 配对 A/B（scripts/news_check.py --ab，逐条交替两种口径）：
+        # 先过滤会把「新鲜且有日期」的结果（多为各站当天更新的日报/栏目页）挤掉、换成更陈旧的候选，
+        # 7 日内日期 39/40 → 32/40；反过来先分层再过滤（剔除只删不改顺序），复测得 40/40 vs 40/40。
+        if request.topic == "news":
+            merged = await self._apply_news_recency(request, merged)
+            return self._apply_quality_filters(merged, request, structural_only=True)
+
+        # 2.2) 质量与多样性过滤（M5-5.3）：通用主题下先清垃圾，再谈新鲜度。
+        # 所有过滤都会在结果不足时按原排序补回，因此不会让结果变少。
+        merged = self._apply_quality_filters(merged, request)
+
+        # 2.6) 时效意图（M5-5.3）：通用主题命中「最新/最近/latest」这类词时也按新鲜度分层重排。
+        # 只用零网络开销的日期线索（URL 内嵌日期 + 标题里的跨年年份），不抓页面、不丢弃结果，
+        # 因此不影响 basic 的速度。
+        # `stale_last=True`：通用主题下「无日期」多是实时页面（台风实时路径、官网专题），
+        # 把「已知跨年旧闻」排在它们后面才对。依据：2-9 的 #4「台风 最新消息 路径」
+        # 曾在通用主题下把 2021 年旧闻排到第 1 位。
+        if self.settings.general_recency_intent and has_recency_intent(request.query):
+            self._fill_dates_from_urls(merged)
+            mark_stale_by_title_year(merged)
+            merged = apply_recency(
+                merged,
+                fresh_days=self.settings.news_fresh_days,
+                drop_stale=False,
+                stale_last=True,
+            )
+        return merged
+
+    def _apply_quality_filters(
+        self, results: list[SearchResult], request: SearchRequest, *, structural_only: bool = False
+    ) -> list[SearchResult]:
+        """质量与多样性过滤（M5-5.3）：候选充足时剔除聚合页 / 非中文脚本 / 低覆盖 / 同站冗余。
+
+        只做删除、不重排；候选不足 `max_results` 时会按「缺陷轻重」补回被剔除的结果
+        （见 `rank.diversity.apply_rank_filters`），因此这一步永远不会把结果掏空。
+
+        `structural_only=True`（新闻主题）只保留「同站冗余 / 脚本不匹配」这两项结构性判据，
+        关掉聚合页与覆盖度过滤 —— 依据是配对 A/B（`news_check.py --ab`，逐条交替两种口径）：
+        news 主题 + time_range=day 下，「带日期」的候选本就很稀缺，而聚合页/覆盖度判据剔除的
+        恰恰是各站点的「日报 / 栏目」页（它们带日期且当天更新），换上来的是更陈旧的候选，
+        实测时效性 39/40 → 32/40。新闻路径已有自己的质量机制（日期回补、过期丢弃、新鲜优先分层），
+        5.3 的这两项判据是在通用主题的候选集上验证的，不应顺手套到新闻路径上。
+        """
+        filtered, hygiene = apply_rank_filters(
+            results,
+            query=request.query,
+            max_results=request.max_results,
+            max_per_host=self.settings.rank_max_per_host,
+            min_query_coverage=(
+                0.0 if structural_only else self.settings.rank_min_query_coverage
+            ),
+            drop_aggregator_pages=(
+                False if structural_only else self.settings.rank_drop_aggregator_pages
+            ),
+            drop_script_mismatch=self.settings.rank_drop_script_mismatch,
+        )
+        if any(hygiene.values()):
+            logger.debug("质量过滤：%s", hygiene)
+        return filtered
+
     async def _collect_hits(self, request: SearchRequest) -> tuple[list[SearchHit], list[str], list[str]]:
         """从各 Provider 收集原始结果，主源不足时自动兜底。"""
         pages_cap = self._page_budget(request)
@@ -199,6 +276,11 @@ class SearchPipeline:
             # 新闻主题必须拿候选池：只取 top-N 的话，融合后已无「更接近现在」的结果可挑，
             # 时效排序与过期过滤就失去意义。
             want = max(want, self.settings.news_candidate_pool)
+        else:
+            # 通用主题同样要候选池（M5-5.3）。SearXNG 一次就把整批结果返回给本地，
+            # 多留候选不增加任何上游请求；但候选数等于结果数时，质量过滤必然因为
+            # 「不足 max_results」被全部补回 —— 过滤形同虚设（实测 2-9 的聚合页就是这么漏出来的）。
+            want = max(want, self.settings.rank_candidate_pool)
         query_key = self._query_cache_key(request, want)
 
         cached_hits = await self.cache.get(query_key)

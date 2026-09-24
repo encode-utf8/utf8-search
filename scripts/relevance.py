@@ -17,6 +17,8 @@ from __future__ import annotations
 import argparse
 import asyncio
 import csv
+import json
+import statistics
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -26,7 +28,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from utf8_search.config import Settings  # noqa: E402
 from utf8_search.core.pipeline import SearchPipeline  # noqa: E402
 from utf8_search.models import SearchRequest  # noqa: E402
-from utf8_search.verify.metrics import evaluate_relevance  # noqa: E402
+from utf8_search.verify.metrics import (  # noqa: E402
+    evaluate_hygiene_delta,
+    evaluate_relevance,
+    summarize_result_hygiene,
+)
 
 # 20 条抽检查询：id 即下表顺序（打分模板的 id 列与此一致）
 QUERIES: list[tuple[str, str]] = [
@@ -74,6 +80,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--score-file", default="", help="已打分的 CSV（id,scores,note）；给了就只做判定，不再联网")
     parser.add_argument("--searxng", default="", help="覆盖 SearXNG 地址")
     parser.add_argument("--no-cache", action="store_true", help="采集时禁用缓存，避免复用到旧结果")
+    parser.add_argument("--hygiene-out", default="", help="把「卫生度」汇总写成 JSON，便于改动前后对比")
+    parser.add_argument(
+        "--legacy",
+        action="store_true",
+        help="按 5.3 之前的排序口径采集（关闭同站限流/聚合页/脚本/覆盖度过滤与时效意图），用于前后对比",
+    )
+    parser.add_argument("--no-cn-source", action="store_true", help="排除 360search，用于隔离中文源本身的贡献")
+    parser.add_argument(
+        "--compare-hygiene",
+        nargs=2,
+        default=None,
+        metavar=("BEFORE", "AFTER"),
+        help="对比两份卫生度 JSON（M5-5.3 验收）：同站冗余/聚合页/脚本不匹配不增加、覆盖率不下降",
+    )
     return parser.parse_args()
 
 
@@ -104,6 +124,31 @@ async def collect(args: argparse.Namespace) -> list[dict[str, object]]:
         settings = settings.model_copy(update={"searxng_url": args.searxng})
     if args.no_cache:
         settings = settings.model_copy(update={"cache_enabled": False})
+    if args.legacy:
+        # 关闭 5.3 引入的排序侧改动，得到「改动前」口径用于 A/B；360search 用 --no-cn-source 单独隔离
+        settings = settings.model_copy(
+            update={
+                "rank_max_per_host": 0,
+                "rank_min_query_coverage": 0.0,
+                "rank_drop_aggregator_pages": False,
+                "rank_drop_script_mismatch": False,
+                "general_recency_intent": False,
+                # 候选池也要退回旧行为：旧代码的 want 就是 max_results（等于 5），
+                # 否则「候选池」本身成了变量，测不出排序改动带来的差异
+                "rank_candidate_pool": 1,
+            }
+        )
+    if args.no_cn_source:
+        settings = settings.model_copy(
+            update={
+                "default_engines": ",".join(
+                    e for e in settings.engine_list if e != "360search"
+                ),
+                "news_general_engines": ",".join(
+                    e for e in settings.news_general_engine_list if e != "360search"
+                ),
+            }
+        )
 
     pipeline = await SearchPipeline.create(settings)
     collected: list[dict[str, object]] = []
@@ -123,9 +168,15 @@ async def collect(args: argparse.Namespace) -> list[dict[str, object]]:
                         "snippet": _snippet(result.content or ""),
                         "published_date": result.published_date or "",
                         "score": result.score,
+                        # 卫生度统计（覆盖率 / 空内容）要读完整摘要：snippet 已截断到 100 字，
+                        # 用它算覆盖率会把「正文里出现查询词」的结果误判成低覆盖。
+                        # 键名固定为 "content"，与 verify.metrics.summarize_result_hygiene 对齐。
+                        "content": result.content or "",
                     }
                     for rank, result in enumerate(response.results, start=1)
                 ]
+                # 卫生度指标（M5-5.3）：客观、可自动化，用于对比改动前后的结果质量
+                hygiene = summarize_result_hygiene(items, query)
                 collected.append(
                     {
                         "id": index,
@@ -134,10 +185,16 @@ async def collect(args: argparse.Namespace) -> list[dict[str, object]]:
                         "items": items,
                         "engines": response.engines_used,
                         "failed_engines": response.failed_engines,
+                        "hygiene": hygiene,
                         "error": "",
                     }
                 )
-                print(f"[{index:>2}/20] {category} {query} -> {len(items)} 条")
+                print(
+                    f"[{index:>2}/20] {category} {query} -> {len(items)} 条  "
+                    f"覆盖 {hygiene['coverage_mean']:.2f}  同站冗余 {hygiene['same_host_excess']:.0f}  "
+                    f"聚合页 {hygiene['aggregator']:.0f}  脚本不匹配 {hygiene['script_mismatch']:.0f}  "
+                    f"空内容 {hygiene['empty_content']:.0f}"
+                )
             except Exception as exc:  # noqa: BLE001 - 单条查询失败不应中断整轮抽检
                 collected.append(
                     {
@@ -182,16 +239,27 @@ def write_report(collected: list[dict[str, object]], args: argparse.Namespace, o
             lines.append("")
             continue
         lines.append(f"引擎：{', '.join(entry['engines']) or '-'}；失败引擎：{', '.join(entry['failed_engines']) or '-'}")
+        hygiene = entry.get("hygiene") or {}
+        if hygiene:
+            lines.append(
+                f"卫生度：覆盖 {hygiene['coverage_mean']:.2f}（最低 {hygiene['coverage_min']:.2f}）"
+                f" · 同站冗余 {hygiene['same_host_excess']:.0f} · 聚合页 {hygiene['aggregator']:.0f}"
+                f" · 脚本不匹配 {hygiene['script_mismatch']:.0f} · 空内容 {hygiene['empty_content']:.0f}"
+                f" · 独立站点 {hygiene['distinct_hosts']:.0f}"
+            )
         lines.append("")
-        lines.append("| 排名 | 标题 | 域名 | 正文字数 | 发布时间 | 内容开头 |")
-        lines.append("| --- | --- | --- | --- | --- | --- |")
+        lines.append("| 排名 | 标题 | 域名 | 正文字数 | 发布时间 | 内容开头 | URL |")
+        lines.append("| --- | --- | --- | --- | --- | --- | --- |")
         for item in entry["items"]:
             lines.append(
                 f"| {item['rank']} | {_escape(str(item['title']))} | {_escape(str(item['domain']))} | "
-                f"{item['chars']} | {item['published_date'] or '-'} | {_escape(str(item['snippet']))} |"
+                f"{item['chars']} | {item['published_date'] or '-'} | {_escape(str(item['snippet']))} | "
+                f"{_escape(str(item['url']))} |"
             )
         lines.append("")
 
+    summary = _aggregate_hygiene(collected)
+    lines.extend(_hygiene_section(summary))
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -205,6 +273,59 @@ def write_report(collected: list[dict[str, object]], args: argparse.Namespace, o
     print(f"打分模板: {template.resolve()}")
     print("提示：scores 填 5 个 0/1（第 1 位对应排名第 1 的结果），填好后用 --score-file 判定")
     return out
+
+
+def _aggregate_hygiene(collected: list[dict[str, object]]) -> dict[str, float]:
+    """把逐条查询的卫生度汇总成整体指标（对各查询取均值/求和）。"""
+    entries = [entry["hygiene"] for entry in collected if entry.get("hygiene")]
+    if not entries:
+        return {}
+    total = sum(float(e["total"]) for e in entries) or 1.0
+    summary: dict[str, float] = {"queries": float(len(entries)), "total": total}
+    for key in ("same_host_excess", "aggregator", "script_mismatch", "empty_content"):
+        summary[key] = sum(float(e[key]) for e in entries)
+    # 覆盖率按结果条数加权平均，避免「结果少的查询」被同等看待
+    summary["coverage_mean"] = (
+        sum(float(e["coverage_mean"]) * float(e["total"]) for e in entries) / total
+    )
+    summary["distinct_hosts_mean"] = statistics.fmean(float(e["distinct_hosts"]) for e in entries)
+    return summary
+
+
+def _hygiene_section(summary: dict[str, float]) -> list[str]:
+    """生成 Markdown 的卫生度汇总小节。"""
+    if not summary:
+        return []
+    lines = [
+        "## 卫生度汇总（M5-5.3，客观指标）",
+        "",
+        "| 指标 | 值 | 含义 |",
+        "| --- | --- | --- |",
+        f"| 结果总数 | {summary['total']:.0f} | 20 条查询的 top-N 合计 |",
+        f"| 查询词覆盖率（加权） | {summary['coverage_mean']:.3f} | 越高说明结果越贴题 |",
+        f"| 同站冗余 | {summary['same_host_excess']:.0f} | 同一可注册域超出上限的条数 |",
+        f"| 聚合页 | {summary['aggregator']:.0f} | 站点首页/栏目页这类「只是导航」的结果 |",
+        f"| 非中英文脚本 | {summary['script_mismatch']:.0f} | 中文查询下混入的俄语/韩语等标题 |",
+        f"| 空内容 | {summary['empty_content']:.0f} | 摘要不足 40 字、对 LLM 无价值 |",
+        f"| 平均独立站点数 | {summary['distinct_hosts_mean']:.1f} | 来源分散度 |",
+        "",
+    ]
+    return lines
+
+
+def compare_hygiene(before_path: str, after_path: str) -> int:
+    """对比两份卫生度 JSON（M5-5.3 验收 5.3-8）。"""
+    before = json.loads(Path(before_path).read_text(encoding="utf-8"))
+    after = json.loads(Path(after_path).read_text(encoding="utf-8"))
+    passed, notes, details = evaluate_hygiene_delta(before=before, after=after)
+    print("\n== 卫生度对比（改动前 -> 改动后） ==")
+    keys = ["total", "coverage_mean", "same_host_excess", "aggregator", "script_mismatch", "empty_content"]
+    for key in keys:
+        print(f"  {key:<18} {float(before.get(key, 0)):>9.3f} -> {float(after.get(key, 0)):>9.3f}")
+    print("\n结论：" + ("通过" if passed else "不通过"))
+    for note in notes:
+        print("  - " + note)
+    return 0 if passed else 1
 
 
 def judge(score_file: str) -> int:
@@ -291,12 +412,20 @@ def judge(score_file: str) -> int:
 def main() -> int:
     _configure_stdout()
     args = parse_args()
+    if args.compare_hygiene:
+        return compare_hygiene(*args.compare_hygiene)
     if args.score_file:
         return judge(args.score_file)
 
     out = Path(args.out) if args.out else Path(f"data/relevance-{datetime.now().strftime('%Y%m%d')}.md")
     collected = asyncio.run(collect(args))
     write_report(collected, args, out)
+    if args.hygiene_out:
+        summary = _aggregate_hygiene(collected)
+        target = Path(args.hygiene_out)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"卫生度汇总: {target.resolve()}")
     return 0
 
 

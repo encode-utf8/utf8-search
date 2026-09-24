@@ -1,0 +1,16 @@
+来源：scripts/relevance.py --compare-hygiene data/rel53-legacy-hygiene.json data/rel53-after-hygiene.json
+口径：20 条中英查询的 top5 结果，改动前（--legacy）/ 改动后各采集一次（端到端实网）
+
+== 卫生度对比（改动前 -> 改动后） ==
+  total                 99.000 ->   100.000
+  coverage_mean          0.595 ->     0.831
+  same_host_excess       1.000 ->     0.000
+  aggregator            11.000 ->     0.000
+  script_mismatch        2.000 ->     0.000
+  empty_content          3.000 ->     1.000
+
+结论：通过
+  - 同站冗余不增加：1 -> 0
+  - 聚合页不增加：11 -> 0
+  - 非中英文脚本不增加：2 -> 0
+  - 查询词覆盖率不下降：0.595 -> 0.831

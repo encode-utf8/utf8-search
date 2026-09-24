@@ -16,8 +16,10 @@ from utf8_search.rank.recency import (
     apply_recency,
     date_from_url,
     freshness_rank,
+    mark_stale_by_title_year,
     parse_published,
     timing_stats,
+    year_from_title,
 )
 
 NOW = datetime(2026, 9, 24, 12, 0, 0, tzinfo=timezone.utc)
@@ -180,3 +182,51 @@ def test_date_from_url_only_accepts_full_dates() -> None:
     assert date_from_url("http://beijing.chinatax.gov.cn/bjswj/c104539/202510/8798cfc2") is None
     assert date_from_url(None) is None
     assert date_from_url("") is None
+
+# ---------------------------------------------------------------- 标题年份陈旧信号（M5-5.3）
+def test_year_from_title() -> None:
+    """标题里的「YYYY年」要能取到；没有年份、或年份藏在长数字里则取不到。"""
+    assert year_from_title("【台风康森】2021年第13号康森台风最新消息-天气网") == 2021
+    assert year_from_title("2026年9月 国内外重大新闻") == 2026
+    assert year_from_title("无年份的标题") is None
+    assert year_from_title("iPhone 17 Pro 价格 参数") is None
+    assert year_from_title("工单号 120210930 的处理结果") is None
+    assert year_from_title("") is None
+
+
+def test_mark_stale_by_title_year_rules() -> None:
+    """只标记「严格早于今年」且没有日期的结果：同年不标记、已有日期不覆盖。"""
+    old = _result("2021年第13号康森台风最新消息", None)
+    same_year = _result("2026年9月时事汇总", None)
+    dated = _result("2021年旧闻但有权威日期", "2026-09-23")
+    future = _result("2030年远景规划", None)
+
+    marked = mark_stale_by_title_year([old, same_year, dated, future], now=NOW)
+
+    assert marked == 1
+    assert old.published_date == "2021-07-01"
+    assert same_year.published_date is None
+    assert dated.published_date == "2026-09-23"
+    assert future.published_date is None
+
+
+def test_apply_recency_stale_last_moves_stale_after_undated() -> None:
+    """stale_last=True（通用主题时效意图）：新鲜 > 无日期 > 已知过期。"""
+    fresh = _result("fresh", "2026-09-23T12:00:00Z")
+    stale = _result("stale", "2021-07-01")
+    undated = _result("undated", None)
+
+    ordered = apply_recency(
+        [stale, undated, fresh], fresh_days=7, now=NOW, drop_stale=False, stale_last=True
+    )
+    assert [r.title for r in ordered] == ["fresh", "undated", "stale"]
+
+
+def test_apply_recency_default_keeps_stale_before_undated() -> None:
+    """默认口径（5.2 新闻主题）保持「新鲜 > 过期 > 无日期」，不被 5.3 改动影响。"""
+    fresh = _result("fresh", "2026-09-23T12:00:00Z")
+    stale = _result("stale", "2021-07-01")
+    undated = _result("undated", None)
+
+    ordered = apply_recency([stale, undated, fresh], fresh_days=7, now=NOW, drop_stale=False)
+    assert [r.title for r in ordered] == ["fresh", "stale", "undated"]
