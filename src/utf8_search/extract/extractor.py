@@ -5,7 +5,8 @@
 2. 以 bytes 交给 trafilatura，让它自行探测编码（对 GBK 中文站点更稳）；
 3. httpx 的超时是「每次读超时」，对慢速站点几乎无效，因此下载用 wait_for 做整段硬超时；
 4. 正文解析是 CPU 密集型，放进独立线程池（默认 32 线程），避免拖住整体吞吐；
-5. 抽取为空或抓取失败时，按配置回退到 Jina Reader（仅 deep 模式默认启用）。
+5. 抽取为空或抓取失败时，按配置回退到 Jina Reader（仅 deep 模式默认启用）；
+6. 另有 fetch_date：只取发布日期的轻量路径，供 topic=news 补齐时效信息（M5-5.2）。
 """
 
 from __future__ import annotations
@@ -14,8 +15,10 @@ import asyncio
 import logging
 import re
 from concurrent.futures import ThreadPoolExecutor
+from urllib.parse import urljoin
 from typing import Any
 
+import htmldate
 import httpx
 import trafilatura
 
@@ -24,6 +27,7 @@ from ..config import Settings
 from ..models import ExtractItem
 from ..providers.jina_reader import JinaReader
 from ..rank.fusion import normalize_url, tokenize
+from ..security import check_url
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +35,8 @@ logger = logging.getLogger(__name__)
 MAX_HTML_BYTES = 500_000
 # 视为可抽取文本的 Content-Type
 HTML_TYPES = ("text/html", "application/xhtml", "text/plain", "text/xml", "application/xml")
+# 需要手动跟随的重定向状态码（手动跟随是为了逐跳做 SSRF 校验）
+REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
 
 
 class PageExtractor:
@@ -66,7 +72,10 @@ class PageExtractor:
     ) -> ExtractItem | None:
         """抓取并抽取单个 URL；失败返回 None。"""
         url = url.strip()
-        if not url.startswith(("http://", "https://")):
+        # 安全校验放在最前面：协议与目标地址不合法时直接拒绝，不做缓存查询、不发请求
+        allowed, reason = await check_url(url, block_private_hosts=self.settings.block_private_hosts)
+        if not allowed:
+            logger.warning("拒绝抓取 %s：%s", url, reason)
             return None
         limit = max_chars or self.settings.raw_content_max_chars
         cache_key = f"page:{fmt}:{normalize_url(url)}"
@@ -119,28 +128,83 @@ class PageExtractor:
         shaped = self._shape(text, query, limit)
         return ExtractItem(url=url, raw_content=shaped, title=title, chars=len(shaped))
 
-    async def _download(self, url: str, timeout: float | None = None) -> bytes | None:
-        """流式下载页面，超过字节上限即停止。"""
-        try:
-            async with self.client.stream(
-                "GET", url, timeout=timeout or self.settings.fetch_timeout
-            ) as response:
-                if response.status_code >= 400:
-                    return None
-                content_type = (response.headers.get("content-type") or "").lower()
-                if content_type and not any(t in content_type for t in HTML_TYPES):
-                    return None
-                chunks: list[bytes] = []
-                size = 0
-                async for chunk in response.aiter_bytes():
-                    chunks.append(chunk)
-                    size += len(chunk)
-                    if size >= MAX_HTML_BYTES:
-                        break
-                return b"".join(chunks) if chunks else None
-        except Exception as exc:
-            logger.debug("下载失败 url=%s: %s", url, exc)
+    async def fetch_date(self, url: str, *, download_timeout: float | None = None) -> str | None:
+        """抓取页面并推断发布日期（返回 YYYY-MM-DD），失败返回 None。
+
+        用于 `topic=news`：SearXNG 的部分引擎不给 publishedDate，靠页面上声明的
+        时间（meta/JSON-LD/正文日期）补齐，才能做时效排序与过期过滤。
+        结果按页面缓存 TTL 缓存，避免同一条结果被反复抓取。
+        """
+        url = url.strip()
+        allowed, reason = await check_url(url, block_private_hosts=self.settings.block_private_hosts)
+        if not allowed:
+            logger.warning("拒绝抓取（取日期）%s：%s", url, reason)
             return None
+
+        cache_key = f"date:{normalize_url(url)}"
+        cached = await self.cache.get(cache_key)
+        if cached:
+            return cached.get("date")
+
+        cap = download_timeout or min(self.settings.fetch_timeout, self.settings.page_total_timeout)
+        try:
+            html_bytes = await asyncio.wait_for(self._download(url, cap), timeout=cap)
+        except (asyncio.TimeoutError, TimeoutError):
+            logger.debug("取日期时下载超时（%.1fs）: %s", cap, url)
+            html_bytes = None
+        if not html_bytes:
+            return None
+
+        loop = asyncio.get_running_loop()
+        date = await loop.run_in_executor(self._executor, _extract_date_from_bytes, html_bytes)
+        if date:
+            await self.cache.set(cache_key, {"url": url, "date": date}, self.settings.cache_page_ttl)
+        return date
+
+    async def _download(self, url: str, timeout: float | None = None) -> bytes | None:
+        """流式下载页面，超过字节上限即停止。
+
+        重定向改为「手动逐跳」处理：每一跳都重新做一次安全校验，
+        避免被 302 到内网或云元数据地址（这是 SSRF 最常见的绕过手法）。
+        """
+        limit = timeout or self.settings.fetch_timeout
+        current = url
+        for _ in range(self.settings.max_redirects + 1):
+            allowed, reason = await check_url(
+                current, block_private_hosts=self.settings.block_private_hosts
+            )
+            if not allowed:
+                logger.warning("拒绝抓取 %s：%s", current, reason)
+                return None
+            try:
+                async with self.client.stream(
+                    "GET", current, timeout=limit, follow_redirects=False
+                ) as response:
+                    if response.status_code in REDIRECT_STATUSES:
+                        location = response.headers.get("location")
+                        if not location:
+                            return None
+                        # 下一轮的循环开头会校验这个新地址
+                        current = urljoin(current, location)
+                        continue
+                    if response.status_code >= 400:
+                        return None
+                    content_type = (response.headers.get("content-type") or "").lower()
+                    if content_type and not any(t in content_type for t in HTML_TYPES):
+                        return None
+                    chunks: list[bytes] = []
+                    size = 0
+                    async for chunk in response.aiter_bytes():
+                        chunks.append(chunk)
+                        size += len(chunk)
+                        if size >= MAX_HTML_BYTES:
+                            break
+                    return b"".join(chunks) if chunks else None
+            except Exception as exc:
+                logger.debug("下载失败 url=%s: %s", current, exc)
+                return None
+        logger.warning("重定向次数超过上限（%d），放弃抓取：%s", self.settings.max_redirects, url)
+        return None
 
     @staticmethod
     def _extract_from_bytes(
@@ -190,6 +254,20 @@ class PageExtractor:
         if len(text) <= limit:
             return text
         return condense_text(text, query, limit)
+
+
+def _extract_date_from_bytes(html_bytes: bytes) -> str | None:
+    """用 htmldate 从 HTML 推断发布日期（在线程池中执行）。
+
+    original_date=True 优先采信页面自己声明的时间，而不是被抓取的时间；
+    extensive_search 保持关闭以控制耗时。htmldate 是 trafilatura 的既有依赖，不新增三方包。
+    """
+    try:
+        found = htmldate.find_date(html_bytes, original_date=True, extensive_search=False)
+    except Exception as exc:  # noqa: BLE001 - 日期推断失败不应影响主流程
+        logger.debug("htmldate 提取日期失败: %s", exc)
+        return None
+    return found or None
 
 
 def condense_text(text: str, query: str, max_chars: int) -> str:

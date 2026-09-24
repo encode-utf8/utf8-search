@@ -27,3 +27,17 @@ def settings(tmp_path) -> Settings:
         api_keys="",
         rate_limit_rpm=3,
     )
+@pytest.fixture(autouse=True)
+def _stub_dns(monkeypatch):
+    """离线测试不真正做 DNS 解析：把域名统一解析到一个公网 IP。
+
+    SSRF 校验会解析域名，若测试环境真去查 DNS 会引入网络依赖与超时；
+    这里统一打桩，需要验证解析行为的测试可自行覆盖 `utf8_search.security._resolve`。
+    """
+    from utf8_search import security
+
+    async def fake_resolve(host: str, port: int | None = None) -> list[str]:
+        return ["93.184.216.34"]
+
+    monkeypatch.setattr(security, "_resolve", fake_resolve)
+    yield

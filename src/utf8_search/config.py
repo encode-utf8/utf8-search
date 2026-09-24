@@ -21,13 +21,51 @@ class Settings(BaseSettings):
     # ---------- 上游搜索服务 ----------
     searxng_url: str = Field(default="http://127.0.0.1:8888", description="SearXNG 基础地址")
     default_engines: str = Field(
-        default="resulthunter,yandex,naver,privacywall,google,zapmeta,yahoo,fynd,sogou,reloado,yep,brave,quark",
+        default="resulthunter,yandex,naver,privacywall,google,zapmeta,yahoo,fynd,reloado,yep,brave,quark",
         description="传给 SearXNG 的 engines 参数，逗号分隔；留空表示使用 SearXNG 默认引擎集合",
     )
     language: str = Field(default="all", description="搜索语言，all 表示不限（中英兼顾）")
     safe_search: int = Field(default=0, description="SearXNG 安全搜索等级 0/1/2")
     search_timeout_limit: float = Field(
         default=2.5, gt=0, description="SearXNG 聚合搜索的时间上限（秒）；到点即返回已拿到的结果，避免个别引擎拖慢整体"
+    )
+
+    # ---------- 引擎健康度自适应（M5-5.1） ----------
+    # 说明：实测 SearXNG 对处于惩罚期（suspended）的引擎是*快速失败*（0.03-0.19s、不发上游请求），
+    # 剔除它们并不省延迟；自适应的目的是让引擎集合随上游健康状态自动收敛与恢复，
+    # 避免静态名单过期带来的覆盖率损失（实测引擎健康度是分钟级漂移的）。
+    engine_health_enabled: bool = Field(
+        default=True, description="是否启用引擎健康度自适应（关闭后行为与旧版完全一致）"
+    )
+    engine_health_min_active: int = Field(
+        default=6,
+        ge=1,
+        description="候选引擎里至少要保留的可用数；不足时按「最早解冻优先」补入冷却中的引擎，防止引擎集合萎缩",
+    )
+    engine_health_probe_slots: int = Field(
+        default=0,
+        ge=0,
+        description="每次查询额外带入的冷却中引擎数（0 表示只靠冷却到期自动恢复，零额外浪费）",
+    )
+    engine_health_cooldown_captcha: float = Field(
+        default=1800.0, gt=0, description="CAPTCHA 类失败的冷却时长（秒）；需人工/换出口 IP 才能解，退避最久"
+    )
+    engine_health_cooldown_denied: float = Field(
+        default=900.0, gt=0, description="access denied / 403 类失败的冷却时长（秒）"
+    )
+    engine_health_cooldown_rate_limit: float = Field(
+        default=180.0,
+        gt=0,
+        description="限流类失败的冷却时长（秒）：too many requests / 429 / 无原因 suspended（与 SearXNG 惩罚盒同量级）",
+    )
+    engine_health_cooldown_timeout: float = Field(
+        default=90.0, gt=0, description="超时类失败的冷却时长（秒）"
+    )
+    engine_health_cooldown_other: float = Field(
+        default=120.0, gt=0, description="其他原因失败的冷却时长（秒）"
+    )
+    engine_health_cooldown_max: float = Field(
+        default=3600.0, gt=0, description="连续失败指数退避的冷却上限（秒）"
     )
 
     # ---------- 监听 ----------
@@ -105,6 +143,74 @@ class Settings(BaseSettings):
         default="127.0.0.1,localhost,[::1],searxng",
         description="绕过代理直连的主机（逗号分隔），默认包含本机与容器内 SearXNG 主机名",
     )
+    # ---------- 安全（SSRF 防护） ----------
+    # 说明：/extract、web_fetch 与深度模式抓取都会访问调用方给出的 URL。
+    # 默认禁止访问内网 / 回环 / 云元数据等保留地址，避免公网部署后被用于内网探测。
+    block_private_hosts: bool = Field(
+        default=True,
+        description="是否禁止抓取内网与保留地址（SSRF 防护）；内网自用场景可显式关闭",
+    )
+    max_redirects: int = Field(
+        default=5,
+        ge=0,
+        description="抓取时允许的最大重定向次数；每一跳都会重新做一次安全校验",
+    )
+
+    # ---------- 时效性（M5-5.2） ----------
+    news_engines: str = Field(
+        default="duckduckgo news,sogou wechat,google news",
+        description=(
+            "topic=news 时传给 SearXNG 的新闻类目引擎（逗号分隔）。留空表示交给 SearXNG "
+            "自己的 news 类目引擎集合。默认三个引擎是 2026-09-24 逐引擎隔离实测的结果："
+            "duckduckgo news 日期覆盖 100%、英文时效最好但纯中文查询会返回 0 条；"
+            "sogou wechat 补中文盲区（8/8 查询各 10 条且 100% 带日期）；"
+            "google news 中文覆盖最全但不返回发布日期，需靠 URL/页面回补日期"
+        ),
+    )
+    news_fresh_days: int = Field(
+        default=7, ge=1, description="新闻结果视为「新鲜」的天数窗口（未显式指定 time_range 时生效）"
+    )
+    news_date_backfill: bool = Field(
+        default=True, description="新闻结果缺少发布日期时，抓取页面用 htmldate 推断补齐"
+    )
+    news_date_pages: int = Field(default=16, ge=0, description="日期回补最多抓取的页面数（0 表示关闭）")
+    news_date_budget: float = Field(default=4.0, gt=0, description="日期回补阶段的总时间预算（秒）")
+    news_candidate_pool: int = Field(
+        default=30,
+        ge=1,
+        description=(
+            "topic=news 时向上游索取的候选条数。必须是候选池而不是 top-N，"
+            "否则融合后已无可挑选的余地，时效排序无意义"
+        ),
+    )
+    news_include_general: bool = Field(
+        default=True,
+        description=(
+            "topic=news 时是否额外打一次通用引擎补充候选。"
+            "实测免费新闻源对中文长尾覆盖差（8 条查询中 3 条返回 0 条），需要通用引擎兜候选"
+        ),
+    )
+    news_general_engines: str = Field(
+        default="resulthunter,naver,privacywall,google,zapmeta,yahoo,fynd,reloado,brave,quark",
+        description=(
+            "新闻主题做「通用引擎新鲜候选补充」时用的引擎列表（逗号分隔）。"
+            "默认排除 yandex：实测 yandex 配合 time_range 会返回大量垃圾农场内容"
+            "（成人站/盗播站），而这一路只用来补最新候选，用更干净的引擎集更划算。"
+            "留空表示复用 default_engines"
+        ),
+    )
+    news_pass_time_range: bool = Field(
+        default=False,
+        description=(
+            "topic=news 时是否把 time_range 透传给 SearXNG。"
+            "实测免费新闻引擎不支持该过滤（duckduckgo news 传 time_range=day 会返回 0 条），"
+            "因此默认关闭，改由本服务按发布日期在本地过滤/排序"
+        ),
+    )
+    news_drop_stale: bool = Field(
+        default=True, description="新闻主题下丢弃已知过期结果（仅在非过期结果已够 max_results 时生效）"
+    )
+
     # ---------- 抽取 ----------
     enable_jina_fallback: bool = Field(default=True, description="抽取失败时是否用 r.jina.ai 兜底")
     jina_prefix: str = Field(default="https://r.jina.ai/", description="Jina Reader 前缀")
@@ -139,6 +245,16 @@ class Settings(BaseSettings):
     def engine_list(self) -> list[str]:
         """解析后的默认引擎列表。"""
         return [e.strip() for e in self.default_engines.split(",") if e.strip()]
+
+    @property
+    def news_general_engine_list(self) -> list[str]:
+        """新闻主题「通用引擎新鲜候选补充」用的引擎列表。"""
+        return [e.strip() for e in self.news_general_engines.split(",") if e.strip()]
+
+    @property
+    def news_engine_list(self) -> list[str]:
+        """解析后的新闻引擎列表（topic=news 时使用）。"""
+        return [e.strip() for e in self.news_engines.split(",") if e.strip()]
 
     @property
     def jina_depth_list(self) -> list[str]:

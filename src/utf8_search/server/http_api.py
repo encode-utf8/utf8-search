@@ -166,20 +166,29 @@ async def root() -> dict[str, Any]:
 
 @app.get("/health")
 async def health() -> dict[str, Any]:
-    """健康检查：报告 SearXNG 可达性与缓存条目数。"""
+    """健康检查：报告 SearXNG 可达性、缓存条目数与引擎健康快照。"""
     pipeline = await get_pipeline()
     searxng_ok = False
+    engine_health: dict[str, Any] | None = None
     for provider in pipeline.providers:
         if provider.name == "searxng":
             searxng_ok = await provider.health()
+            # 引擎健康快照（M5-5.1）：上游引擎被限流/封锁是常态，把「哪些引擎正在冷却、
+            # 什么原因、还有多久解冻」暴露出来，运维才能发现「上游策略变了」而不是只看延迟。
+            snapshot = getattr(provider, "engine_health_snapshot", None)
+            if callable(snapshot):
+                engine_health = snapshot()
             break
-    return {
+    payload: dict[str, Any] = {
         "status": "ok" if searxng_ok else "degraded",
         "version": __version__,
         "searxng": "ok" if searxng_ok else "unreachable",
         "cache_entries": await pipeline.cache.count(),
         "auth_enabled": get_guard().enabled,
     }
+    if engine_health is not None:
+        payload["engines"] = engine_health
+    return payload
 
 
 @app.post("/search")

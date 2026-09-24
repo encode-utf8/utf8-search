@@ -158,6 +158,30 @@ def rerank(results: list[SearchResult], query: str, *, weight: float = 0.6) -> l
     return sorted(results, key=lambda r: r.score, reverse=True)
 
 
+# 「标题就是一个裸域名/URL」的形态：搜索引擎没给出任何真实标题，实测这类结果
+# 全是垃圾农场页（szfudali.com / vk.ru/topic-xxx / youtube.com/watch?v=xxx）。
+_BARE_URL_TITLE = re.compile(r"[\w.-]+\.[a-z]{2,}(?:[/?#].*)?$", re.IGNORECASE)
+
+
+def _is_bare_url_title(title: str) -> bool:
+    """判断标题是否只是「裸域名 / 裸 URL」——没有可读信息的低质结果。"""
+    text = (title or "").strip()
+    if not text or " " in text or _CJK.search(text):
+        return False
+    text = re.sub(r"^https?://", "", text, flags=re.IGNORECASE)
+    return bool(_BARE_URL_TITLE.fullmatch(text))
+
+
+def filter_low_quality(results: list[SearchResult]) -> list[SearchResult]:
+    """剔除客观低质结果：无标题、或标题就是裸域名/裸 URL。
+
+    这类结果对 LLM 毫无价值（连标题都拿不到，说明页面本身没什么可读内容），
+    但在「按发布时间过滤」的通用引擎结果里占比不低，留着会挤掉真正切题的新闻。
+    判据刻意保持客观（不猜内容质量、不维护垃圾域名黑名单），避免误伤正常结果。
+    """
+    return [r for r in results if (r.title or "").strip() and not _is_bare_url_title(r.title)]
+
+
 def filter_domains(
     results: list[SearchResult],
     *,

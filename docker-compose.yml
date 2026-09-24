@@ -5,12 +5,17 @@ services:
     container_name: utf8-search-searxng
     restart: unless-stopped
     volumes:
-      - ./searxng:/etc/searxng:rw
+      # 默认用云端直连配置；本机（中国大陆网络需走代理）在 .env 里指定
+      # SEARXNG_SETTINGS_FILE=./searxng/settings.local.yml
+      - ${SEARXNG_SETTINGS_FILE:-./searxng/settings.yml}:/etc/searxng/settings.yml:ro
     ports:
       - "127.0.0.1:8888:8080"
     environment:
       - SEARXNG_BASE_URL=http://localhost:8888/
       - SEARXNG_SECRET=change-me-in-production
+    # 让容器内的 host.docker.internal 指向宿主机（本地代理需要；Linux/Windows Docker 均适用）
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
       interval: 30s

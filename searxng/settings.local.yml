@@ -1,3 +1,19 @@
+# 【本机开发专用】searxng/settings.yml 的本地覆盖版本：只多出一段 outgoing.proxies。
+#
+# 为什么需要它：在中国大陆网络上直连时，Google / DuckDuckGo 等站点不可达
+# （2026-09-24 实测：宿主机直连 google.com 与 duckduckgo.com 均 ConnectTimeout，
+# 走本机代理 127.0.0.1:7897 则全部 200）。SearXNG 的出口只认 settings.yml 里的
+# `outgoing.proxies`，不读 HTTP_PROXY 环境变量，因此本地必须用本文件。
+#
+# 启用方式（二选一）：
+#   1. .env 里设置 SEARXNG_SETTINGS_FILE=./searxng/settings.local.yml 后
+#      `docker compose up -d searxng`（推荐，docker-compose.yml 已支持该变量）；
+#   2. 临时验证：docker cp 本文件到容器 /etc/searxng/settings.yml 后 restart。
+# 云服务器（海外出口，直连可达）不要启用本文件，直接用 settings.yml。
+#
+# 维护约定：本文件必须与 settings.yml 保持同步（仅允许 proxies 一处差异），
+# 已有单测 tests/test_searxng_settings.py 强制校验这一点。
+#
 # SearXNG 配置（utf8-search 专用）
 # 关键点：开启 json 输出格式（本服务通过 JSON 接口调用），关闭 limiter（内网调用）。
 #
@@ -89,6 +105,11 @@ outgoing:
   max_request_timeout: 15.0
   pool_connections: 100
   pool_maxsize: 20
+  # 本机代理（Clash 默认端口 7897）。host.docker.internal 由 docker-compose.yml 的
+  # extra_hosts: host.docker.internal:host-gateway 提供。
+  proxies:
+    all://:
+      - http://host.docker.internal:7897
 
 # 显式启用引擎
 engines:

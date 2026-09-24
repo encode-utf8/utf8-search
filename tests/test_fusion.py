@@ -8,6 +8,7 @@ from utf8_search.rank.fusion import (
     bm25_scores,
     domain_of,
     filter_domains,
+    filter_low_quality,
     fuse,
     normalize_url,
     rerank,
@@ -70,3 +71,30 @@ def test_filter_domains() -> None:
     ]
     assert len(filter_domains(results, include_domains=["gov.cn"])) == 1
     assert len(filter_domains(results, exclude_domains=["spam.com"])) == 1
+
+def test_filter_low_quality_drops_bare_url_and_empty_titles() -> None:
+    """标题就是「裸域名 / 裸 URL」或无标题的结果一律剔除。
+
+    这类结果实测大量出现在「按发布时间过滤」的通用引擎结果里（垃圾农场页），
+    对 LLM 没有任何可用信息，留着会挤掉真正切题的新闻。
+    """
+    results = [
+        SearchResult(title="正常标题 - 台风最新路径", url="https://news.qq.com/a"),
+        SearchResult(title="szfudali.com", url="https://szfudali.com/"),
+        SearchResult(title="vk.ru/topic-237884622_57686164", url="https://vk.ru/topic-1"),
+        SearchResult(title="https://youtube.com/watch?v=rYOtrsWJ6bA", url="https://youtube.com/watch?v=x"),
+        SearchResult(title="m.bcbay.com/news/page/550875", url="https://m.bcbay.com/news/page/550875"),
+        SearchResult(title="   ", url="https://empty.com/"),
+    ]
+    kept = filter_low_quality(results)
+    assert [r.url for r in kept] == ["https://news.qq.com/a"]
+
+
+def test_filter_low_quality_keeps_titles_with_text() -> None:
+    """带空格（中英标题）或含中文的标题不能被误杀。"""
+    results = [
+        SearchResult(title="Python 3.13 新特性", url="https://a.com/1"),
+        SearchResult(title="Reuters", url="https://b.com/2"),
+        SearchResult(title="苹果官网（中国大陆）", url="https://c.com/3"),
+    ]
+    assert len(filter_low_quality(results)) == 3

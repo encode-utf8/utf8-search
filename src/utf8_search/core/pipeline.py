@@ -14,6 +14,7 @@ import json
 import logging
 import time
 import uuid
+from datetime import datetime, timezone
 from typing import Any
 
 import httpx
@@ -32,8 +33,10 @@ from ..models import (
 from ..providers.base import BaseProvider, SearchHit
 from ..providers.bing_html import BingHtmlProvider
 from ..providers.jina_reader import JinaReader
+from ..providers.engine_health import EngineHealthTracker
 from ..providers.searxng import SearxngProvider
-from ..rank.fusion import filter_domains, fuse, rerank
+from ..rank.fusion import filter_domains, filter_low_quality, fuse, rerank
+from ..rank.recency import age_days, apply_recency, date_from_url
 
 logger = logging.getLogger(__name__)
 
@@ -117,6 +120,11 @@ class SearchPipeline:
                 client,
                 default_engines=settings.engine_list,
                 timeout_limit=settings.search_timeout_limit,
+                news_engines=settings.news_engine_list,
+                news_pass_time_range=settings.news_pass_time_range,
+                # 引擎健康度自适应（M5-5.1）：开关关闭时 from_settings 返回 None，
+                # provider 会完全跳过自适应逻辑，等价于旧行为
+                engine_health=EngineHealthTracker.from_settings(settings),
             ),
             BingHtmlProvider(client),
         ]
@@ -149,12 +157,19 @@ class SearchPipeline:
 
         # 2) 融合、去重、重排、过滤
         merged = fuse(_group_hits(hits)) if hits else []
+        # 剔除客观低质结果（无标题 / 标题是裸域名）：这类结果在「按时间过滤」的通用引擎
+        # 结果里占比不低，留着会挤掉真正切题的新闻
+        merged = filter_low_quality(merged)
         merged = filter_domains(
             merged,
             include_domains=request.include_domains,
             exclude_domains=request.exclude_domains,
         )
         merged = rerank(merged, request.query)
+
+        # 2.5) 时效性（M5-5.2）：新闻主题下补齐发布日期并按新鲜度重排，必要时剔除已知过期结果
+        if request.topic == "news":
+            merged = await self._apply_news_recency(request, merged)
 
         # 3) 深度模式：并发抓取正文（受总预算约束）
         pages_read = 0
@@ -180,6 +195,10 @@ class SearchPipeline:
         """从各 Provider 收集原始结果，主源不足时自动兜底。"""
         pages_cap = self._page_budget(request)
         want = max(request.max_results, pages_cap)
+        if request.topic == "news":
+            # 新闻主题必须拿候选池：只取 top-N 的话，融合后已无「更接近现在」的结果可挑，
+            # 时效排序与过期过滤就失去意义。
+            want = max(want, self.settings.news_candidate_pool)
         query_key = self._query_cache_key(request, want)
 
         cached_hits = await self.cache.get(query_key)
@@ -189,6 +208,12 @@ class SearchPipeline:
         engines_used: list[str] = []
         failed_engines: list[str] = []
         hits: list[SearchHit] = []
+
+        # 新闻主题：通用引擎兜底请求与主源的新闻请求互不依赖，先并发发出去，
+        # 拿到主源结果后再汇合。这样新闻主题只多花「较慢的那一次」的延迟。
+        general_task: asyncio.Task | None = None
+        if request.topic == "news" and self.settings.news_include_general:
+            general_task = asyncio.create_task(self._collect_general_extra(request, want))
 
         # 主源：SearXNG；仅在「结果拿不满用户需要的条数」或主源失败时才启用兜底源，
         # 避免深度模式下为了凑够抓取页数而白白多打一次外部请求。
@@ -222,9 +247,184 @@ class SearchPipeline:
                 if len(hits) >= request.max_results and index == 0:
                     break
 
+        # 汇合并发的通用兜底结果（新闻源对中文长尾覆盖差，用通用结果补齐候选；
+        # 融合阶段会按 URL 去重）
+        if general_task is not None:
+            try:
+                extras, extra_engines, extra_failed = await general_task
+            except Exception as exc:  # noqa: BLE001 - 兜底检索失败不应影响新闻主流程
+                logger.warning("新闻补充检索（通用引擎）失败: %s", exc)
+                failed_engines.append("searxng:general")
+            else:
+                hits.extend(extras)
+                engines_used.extend(extra_engines)
+                failed_engines.extend(extra_failed)
+
         if hits:
             await self.cache.set(query_key, [h.to_dict() for h in hits], self.settings.cache_query_ttl)
         return hits, engines_used, failed_engines
+
+    async def _collect_general_extra(
+        self, request: SearchRequest, want: int
+    ) -> tuple[list[SearchHit], list[str], list[str]]:
+        """新闻主题下再打一次通用引擎，补充新闻源拿不到的候选。
+
+        免费新闻源对中文长尾查询覆盖很差（实测 8 条查询里有 3 条直接返回 0 条），
+        只靠新闻引擎会导致整轮结果退化成兜底源的无日期结果。补充失败不影响主流程。
+
+        这里**必须把 time_range 透传给通用引擎**：通用引擎（Bing/Google 等）的日期过滤
+        是真的有效的，实测 time_range=day 时每条查询都能拿到 5-12 条「当天/1 日内」结果，
+        且延迟不增（1.0-2.3s）；不透传时同一批查询只有 0-2 条带日期。
+        注意这与新闻类目引擎相反：新闻引擎带 time_range 一律返回 0 条
+        （见 config.news_pass_time_range）。
+        """
+        extras: list[SearchHit] = []
+        engines_used: list[str] = []
+        failed_engines: list[str] = []
+        # 用一组独立的引擎（见 news_general_engines）：主通用引擎列表里的 yandex
+        # 配合 time_range 会返回大量垃圾农场内容（实测出现成人站、综艺盗播站），
+        # 而这一路只用来补「最新的候选」，用更干净的引擎集更划算。
+        extra_engines = self.settings.news_general_engine_list or None
+        for provider in self.providers:
+            if provider.name != "searxng":
+                continue
+            try:
+                provider_hits = await provider.search(
+                    request.query,
+                    max_results=want,
+                    topic="general",
+                    time_range=request.time_range,
+                    engines=extra_engines,
+                    language=self.settings.language,
+                )
+            except Exception as exc:  # noqa: BLE001 - 补充检索失败不应影响新闻主流程
+                logger.warning("新闻补充检索（通用引擎）失败: %s", exc)
+                failed_engines.append("searxng:general")
+                continue
+            if provider_hits:
+                extras.extend(provider_hits)
+                engines_used.append("searxng:general")
+        return extras, engines_used, failed_engines
+
+    # -------------------------------------------------------------- 时效性（M5-5.2）
+    def _fresh_days(self, request: SearchRequest) -> int:
+        """新闻结果的「新鲜」排序窗口：显式 time_range 优先，否则用配置默认值。"""
+        window = {"day": 1, "week": 7, "month": 31, "year": 365}.get(request.time_range or "")
+        return window or self.settings.news_fresh_days
+
+    def _drop_after_days(self, request: SearchRequest) -> int:
+        """丢弃阈值：不低于配置的新闻新鲜窗口。
+
+        不能直接沿用 `time_range=day` 的 1 天：免费源给不出足够的当天结果，
+        用 1 天当阈值会把 2-7 天的近期新闻丢掉、拿无日期结果补位，实测会显著拉低时效性。
+        """
+        return max(self._fresh_days(request), self.settings.news_fresh_days)
+
+    async def _apply_news_recency(
+        self, request: SearchRequest, results: list[SearchResult]
+    ) -> list[SearchResult]:
+        """新闻主题的时效处理：先回补缺失日期，再按新鲜度重排。"""
+        fresh_days = self._fresh_days(request)
+        # 先用 URL 里的日期线索做零成本补全，再决定要不要抓页面
+        self._fill_dates_from_urls(results)
+        shortfall = self._fresh_shortfall(results, fresh_days=fresh_days, max_results=request.max_results)
+        if shortfall > 0:
+            await self._backfill_published_dates(results, shortfall=shortfall)
+        return apply_recency(
+            results,
+            fresh_days=fresh_days,
+            max_results=request.max_results,
+            drop_stale=self.settings.news_drop_stale,
+            drop_after_days=self._drop_after_days(request),
+        )
+
+    def _fresh_shortfall(
+        self, results: list[SearchResult], *, fresh_days: int, max_results: int
+    ) -> int:
+        """还差几条「新鲜」结果才能填满 max_results；已够则为 0。
+
+        用于决定要不要花时间去抓页面回补日期：免费源里抓页面补日期的成功率约 1/3，
+        且补出来的经常是旧日期，所以在「已经有足够新鲜结果」时完全跳过这一步，
+        是 topic=news 延迟优化的关键（实测能把新闻查询的端到端耗时压回 1-2s 量级）。
+        """
+        now = datetime.now(timezone.utc)
+        fresh = 0
+        for result in results:
+            days = age_days(result.published_date, now=now)
+            if days is not None and days <= fresh_days:
+                fresh += 1
+                if fresh >= max_results:
+                    return 0
+        return max_results - fresh
+
+    def _fill_dates_from_urls(self, results: list[SearchResult]) -> int:
+        """用 URL 路径里内嵌的日期补全缺失的 `published_date`（纯本地计算，零网络开销）。
+
+        很多结果（通用引擎兜底、google news 等不给日期的引擎）其实把日期写在了 URL 里，
+        例如 `/202609/t20260922_12028748.htm`、`/2026/08/01/ARTI...`。
+        先做这一步，后面的抓页面回补只需处理「连 URL 都没有日期线索」的结果，
+        实测能明显提高日期覆盖率，同时减少抓取请求、降低延迟。
+
+        只补空值，不覆盖引擎已经给出的日期（引擎给的是权威值）。
+        """
+        filled = 0
+        for result in results:
+            if result.published_date:
+                continue
+            found = date_from_url(result.url)
+            if found:
+                result.published_date = found
+                filled += 1
+        if filled:
+            logger.debug("新闻日期回补（URL）：%d 条", filled)
+        return filled
+
+    async def _backfill_published_dates(self, results: list[SearchResult], *, shortfall: int) -> None:
+        """为缺少发布日期的新闻结果抓页面推断日期（原地修改，受页数与时间预算约束）。
+
+        `shortfall` 是「还差几条新鲜结果」，由 `_fresh_shortfall` 算出，为 0 时调用方
+        根本不会进来。据此反推要抓的页数：免费源抓页面补日期的成功率约 1/3、且补出来的
+        常常是旧日期，所以按每个缺口试 4 个候选来估算，再受 `news_date_pages` 与
+        `news_date_budget` 双重封顶。这样「结果已经够新鲜」的查询完全不产生抓取请求。
+        """
+        if not self.settings.news_date_backfill or self.settings.news_date_pages <= 0:
+            return
+        page_cap = min(self.settings.news_date_pages, max(1, shortfall) * 4)
+        now = datetime.now(timezone.utc)
+        targets = [
+            result
+            for result in results[:page_cap]
+            if age_days(result.published_date, now=now) is None
+        ]
+        if not targets:
+            return
+
+        page_timeout = min(self.settings.fetch_timeout, self.settings.page_total_timeout)
+
+        async def fetch_one(result: SearchResult) -> tuple[SearchResult, str | None]:
+            async with self._semaphore:
+                try:
+                    date = await asyncio.wait_for(
+                        self.extractor.fetch_date(result.url), timeout=page_timeout
+                    )
+                except (asyncio.TimeoutError, TimeoutError):
+                    logger.debug("回补日期超时（%.1fs）: %s", page_timeout, result.url)
+                    date = None
+                return result, date
+
+        finished = await self._run_with_budget(
+            [fetch_one(result) for result in targets], self.settings.news_date_budget
+        )
+        filled = 0
+        for item in finished:
+            if not item:
+                continue
+            result, date = item
+            if date and not result.published_date:
+                result.published_date = date
+                filled += 1
+        if filled:
+            logger.debug("新闻日期回补：%d/%d 条补齐成功", filled, len(targets))
 
     async def _enrich_with_content(
         self, request: SearchRequest, results: list[SearchResult]
