@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# 环境变量与本地配置
+.env
+.env.local
+
+# 运行时数据（缓存 / 日志）
+data/
+*.db
+*.db-wal
+*.db-shm
+logs/
+
+# SearXNG 本地数据
+searxng/cache/
+searxng/data/
+
+# 编辑器与系统
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

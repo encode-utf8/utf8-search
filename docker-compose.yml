@@ -1,0 +1,39 @@
+# utf8-search 一键部署：SearXNG（搜索聚合）+ 本服务（MCP + REST）
+services:
+  searxng:
+    image: searxng/searxng:latest
+    container_name: utf8-search-searxng
+    restart: unless-stopped
+    volumes:
+      - ./searxng:/etc/searxng:rw
+    ports:
+      - "127.0.0.1:8888:8080"
+    environment:
+      - SEARXNG_BASE_URL=http://localhost:8888/
+      - SEARXNG_SECRET=change-me-in-production
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  utf8-search:
+    build:
+      context: .
+      # 国内服务器构建较慢/超时时，把 PIP_INDEX_URL 换成国内镜像源
+      args:
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://pypi.org/simple}
+    container_name: utf8-search-app
+    restart: unless-stopped
+    depends_on:
+      searxng:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      - UTF8SEARCH_SEARXNG_URL=http://searxng:8080
+      - UTF8SEARCH_API_KEYS=${UTF8SEARCH_API_KEYS:-}
+      - UTF8SEARCH_RATE_LIMIT_RPM=${UTF8SEARCH_RATE_LIMIT_RPM:-60}
+      - UTF8SEARCH_MCP_ALLOWED_HOSTS=${UTF8SEARCH_MCP_ALLOWED_HOSTS:-}
+    volumes:
+      - ./data:/app/data

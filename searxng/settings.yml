@@ -1,0 +1,96 @@
+# SearXNG 配置（utf8-search 专用）
+# 关键点：开启 json 输出格式（本服务通过 JSON 接口调用），关闭 limiter（内网调用）。
+#
+# 引擎策略（依据 2026-09-24 逐引擎实测，详见 docs/01 第 4.3 节）：
+#   1) 用官方 keep_only 语法限定候选引擎，避免 SearXNG 默认把大量不可用引擎一起打出去
+#      （个别引擎超时会把 worker 打挂，表现为 /search 502）。
+#   2) 再用 engines 列表显式 disabled:false 打开需要的引擎（keep_only 只做过滤，
+#      不改变引擎自身的默认启用状态）。
+#
+# 实测结论（美国出口 IP，2026-09-24，5 条中英查询交叉验证）：
+#   稳定可用：resulthunter / yandex / naver / privacywall / google / zapmeta /
+#             yahoo / fynd / sogou
+#   机会型（可用但会间歇性被限流，失败极快、代价可忽略）：
+#             reloado / yep / brave / quark
+#   不可用：bing（返回 0）、duckduckgo（CAPTCHA）、google cse（unusual traffic）、
+#           qwant（CAPTCHA）、baidu（CAPTCHA）、seznam（timeout）、
+#           mojeek 与 startpage（本镜像标记 inactive，需 Proof-of-Work 验证码）、
+#           crowdview / fastbot / tusksearch / vuhuv / fireball / gabanza /
+#           searchmysite / ayo / encyclosearch / abcnyheter（0 条或超时）
+use_default_settings:
+  engines:
+    keep_only:
+      - resulthunter
+      - yandex
+      - naver
+      - privacywall
+      - google
+      - zapmeta
+      - yahoo
+      - fynd
+      - sogou
+      - reloado
+      - yep
+      - brave
+      - quark
+
+general:
+  debug: false
+  instance_name: "utf8-search"
+
+server:
+  secret_key: "change-me-in-production"
+  limiter: false
+  public_instance: false
+  image_proxy: false
+  http_protocol_version: "1.1"
+
+search:
+  safe_search: 0
+  # 中英兼顾：不限语言；如需偏中文可改为 zh-CN
+  default_language: "all"
+  autocomplete: ""
+  formats:
+    - html
+    - json
+
+ui:
+  static_use_hash: true
+
+# 出网超时：默认 3s 会让略慢的引擎超时，而引擎超时在 SearXNG 中可能触发
+# 「ResultContainer 已关闭后仍上报引擎不可用」的异常并把 worker 打挂（表现为 502）。
+# 这里放宽到 8s / 15s，实测可显著减少 502。
+outgoing:
+  request_timeout: 8.0
+  max_request_timeout: 15.0
+  pool_connections: 100
+  pool_maxsize: 20
+
+# 显式启用引擎
+engines:
+  - name: resulthunter
+    disabled: false
+  - name: yandex
+    disabled: false
+  - name: naver
+    disabled: false
+  - name: privacywall
+    disabled: false
+  - name: google
+    disabled: false
+  - name: zapmeta
+    disabled: false
+  - name: yahoo
+    disabled: false
+  - name: fynd
+    disabled: false
+  - name: sogou
+    disabled: false
+  - name: reloado
+    disabled: false
+  - name: yep
+    disabled: false
+  - name: brave
+    disabled: false
+  - name: quark
+    disabled: false
