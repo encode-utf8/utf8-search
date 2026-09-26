@@ -23,6 +23,11 @@ MEMORY_GROWTH_FLOOR_BYTES = 50 * 1024 * 1024
 # 长稳可用率门槛（docs/04 第 4.4 节：≥ 99%）
 MIN_AVAILABILITY = 0.99
 
+# 长稳「采样覆盖率」下限。SKIP 槽位不进可用率分母，于是「跳过 60% 槽位 + 剩下的全成功」
+# 能凑出可用率 100%，而 window_hours 按首末时间戳仍显示 24h —— 这是「假绿」换了个维度
+# 又出现。因此覆盖率本身必须是硬门槛：低于该下限直接判不通过，且结论要写明实际覆盖率。
+MIN_COVERAGE = 0.95
+
 # 长稳「疑似休眠」判定：单次采样耗时超过 interval 的这个倍数，说明进程被挂起过
 # （机器休眠 / cgroup 冻结 / 断网重试），这个耗时不是服务的真实延迟，必须排除出分位统计。
 SOAK_SUSPECT_LATENCY_FACTOR = 3.0
@@ -547,6 +552,7 @@ def summarize_soak_rows(
     *,
     interval_s: float | None = None,
     min_availability: float = MIN_AVAILABILITY,
+    min_coverage: float = MIN_COVERAGE,
     growth_ratio: float = MEMORY_GROWTH_RATIO,
     growth_floor_bytes: float = MEMORY_GROWTH_FLOOR_BYTES,
 ) -> dict[str, object]:
@@ -560,6 +566,10 @@ def summarize_soak_rows(
     - **样本归类**：有结果 / 空结果 / 异常 / 跳过 / 疑似休眠（suspect）分别计数。
       「跳过」是进程休眠后**没有跑**的采样槽位（见 `scripts/soak.py` 的 SKIP 逻辑）：
       它们不计入可用率分母，但必须在结论里可见，否则会被静默当成连续覆盖。
+
+    除了可用率，**采样覆盖率**（`sampled / measured`）也是硬门槛（`min_coverage`）：
+    SKIP 不进可用率分母，若不额外卡覆盖率，「跳过 60% 槽位 + 其余全成功」会假绿，
+    而 `window_hours` 按首末时间戳看仍是 24h。
 
     `interval_s` 用于在旧格式 CSV（没有 `suspect` 列）上回算疑似休眠样本；不传则
     只认 CSV 里写明的 suspects。
@@ -597,6 +607,15 @@ def summarize_soak_rows(
             f"跳过 {len(skipped)} 个采样槽位（进程休眠后落后 > 2 个周期，不补跑）："
             f"实际覆盖 {len(sampled)}/{len(measured)}（{coverage_ratio:.1%}），这些槽位不计入可用率"
         )
+    # 覆盖率下限：SKIP 不进可用率分母，只有把覆盖率也当硬门槛才能挡住这一类假绿。
+    if measured and coverage_ratio < min_coverage:
+        passed = False
+        notes.append(
+            f"采样覆盖率 {coverage_ratio:.1%} 低于下限 {min_coverage:.0%}："
+            f"有效采样 {len(sampled)}/{len(measured)}，跳过 {len(skipped)} 个槽位，长稳判定不通过"
+        )
+    else:
+        notes.append(f"采样覆盖率 {coverage_ratio:.1%}（下限 {min_coverage:.0%}）")
     if suspects:
         notes.append(
             f"疑似休眠样本 {len(suspects)} 个（单次耗时 > {SOAK_SUSPECT_LATENCY_FACTOR:.0f}×采样间隔）："

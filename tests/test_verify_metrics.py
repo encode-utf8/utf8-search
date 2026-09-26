@@ -404,6 +404,50 @@ def test_soak_skipped_slots_visible_and_excluded_from_availability() -> None:
     assert any("跳过 4 个采样槽位" in note for note in summary["notes"])
 
 
+def test_soak_fails_when_coverage_below_floor() -> None:
+    """B1 补丁：覆盖率是硬门槛 —— 「跳过 40% 槽位 + 其余全成功」不得再判通过。
+
+    SKIP 不进可用率分母，所以可用率会显示 100%、`window_hours` 按首末时间戳看也没缩水；
+    只有把覆盖率（20/... 实际打到的槽位占比）也当门槛，才能挡住这类假绿。
+    """
+    rows = [_soak_row(index=i) for i in range(1, 13)]  # 12 个真实成功样本
+    rows += [
+        _soak_row(
+            index=12 + i,
+            skipped=True,
+            ok=False,
+            results=0,
+            latency_ms="",
+            rss_bytes=None,
+            error="SKIPPED: 落后 4 个采样周期（>2×间隔），按规则不补跑",
+        )
+        for i in range(1, 9)  # 8 个 SKIP -> 覆盖率 12/20 = 60% < 95%
+    ]
+    summary = summarize_soak_rows(rows)
+
+    assert summary["samples"] == 20
+    assert summary["skipped"] == 8
+    assert summary["availability"] == 1.0  # 可用率仍是 100%（SKIP 不进分母）
+    assert summary["coverage_ratio"] == pytest.approx(0.6)
+    assert summary["passed"] is False  # 但覆盖率 60% < 95% -> 不通过
+    assert any("采样覆盖率 60.0% 低于下限 95%" in note for note in summary["notes"])
+
+
+def test_soak_fails_when_availability_below_floor_even_if_coverage_ok() -> None:
+    """覆盖率达标（100%）但可用率不达标 -> 仍不通过：两个门槛是「与」关系。"""
+    rows = [_soak_row(index=i) for i in range(1, 9)]
+    rows += [
+        _soak_row(index=9, ok=False, results=0, error="TimeoutError: 上游超时"),
+        _soak_row(index=10, ok=False, results=0, error="TimeoutError: 上游超时"),
+    ]
+    summary = summarize_soak_rows(rows)
+
+    assert summary["coverage_ratio"] == pytest.approx(1.0)
+    assert summary["availability"] == pytest.approx(0.8)
+    assert summary["passed"] is False
+    assert any("可用率" in note for note in summary["notes"])
+
+
 def test_soak_legacy_12_column_csv_parses(tmp_path) -> None:
     """旧格式（12 列）CSV 仍能解析：缺列时 suspect=None、skipped=False。"""
     path = tmp_path / "legacy.csv"
