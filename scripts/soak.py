@@ -32,7 +32,7 @@ import json
 import os
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
@@ -43,6 +43,7 @@ from utf8_search.models import SearchRequest  # noqa: E402
 from utf8_search.verify.metrics import (  # noqa: E402
     SOAK_TIMESTAMP_FORMAT,
     format_bytes,
+    is_suspect_latency,
     load_soak_rows,
     process_alive,
     read_rss_bytes,
@@ -75,6 +76,10 @@ COLUMNS = [
     "rss_bytes",
     "query",
     "error",
+    # 下面两列是 4.2 挂机失败后新增的（旧 CSV 没有这两列，解析时按默认值处理）：
+    # suspect = 单次采样耗时 > 3×间隔（进程被挂起过），skipped = 该槽位没跑（休眠后不补跑）
+    "suspect",
+    "skipped",
 ]
 
 
@@ -203,6 +208,31 @@ def _heartbeat_age(text: str) -> float | None:
     return max(0.0, (datetime.now() - stamp).total_seconds())
 
 
+def _skip_row(*, index: int, timestamp: datetime, elapsed: float, missed: int) -> dict[str, object]:
+    """构造一条「没跑」的 SKIP 行。
+
+    进程被挂起（机器休眠 / cgroup 冻结）后落后超过 2 个周期时，补跑没有意义
+    ——首轮挂机出现过「47 个样本在 11 秒内补完、其中 39 个命中缓存」的失真数据。
+    这类空档必须逐条落进 CSV，否则汇总会把它们静默当成连续覆盖。
+    """
+    return {
+        "index": index,
+        "timestamp": timestamp.strftime(SOAK_TIMESTAMP_FORMAT),
+        "elapsed_s": round(elapsed, 3),
+        "warmup": False,
+        "ok": False,
+        "latency_ms": "",
+        "results": 0,
+        "pages_read": 0,
+        "cached": False,
+        "rss_bytes": None,
+        "query": "",
+        "error": f"SKIPPED: 落后 {missed} 个采样周期（>2×间隔），按规则不补跑",
+        "suspect": False,
+        "skipped": True,
+    }
+
+
 def _meta_payload(
     args: argparse.Namespace, *, pid: int, started_at: str, samples: int, finished: bool
 ) -> dict[str, object]:
@@ -233,7 +263,13 @@ def _json_payload(
         "mode": args.mode,
         "samples": summary["samples"],
         "succeeded": summary["succeeded"],
+        "empty": summary["empty"],
+        "errors": summary["errors"],
+        "skipped": summary["skipped"],
+        "suspect": summary["suspect"],
         "availability": summary["availability"],
+        "availability_including_empty": summary["availability_including_empty"],
+        "coverage_ratio": summary["coverage_ratio"],
         "window_hours": summary["window_hours"],
         "latency": summary["latency"],
         "rss": summary["rss"],
@@ -251,7 +287,7 @@ def _print_summary(
     判定与汇总全部走 `utf8_search.verify.metrics.summarize_soak_rows`，
     因此「在线采样结束时的结论」与「事后 --summarize 复算的结论」必然一致。
     """
-    summary = summarize_soak_rows(rows)
+    summary = summarize_soak_rows(rows, interval_s=args.interval)
     latency = summary["latency"]  # type: ignore[assignment]
     rss = summary["rss"]  # type: ignore[assignment]
 
@@ -262,8 +298,18 @@ def _print_summary(
             f"（覆盖 {float(summary['window_hours']):.2f} h）"
         )
     print(f"采样点数    : {summary['samples']}（预热 {summary['warmup_rows']} 个已剔除）")
-    print(f"成功 / 失败 : {summary['succeeded']} / {summary['failed']}")
-    print(f"可用率      : {float(summary['availability']):.2%}")
+    print(f"有结果      : {summary['succeeded']}（可用率分子，判定口径）")
+    print(f"空结果 / 异常: {summary['empty']} / {summary['errors']}（分开计数，均不计成功）")
+    print(
+        f"跳过槽位    : {summary['skipped']} 个"
+        f"（实际覆盖 {float(summary['coverage_ratio']):.1%}，SKIP 不计入可用率）"
+    )
+    print(
+        f"可用率      : 有结果 {float(summary['availability']):.2%}（判定）"
+        f" / 含空结果 {float(summary['availability_including_empty']):.2%}（参考）"
+    )
+    if summary["suspect"]:
+        print(f"疑似休眠    : {summary['suspect']} 个（已排除出延迟分位，仍计入可用率与 RSS）")
     if latency["count"]:
         print(
             f"延迟        : P50 {latency['p50']:.0f}ms  P95 {latency['p95']:.0f}ms  "
@@ -276,6 +322,8 @@ def _print_summary(
         )
     for row in summary["failures"][:10]:  # type: ignore[index]
         print(f"  失败样本 #{row['index']}: {row['error']}")
+    for row in summary["empty_rows"][:5]:  # type: ignore[index]
+        print(f"  空结果样本 #{row['index']}: {row['query']}（上游 0 条）")
     print("\n结论：" + ("通过" if summary["passed"] else "不通过 / 待定") + " — " + "；".join(summary["notes"]))  # type: ignore[arg-type]
     if not summary["samples"]:
         print("提示：没有任何有效采样，无法判定")
@@ -298,9 +346,9 @@ def _print_status(args: argparse.Namespace) -> int:
     else:
         print(f"meta        : 未找到 {meta_path.resolve()}")
 
+    interval = float(meta.get("interval_s") or 0) or args.interval
     if meta:
         pid = int(meta.get("pid") or 0)
-        interval = float(meta.get("interval_s") or 0) or 300.0
         heartbeat = str(meta.get("updated_at") or "")
         age = _heartbeat_age(heartbeat)
         print(f"进程 PID    : {pid}（{'存活' if process_alive(pid) else '已退出'}）")
@@ -318,11 +366,17 @@ def _print_status(args: argparse.Namespace) -> int:
         print(f"明细        : {csv_path.resolve()} 不存在或无有效样本")
         return 2
 
-    summary = summarize_soak_rows(rows)
+    summary = summarize_soak_rows(rows, interval_s=interval)
     last = rows[-1]
     print(f"明细        : {csv_path.resolve()}（{len(rows)} 行）")
+    if last.get("skipped"):
+        last_state = "SKIP    "
+    elif last.get("suspect"):
+        last_state = "SUSPECT "
+    else:
+        last_state = "OK     " if last["ok"] else "FAIL   "
     print(
-        f"最近采样    : #{last['index']} {last['timestamp']} {'OK' if last['ok'] else 'FAIL'} "
+        f"最近采样    : #{last['index']} {last['timestamp']} {last_state}"
         f"{float(last['latency_ms']):.0f}ms 结果 {last['results']} 读页 {last['pages_read']} "
         f"RSS {format_bytes(last.get('rss_bytes'))}"
     )
@@ -330,7 +384,15 @@ def _print_status(args: argparse.Namespace) -> int:
         f"覆盖窗口    : {summary['first_timestamp']} -> {summary['last_timestamp']}"
         f"（{float(summary['window_hours']):.2f} h）"
     )
-    print(f"累计可用率  : {float(summary['availability']):.2%}（{summary['succeeded']}/{summary['samples']}）")
+    print(
+        f"累计可用率  : 有结果 {float(summary['availability']):.2%}"
+        f"（{summary['succeeded']}/{summary['samples'] - summary['skipped']}）"
+        f" / 含空结果 {float(summary['availability_including_empty']):.2%}"
+    )
+    print(
+        f"样本分类    : 有结果 {summary['succeeded']} / 空结果 {summary['empty']}"
+        f" / 异常 {summary['errors']} / 跳过 {summary['skipped']} / 疑似休眠 {summary['suspect']}"
+    )
     print(
         f"当前结论    : {'通过' if summary['passed'] else '不通过 / 待定'} — "
         + "；".join(summary["notes"])  # type: ignore[arg-type]
@@ -395,8 +457,22 @@ async def run(args: argparse.Namespace) -> int:
 
     rows: list[dict[str, object]] = []
     started = time.perf_counter()
+    started_wall = datetime.now()
     deadline = started + args.duration_hours * 3600
     finished = False
+
+    def refresh_artifacts() -> None:
+        """刷新 meta 心跳与汇总 JSON（含 SKIP 行），进程被强杀也不丢已有结论。"""
+        all_rows = existing + rows
+        _write_json(
+            meta_path,
+            _meta_payload(args, pid=pid, started_at=started_at, samples=len(all_rows), finished=False),
+        )
+        if args.json_out:
+            _write_json(
+                args.json_out,
+                _json_payload(args, summarize_soak_rows(all_rows, interval_s=args.interval), all_rows),
+            )
 
     try:
         with out.open("a", encoding="utf-8", newline="") as handle:
@@ -406,26 +482,61 @@ async def run(args: argparse.Namespace) -> int:
 
             index = resume_from
             proc_sample = 0
+            # 本次进程内的采样槽位：第 k 个槽位的计划时刻 = started + k*interval
+            slot = 0
             while time.perf_counter() < deadline:
                 if args.max_samples and proc_sample >= args.max_samples:
                     break
+
+                # 对齐到时间槽位。落后 1~2 个周期时立即补跑；落后超过 2 个周期说明进程被挂起过
+                # （机器休眠 / cgroup 冻结），此时**不补跑**——把错过的槽位逐条记成 SKIP
+                # 再快进到当前槽位，避免「47 个样本 11 秒内补完、39 个命中缓存」那种失真。
+                lag = time.perf_counter() - (started + slot * args.interval)
+                if lag < 0:
+                    await asyncio.sleep(-lag)
+                elif lag > 2 * args.interval:
+                    missed = int(lag // args.interval)
+                    for offset in range(missed):
+                        index += 1
+                        rows.append(
+                            _skip_row(
+                                index=index,
+                                timestamp=started_wall + timedelta(seconds=(slot + offset) * args.interval),
+                                elapsed=time.perf_counter() - started,
+                                missed=missed,
+                            )
+                        )
+                        writer.writerow([rows[-1].get(column, "") for column in COLUMNS])
+                    slot += missed
+                    handle.flush()
+                    refresh_artifacts()
+                    print(
+                        f"[SKIP] 落后 {missed} 个采样周期（约 {lag / 60:.1f} 分钟）：按规则不补跑，"
+                        f"已记 {missed} 条 SKIP 并快进到当前时间槽位"
+                    )
+
                 index += 1
                 proc_sample += 1
                 result = await probe.run(index)
+                latency_ms = float(result["latency_ms"])
                 row = {
                     "index": index,
                     "timestamp": datetime.now().strftime(SOAK_TIMESTAMP_FORMAT),
                     "elapsed_s": round(time.perf_counter() - started, 3),
                     "warmup": proc_sample <= args.warmup,
                     "rss_bytes": read_rss_bytes(rss_pid) if rss_pid else None,
+                    # 单次耗时 > 3×采样间隔 => 进程被挂起过，这条延迟不是服务的真实表现
+                    "suspect": is_suspect_latency(latency_ms, args.interval),
+                    "skipped": False,
                     **result,
                 }
                 rows.append(row)
+                slot += 1
                 writer.writerow([row.get(column, "") for column in COLUMNS])
                 # 逐行刷盘：24h 挂机中途被中断也能看到进度
                 handle.flush()
 
-                flag = "OK " if row["ok"] else "FAIL"
+                flag = "SUSP" if row["suspect"] else ("OK " if row["ok"] else "FAIL")
                 print(
                     f"[{index:>4}] {row['timestamp']} {flag} {float(row['latency_ms']):6.0f}ms "
                     f"结果 {row['results']:>2} 读页 {row['pages_read']:>2} "
@@ -433,18 +544,7 @@ async def run(args: argparse.Namespace) -> int:
                 )
 
                 # 每次采样刷新心跳与汇总：进程被强杀也不丢结论（首轮挂机就是这么丢的）
-                all_rows = existing + rows
-                _write_json(
-                    meta_path,
-                    _meta_payload(args, pid=pid, started_at=started_at, samples=len(all_rows), finished=False),
-                )
-                if args.json_out:
-                    _write_json(args.json_out, _json_payload(args, summarize_soak_rows(all_rows), all_rows))
-
-                next_at = started + proc_sample * args.interval
-                wait = next_at - time.perf_counter()
-                if wait > 0:
-                    await asyncio.sleep(wait)
+                refresh_artifacts()
             else:
                 finished = True
     except (KeyboardInterrupt, asyncio.CancelledError):
