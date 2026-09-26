@@ -64,7 +64,7 @@
 | 3-5 | 可观测性 | 查看响应字段与日志 | 每次请求含耗时、读页数、命中来源与失败引擎 | [x] |
 | 3-6 | 客户端接入文档 | 按文档配置 | Claude Desktop / Codex / Cursor / Cherry Studio / Dify / n8n / 自研 Agent 均有配置示例 | [x] |
 | 3-7 | SSRF 防护 | 向 `/v1/extract` 传内网地址 | 被拒绝，不发起请求 | [ ] |
-| 3-8 | 云服务器部署 | Linux + `docker compose up -d` | 双容器健康，HTTPS + 鉴权可用 | [ ] |
+| 3-8 | 云服务器部署 | Linux + `docker compose up -d` | 双容器健康，HTTPS + 鉴权可用 | [x] |
 | 3-9 | 真实客户端联调 | 各客户端按 `docs/03` 配置 | 至少 Claude Desktop / Codex / Cursor 跑通 | [ ] |
 
 ## 5. 鉴权与限流（用户第 7 条需求）
@@ -144,6 +144,56 @@ SearXNG 引擎可用性（本镜像 2026.9.23，均已写入 `searxng/settings.y
   - `POST /v1/extract {"urls":["file:///etc/passwd"]}` → `failed_results`，0.001 s
   - 对照组 `https://example.com` → 正常返回正文（131 字符），未误伤
 - 日志佐证：`WARNING 拒绝抓取 http://127.0.0.1:8888/search：目标 IP 127.0.0.1 属于保留网段`。
+
+## 14. M4-4.2 云服务器部署验收（2026-09-25）
+
+**背景**：`docs/04-后续路线图.md` 第 4.2 节要求「Linux VPS + `docker compose up -d`，SearXNG + 应用均健康；反向代理 + HTTPS，配置 `UTF8SEARCH_MCP_ALLOWED_HOSTS`；开启 `UTF8SEARCH_API_KEYS`，确认 401/429 行为；`data/` 卷持久化验证；产出 `docs/05-服务器部署手册.md`」。
+
+**范围**：新增 `Caddyfile`、`docs/05-服务器部署手册.md`、`docs/reports/m4-4.2-deploy-20260925.md`；修改 `docker-compose.yml`（Caddy 服务 + 应用端口收回回环 + 应用 healthcheck）、`.env`（gitignore）、`docs/04-后续路线图.md`、`checklist.md`。**阶段 A3 收尾**另修 `scripts/mcp_selfcheck.py`（时效性口径 / ratelimit Key / Key 掩码 / 复现命令平台自适应）并新增离线回归 `tests/test_mcp_selfcheck.py`；**未改 `src/`**。
+
+**部署环境**：阿里云新加坡 `43.106.104.49`（Ubuntu 22.04.5 / x86_64），域名 `43.106.104.49.sslip.io`，基线 commit `a5e5756`。
+
+| 编号 | 验收项 | 验证方式 | 通过标准 | 状态 |
+| --- | --- | --- | --- | --- |
+| 4.2-1 | 整栈起来 | `docker compose up -d --build` + `docker compose ps` | SearXNG 与应用均 healthy | [x] |
+| 4.2-2 | 对外只暴露 TLS | `ss -ltn`；从非回环网卡直连 8000 | 应用端口为 `127.0.0.1:8000`，其它接口 `Connection refused` | [x] |
+| 4.2-3 | 新增 Caddy 反向代理 | 加入 `docker-compose.yml` + `Caddyfile` | 对外只开 80/443，TLS 终止后转 `utf8-search:8000` | [x] |
+| 4.2-4 | 阿里云安全组只放行 22/80/443 | 控制台手工改 + 公网探测 | 安全组已放行，公网可访问 | [x] 2026-09-25 放行；公网 `80 → 308`、`443 → 200` |
+| 4.2-5 | 无域名拿真证书 | Caddy 自动 ACME（sslip.io） | Let's Encrypt 签发成功 | [x] 已签发真证书，有效期至 2026-12-24（A3 复核指纹见部署报告 3.1） |
+| 4.2-6 | 自签兜底与客户端信任 | 导出 Caddy 根 CA + `update-ca-certificates` | 客户端信任根证书后可正常校验 | [x] |
+| 4.2-7 | 配置 `UTF8SEARCH_MCP_ALLOWED_HOSTS` | 伪造 Host 请求 `/mcp` | 白名单内 200、伪造 Host 421 | [x] |
+| 4.2-8 | 开启鉴权 | 无 Key / 错 Key 请求 | 均返回 401 | [x] |
+| 4.2-9 | 三种 Key 传法 | Bearer / X-API-Key / body `api_key` | 三路均 200 | [x] |
+| 4.2-10 | 限流 | 部署环境连发 65 次（RPM=60） | 出现 429 且带 `Retry-After` | [x] |
+| 4.2-11 | `data/` 卷持久化 | 重启应用容器后同查询 | 缓存文件仍在，`cached=true` | [x] |
+| 4.2-12 | 全通道回归（TLS + 鉴权） | `mcp_selfcheck.py --base-url https://... --api-key` | 24/24 通过，exit 0 | [x] 阶段 A3 修掉脚本自身缺陷后，**主命令一次跑出 24/24** |
+| 4.2-13 | 产出部署手册 | `docs/05-服务器部署手册.md` | 含端口/安全组/环境变量/证书/升级回滚/排障 | [x] |
+
+**关键实测值**：
+
+- 容器：app `Up (healthy) 127.0.0.1:8000->8000/tcp`、searxng `Up (healthy) 127.0.0.1:8888->8080/tcp`、caddy `Up 0.0.0.0:80,0.0.0.0:443`。
+- 鉴权：无 Key / 错 Key → 401；Bearer / X-API-Key / body `api_key` → 200；连发 65 次 → 59×200 后 429（`retry-after: 51`）。
+- Host 白名单：域名 200、裸 IP 200、`rebind.example` → 421（`server: uvicorn`）。
+- 持久化：`cached=False` → 重启 → `cached=True`，`cache_entries=26`。
+- 全通道自检：2026-09-25 首次为主命令 22/24（2 项 ratelimit 失败源于脚本 bug）+ `--mode ratelimit` 单跑 2/2；**阶段 A3 修掉脚本自身缺陷后，主命令一次跑出 24/24、exit 0**。
+
+**本轮修掉的问题**：
+
+- **Caddy 吞掉不匹配 Host 的请求**：原配置下伪造 Host 会拿到 Caddy 自己的「空 200」而非应用的 421，等于把 DNS 重绑定防护架空。修法：`header_up Host {http.request.host}` 透传原始 Host，并加 `:443` 兜底站点把所有 Host 都交给应用判定。修复后伪造 Host 正确返回 421。
+- **应用容器无 healthcheck**：补上后 `docker compose ps` 才显示 `Up (healthy)`。
+
+**阶段 A3 修掉的脚本自身缺陷**（详见部署报告第 6 节）：
+
+- 时效性判定与产品口径不一致：旧实现「最旧一条 ≤ 3 天」，而 M5-5.2 / `docs/04` 第 5.2 节 / `.env.example` 的口径是「**带 7 日内日期、门槛 ≥ 80%**」。已改为窗口 `min(settings.news_fresh_days, 7)`、判「带日期结果中落在窗口内的比例 ≥ 80%」，最旧值仅作诊断。这是**自检脚本缺陷**，不代表产品新鲜度变差。
+- `scripts/mcp_selfcheck.py`：`--api-key` 与 ratelimit 通道实例的 Key 不一致，导致用自定义 Key 跑时 ratelimit 两项必然 401 —— 已改为复用 `--api-key`。
+- `scripts/mcp_selfcheck.py`：会把完整 API Key 打印进报告 —— 已改为只输出掩码（前 4…后 4），`render_report` 再兜底脱敏。
+
+**附加观测（`google news`）**：部署后连续 6 条 news 查询 6/6 失败，`/health` 显示 `class=captcha`、`consecutive_failures=6`；但**重启 SearXNG 清空其处罚盒后 6/6 成功**，同机直连 Google 搜索页也稳定 200 → 判定为间歇性风控 + SearXNG 自锁，**不是这台机器 IP 被永久封禁**，无需改代码，换源建议见 `docs/reports/m4-4.2-deploy-20260925.md` 第 7.3 节。
+
+**风险 / 已知限制**：
+
+- 安全组未放行前，公网不可达、Let's Encrypt 无法签发（放行后需「删缓存证书 + 重启 caddy」两步切换，仅 restart 不会重新申请）。
+- 公开受信任证书会把该 IP 写进证书透明度（CT）日志，属公开永久记录。
 
 ## 13. M4-4.3 真实客户端联调（✅ 自动化已完成 2026-09-24；4.3-12 待人工回填）
 
@@ -718,6 +768,6 @@ Cursor、Cherry Studio、Dify、n8n、自研 Agent；任一跑不通则回修文
 
 - **本机网络波动**：开发期间出现系统代理（`127.0.0.1:7897`）失效导致外网抓取大面积超时的情况，此时改用直连（`UTF8SEARCH_TRUST_ENV=false`）即可恢复。部署到服务器时无此问题。
 - 反爬风险：免费引擎会被上游限流，需持续跟踪引擎可用性并按需调整 `keep_only` 名单。
-- 未完成项：2-9（相关性人工抽检）、3-3（10 并发压测）、3-4（24 h 长稳）、3-8（云服务器部署）、3-9（真实客户端联调）；3-7（SSRF 防护）已由 M4-4.1 完成。——**详细执行计划见 `docs/04-后续路线图.md`**。
+- 未完成项：2-9（相关性人工抽检）、3-3（10 并发压测）、3-4（24 h 长稳）、3-9（真实客户端联调）；3-7（SSRF 防护）已由 M4-4.1 完成，3-8（云服务器部署）已由 M4-4.2 完成（安全组 22/80/443 已放行、Let's Encrypt 真证书已签发）。——**详细执行计划见 `docs/04-后续路线图.md`**。
 - 合规：仅限抓取公开页面并遵守 robots.txt 与限速要求。
 - 待清理：调研期临时容器已删除；`%TEMP%\searxng-spike` 目录受本机策略限制未能删除，其中仅含一份测试用 settings.yml。

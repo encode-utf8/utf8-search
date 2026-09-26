@@ -1,0 +1,59 @@
+# utf8-search 反向代理（4.2 云部署，无自有域名方案）
+#
+# 域名由 docker-compose 的 UTF8SEARCH_DOMAIN 注入，默认 43.106.104.49.sslip.io。
+# sslip.io 是免费通配 DNS：把 IP 写进主机名即可解析回该 IP，因此不用买域名也能
+# 让 Caddy 走标准 ACME（Let's Encrypt）拿到受信任的真证书。
+#
+# 注意：申请证书需要 Let's Encrypt 能从公网回连本机 80 或 443，
+# 阿里云安全组必须放行 80/443，否则会签发失败并退回自签证书。
+
+{$UTF8SEARCH_DOMAIN} {
+	encode zstd gzip
+
+	# 证书策略：先试 Let's Encrypt（真证书，客户端零配置信任）；
+	# 若 ACME 失败（安全组未放行 / sslip.io 共享域配额被占），立刻退回 Caddy 内置 CA 的自签证书。
+	# 两条路都走 TLS，任何时刻都不会退回明文 HTTP。
+	# 安全组放行后若要立刻换成真证书：先删掉已缓存的自签证书、再重启（只 restart 不会重新申请，
+	# 因为 Caddy 会直接复用存储里那张尚未过期的证书）：
+	#   docker compose exec -T caddy sh -c "rm -rf /data/caddy/certificates/local/43.106.104.49.sslip.io"
+	#   docker compose restart caddy
+	tls {
+		issuer acme
+		issuer internal
+	}
+
+	# 关键：必须显式透传客户端原始 Host。
+	# 实测 Caddy 默认会把 Host 改写成站点/上游地址，导致应用的 MCP DNS 重绑定防护
+	# 看不到真实 Host（伪造 Host 也一律放行 200）。应用的白名单是按 Host 精确匹配的
+	# （见 src/utf8_search/server/http_api.py::_transport_security），所以这里要交回原始值，
+	# 由应用来拒绝非白名单 Host（返回 421）。
+	reverse_proxy utf8-search:8000 {
+		header_up Host {http.request.host}
+		# MCP 的 Streamable HTTP 可能是流式响应，关掉响应缓冲避免被攒成一坨
+		flush_interval -1
+		# 搜索类请求最长可能跑到十几秒，给足读超时
+		transport http {
+			read_timeout 60s
+			dial_timeout 5s
+		}
+	}
+
+	# 访问日志留痕，便于排查客户端联调与限流问题
+	log {
+		output file /data/access.log {
+			roll_size 10MiB
+			roll_keep 5
+		}
+	}
+}
+
+# 兜底站点：Host 不在白名单时，Caddy 默认会自己吞掉请求并返回「空 200」，
+# 应用那层 DNS 重绑定防护（伪造 Host → 421）就永远看不到这些请求了。
+# 这里把任意 Host 也转给应用，让唯一的判定点回到应用（allowlist 在配置里）。
+# 该站点用自签证书即可 —— 攻击者拿不到可信证书，正常客户端也只会用上面那个受信站点。
+:443 {
+	tls internal
+	reverse_proxy utf8-search:8000 {
+		header_up Host {http.request.host}
+	}
+}

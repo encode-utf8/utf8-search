@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import sys
 from pathlib import Path
 
@@ -77,6 +78,87 @@ def test_render_report_lists_failures_and_manual_checklist() -> None:
     assert "| rest | 1 | 1 | 0 | 0 |" in report
     for client, _ in mcp_selfcheck.MANUAL_CLIENTS:
         assert client in report
+
+
+def test_mask_api_key_keeps_only_head_and_tail() -> None:
+    """掩码只保留前 4 + 后 4；短板/空 Key 一律整体打码。"""
+    assert mcp_selfcheck.mask_api_key("utf8_abcdefghijklmnop") == "utf8…mnop"
+    assert mcp_selfcheck.mask_api_key("short") == "*****"
+    assert mcp_selfcheck.mask_api_key("") == "(未提供)"
+
+
+def test_render_report_never_leaks_full_api_key() -> None:
+    """报告任何位置都不得出现完整 API Key（归档/分享即泄露）。"""
+    secret = "utf8_abcdefghijklmnopqrstuvwxyz0123456789"
+    rec = mcp_selfcheck.Recorder()
+    rec.add("rest", "demo-ok", True, "一切正常", 0.1)
+    args = mcp_selfcheck.parse_args(["--api-key", secret])
+    masked = mcp_selfcheck.mask_api_key(secret)
+
+    # 场景 1：调用方按约定传入掩码 —— 报告里只应有掩码形态
+    report = mcp_selfcheck.render_report(
+        rec, args, ["rest"], [f"http://127.0.0.1:1（临时实例，API Key={masked}，RPM=1）"]
+    )
+    assert secret not in report
+    assert masked in report
+
+    # 场景 2：调用方忘了掩码 —— render_report 必须兜底把明文替换掉
+    report_raw = mcp_selfcheck.render_report(
+        rec, args, ["rest"], [f"http://127.0.0.1:1（临时实例，API Key={secret}，RPM=1）"]
+    )
+    assert secret not in report_raw
+    assert masked in report_raw
+
+
+def test_render_report_reproduce_command_is_platform_adaptive() -> None:
+    """复现命令不得硬编码 Windows 路径：本机解释器与代码块语言按平台给出。"""
+    rec = mcp_selfcheck.Recorder()
+    args = mcp_selfcheck.parse_args(["--mode", "rest"])
+    report = mcp_selfcheck.render_report(rec, args, ["rest"], [])
+
+    assert "scripts/mcp_selfcheck.py" in report
+    if os.name == "nt":
+        assert "```powershell" in report
+    else:
+        assert "```bash" in report
+        assert "\\Scripts\\python.exe" not in report
+
+
+def test_news_freshness_all_within_window_passes() -> None:
+    """全部落在窗口内 → 覆盖率 100%，判定通过，结论给出比例/窗口/最旧天数。"""
+    passed, detail = mcp_selfcheck.evaluate_news_freshness([0.5, 1.0, 2.5, 6.9], window_days=7.0)
+
+    assert passed is True
+    assert "100%" in detail
+    assert "7 天窗口" in detail
+    assert "最旧" in detail
+
+
+def test_news_freshness_one_of_five_over_window_still_passes() -> None:
+    """5 条里 1 条超窗 → 覆盖率 4/5 = 80% ≥ 门槛，仍判通过（这正是旧口径误杀的场景）。"""
+    passed, detail = mcp_selfcheck.evaluate_news_freshness(
+        [0.4, 1.2, 2.0, 5.1, 8.3], window_days=7.0
+    )
+
+    assert passed is True
+    assert "80%" in detail
+
+
+def test_news_freshness_two_of_five_over_window_fails() -> None:
+    """5 条里 2 条超窗 → 覆盖率 3/5 = 60% < 80%，判定不通过。"""
+    passed, detail = mcp_selfcheck.evaluate_news_freshness(
+        [0.4, 1.2, 5.0, 9.0, 11.5], window_days=7.0
+    )
+
+    assert passed is False
+    assert "60%" in detail
+
+
+def test_news_fresh_window_caps_at_seven_days() -> None:
+    """窗口取 min(配置, 7)：部署可更严，但不能放宽到 7 天以上。"""
+    assert mcp_selfcheck.news_fresh_window_days(7) == 7.0
+    assert mcp_selfcheck.news_fresh_window_days(3) == 3.0
+    assert mcp_selfcheck.news_fresh_window_days(30) == 7.0
 
 
 async def test_stdio_handshake_and_tools() -> None:
