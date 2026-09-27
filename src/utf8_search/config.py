@@ -155,13 +155,16 @@ class Settings(BaseSettings):
         ge=0,
         description="同时打到 SearXNG 的聚合请求上限（0 = 关闭闸门，不推荐）；实测并发 1-3 时 P50≈1.3s",
     )
+    # 默认值来自 2026-09-27 的参数矩阵扫描（见 docs/reports/m5-concurrency-gate-20260927.md）：
+    # 「排队优先、拒绝为例外」——queue 6 时 @10 只有 18% 成功率，queue 12 才把 @10 拉到 100%；
+    # max_wait 2.5s 时 @30 只有 18%，4.0s 到 25%（且 @10 仍 100%）。取满足两条选点标准的最小 max_wait。
     upstream_queue_limit: int = Field(
-        default=6,
+        default=12,
         ge=0,
         description="上游闸门允许排队的请求数上限；队列满立即返回 429，避免把上游压垮",
     )
     upstream_max_wait: float = Field(
-        default=2.5,
+        default=4.0,
         gt=0,
         description="上游闸门排队等待上限（秒）；超过立即返回 429，避免所有请求一起慢",
     )

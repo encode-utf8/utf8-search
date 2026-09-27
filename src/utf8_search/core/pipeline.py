@@ -176,7 +176,7 @@ class SearchPipeline:
         # 1) 取原始结果（多源并发 + 兜底）。
         # 上游过载且**一条结果都没有**时，_collect_hits 会向上抛 UpstreamOverloaded（→ 429），
         # 而不是返回空列表把「过载」伪装成「没搜到」。
-        hits, engines_used, failed_engines, degraded = await self._collect_hits(request)
+        hits, engines_used, failed_engines, degraded_reason = await self._collect_hits(request)
 
         # 2) 融合、去重、重排、过滤、时效分层（不含正文抓取）
         merged = await self._rank_hits(hits, request)
@@ -197,8 +197,8 @@ class SearchPipeline:
             pages_read=pages_read,
             engines_used=engines_used,
             failed_engines=failed_engines,
-            degraded=degraded,
-            degraded_reason="upstream_overloaded" if degraded else None,
+            degraded=degraded_reason is not None,
+            degraded_reason=degraded_reason,
         )
         await self.cache.set(result_key, response.model_dump(mode="json"), self.settings.cache_result_ttl)
         return response
@@ -288,15 +288,16 @@ class SearchPipeline:
 
     async def _collect_hits(
         self, request: SearchRequest
-    ) -> tuple[list[SearchHit], list[str], list[str], bool]:
+    ) -> tuple[list[SearchHit], list[str], list[str], str | None]:
         """从各 Provider 收集原始结果，主源不足时自动兜底。
 
-        返回 `(hits, engines_used, failed_engines, degraded)`。上游过载（`UpstreamOverloaded`）：
+        返回 `(hits, engines_used, failed_engines, degraded_reason)`。上游过载（`UpstreamOverloaded`）：
 
         - **绝不被 `except Exception` 吞成「返回 0 条」**——一条结果都没有时直接向上抛，由接口层映射成
           429 / MCP 可读错误；
-        - **绝不降级到兜底源**（Bing 等）——过载是全局保护，把压力转嫁给更脆弱的抓取源只会扩大故障面；
-        - 已经拿到结果时按 `degraded=True` 返回（例如 news 的第二路通用引擎被拒），保留可用结果。
+        - **主源过载时绝不降级到兜底源**（Bing 等）——过载是全局保护，把压力转嫁给更脆弱的抓取源只会扩大故障面；
+        - **可选上游调用改用非阻塞取容量**（news 的通用引擎补充、Bing 兜底）：有容量才补，没容量跳过并把
+          原因写进 `degraded_reason`，主源与整体延迟不受影响（news 的等效并发因此接近 limit，而不是 limit/2）。
         """
         pages_cap = self._page_budget(request)
         want = max(request.max_results, pages_cap)
@@ -313,12 +314,13 @@ class SearchPipeline:
 
         cached_hits = await self.cache.get(query_key)
         if cached_hits is not None:
-            return [SearchHit(**item) for item in cached_hits], ["cache"], [], False
+            return [SearchHit(**item) for item in cached_hits], ["cache"], [], None
 
         engines_used: list[str] = []
         failed_engines: list[str] = []
         hits: list[SearchHit] = []
         overloaded: UpstreamOverloaded | None = None
+        degraded_reasons: list[str] = []
 
         # 新闻主题：通用引擎兜底请求与主源的新闻请求互不依赖，先并发发出去，
         # 拿到主源结果后再汇合。这样新闻主题只多花「较慢的那一次」的延迟。
@@ -331,6 +333,15 @@ class SearchPipeline:
         for index, provider in enumerate(self.providers):
             if index > 0 and len(hits) >= request.max_results:
                 break
+            # 兜底源（index>0）走**非阻塞**取容量：有容量才补，没容量跳过并记 degraded，
+            # 既不排队拖慢主流程，也不把压力转嫁给更脆弱的抓取源。
+            optional = index > 0
+            acquired_optional = False
+            if optional:
+                acquired_optional = await self.gate.try_acquire()
+                if not acquired_optional:
+                    degraded_reasons.append("fallback_no_capacity")
+                    continue
             try:
                 provider_hits = await provider.search(
                     request.query,
@@ -348,6 +359,9 @@ class SearchPipeline:
                 logger.warning("Provider %s 搜索失败: %s", provider.name, exc)
                 failed_engines.append(provider.name)
                 continue
+            finally:
+                if optional and acquired_optional:
+                    self.gate.release()
 
             if provider.name == "searxng":
                 unresponsive = getattr(provider, "unresponsive_engines", [])
@@ -368,8 +382,12 @@ class SearchPipeline:
             try:
                 extras, extra_engines, extra_failed = await general_task
             except UpstreamOverloaded as exc:
-                # 第二路（通用引擎补充）被闸门拒绝：已有结果则降级返回，没有结果则一并上抛。
-                overloaded = overloaded or exc
+                # 第二路（通用引擎补充，非阻塞取容量）没拿到容量 / 被拒：已有结果则降级返回，
+                # 一条结果都没有时由下面的判断统一上抛。
+                degraded_reasons.append(
+                    "news_general_no_capacity" if exc.reason == "no_capacity" else "upstream_overloaded"
+                )
+                # 这是**可选路**被拒，不代表主源过载：不参与「是否上抛」的判断。
             except Exception as exc:  # noqa: BLE001 - 兜底检索失败不应影响新闻主流程
                 logger.warning("新闻补充检索（通用引擎）失败: %s", exc)
                 failed_engines.append("searxng:general")
@@ -378,12 +396,15 @@ class SearchPipeline:
                 engines_used.extend(extra_engines)
                 failed_engines.extend(extra_failed)
 
+        if overloaded is not None and hits:
+            # 主源过载但仍有结果（例如 news 的通用补充路先拿到了候选）→ 降级返回
+            degraded_reasons.append("upstream_overloaded")
         if overloaded is not None and not hits:
             # 一条结果都没有、且原因是上游过载 —— 必须让调用方看到明确信号，不能返回空列表。
             raise overloaded
         if hits:
             await self.cache.set(query_key, [h.to_dict() for h in hits], self.settings.cache_query_ttl)
-        return hits, engines_used, failed_engines, overloaded is not None
+        return hits, engines_used, failed_engines, (",".join(dict.fromkeys(degraded_reasons)) or None)
 
     async def _collect_general_extra(
         self, request: SearchRequest, want: int
@@ -417,6 +438,8 @@ class SearchPipeline:
                     time_range=request.time_range,
                     engines=extra_engines,
                     language=self.settings.language,
+                    # 可选补充路：非阻塞取容量，拿不到就跳过（由 _collect_hits 记 degraded）
+                    non_blocking=True,
                 )
             except UpstreamOverloaded:
                 # 过载必须穿透到 _collect_hits 决定「降级返回」还是「上抛 429」，

@@ -53,7 +53,10 @@ class _DateProvider(BaseProvider):
     def __init__(self, hits: list[SearchHit]) -> None:
         self._hits = hits
 
-    async def search(self, query, *, max_results, topic="general", time_range=None, engines=None, language="all"):
+    async def search(
+        self, query, *, max_results, topic="general", time_range=None, engines=None, language="all",
+        non_blocking=False,
+    ):
         return self._hits[:max_results]
 
 
@@ -81,7 +84,8 @@ class _RecordingProvider(BaseProvider):
         self.calls: list[dict] = []
 
     async def search(
-        self, query, *, max_results, topic="general", time_range=None, engines=None, language="all"
+        self, query, *, max_results, topic="general", time_range=None, engines=None, language="all",
+        non_blocking=False,
     ):  # noqa: ANN001
         self.calls.append(
             {"topic": topic, "time_range": time_range, "engines": engines, "max_results": max_results}
@@ -322,7 +326,8 @@ class _ConcurrencyProbeProvider(BaseProvider):
         self.concurrent = False
 
     async def search(
-        self, query, *, max_results, topic="general", time_range=None, engines=None, language="all"
+        self, query, *, max_results, topic="general", time_range=None, engines=None, language="all",
+        non_blocking=False,
     ):  # noqa: ANN001
         if topic == "news":
             try:

@@ -105,15 +105,44 @@ async def test_gate_track_records_upstream_latency_and_result() -> None:
     assert gate.metrics.request_seconds.count == 2
 
 
+async def test_try_acquire_fails_fast_without_queueing_or_histogram() -> None:
+    """非阻塞获取：满了立即 False —— 不排队、不写排队直方图、不产生客户端 429 计数。"""
+    gate = UpstreamGate(limit=1, queue_limit=0, max_wait=5.0)
+
+    assert await gate.try_acquire() is True
+    assert await gate.try_acquire() is False
+    assert gate.waiting == 0  # 没有排队者
+    assert gate.metrics.acquire_seconds.count == 0  # 不污染排队直方图
+    assert gate.metrics.rejected_total == 0  # 失败的 try_acquire 不等于客户端被拒
+
+    gate.release()
+    assert gate.active == 0
+
+
+async def test_track_non_blocking_reports_no_capacity() -> None:
+    """`track(non_blocking=True)` 拿不到容量时抛 reason=no_capacity，且不排队。"""
+    gate = UpstreamGate(limit=1, queue_limit=2, max_wait=5.0)
+    await gate.acquire()
+
+    with pytest.raises(UpstreamOverloaded) as info:
+        async with gate.track(non_blocking=True):
+            pass
+
+    assert info.value.reason == "no_capacity"
+    assert gate.metrics.rejected_by_reason == {"no_capacity": 1}
+    assert gate.metrics.acquire_seconds.count == 0
+    gate.release()
+
+
 # ---------------------------------------------------------------- 配置解析
 def test_gate_settings_defaults_and_env_override(monkeypatch) -> None:
-    """默认 3 / 6 / 2.5s；`UTF8SEARCH_UPSTREAM_*` 可覆盖，metrics 开关可关。"""
+    """默认 3 / 12 / 4.0s（「排队优先」档，见参数矩阵）；`UTF8SEARCH_UPSTREAM_*` 可覆盖，metrics 开关可关。"""
     base = Settings()
-    assert (base.upstream_max_concurrency, base.upstream_queue_limit) == (3, 6)
-    assert base.upstream_max_wait == pytest.approx(2.5)
+    assert (base.upstream_max_concurrency, base.upstream_queue_limit) == (3, 12)
+    assert base.upstream_max_wait == pytest.approx(4.0)
     assert base.metrics_enabled is True
     gate = UpstreamGate.from_settings(base)
-    assert (gate.limit, gate.queue_limit, gate.max_wait) == (3, 6, pytest.approx(2.5))
+    assert (gate.limit, gate.queue_limit, gate.max_wait) == (3, 12, pytest.approx(4.0))
 
     monkeypatch.setenv("UTF8SEARCH_UPSTREAM_MAX_CONCURRENCY", "2")
     monkeypatch.setenv("UTF8SEARCH_UPSTREAM_QUEUE_LIMIT", "0")
@@ -163,7 +192,8 @@ async def test_metrics_render_prometheus_text() -> None:
         assert f"# TYPE {metric} " in text
     assert 'utf8search_upstream_requests_total{result="ok"} 1' in text
     assert 'utf8search_upstream_rejected_total{reason="queue_full"} 1' in text
-    assert "utf8search_upstream_rejected_total 1" in text
+    # nit：不再输出无标签聚合线（否则 Prometheus sum() 会与带标签序列重复计数）
+    assert "utf8search_upstream_rejected_total 1" not in text
     assert 'utf8search_upstream_request_seconds_bucket{le="+Inf"} 1' in text
     assert "utf8search_upstream_request_seconds_count 1" in text
     assert text.endswith("\n")
@@ -185,7 +215,10 @@ class _OverloadProvider(BaseProvider):
     def __init__(self) -> None:
         self.calls = 0
 
-    async def search(self, query, *, max_results, topic="general", time_range=None, engines=None, language="all"):
+    async def search(
+        self, query, *, max_results, topic="general", time_range=None, engines=None, language="all",
+        non_blocking=False,
+    ):
         self.calls += 1
         raise UpstreamOverloaded(reason="queue_full", retry_after=2.5)
 
@@ -198,25 +231,36 @@ class _RecordingProvider(BaseProvider):
         self._hits = hits
         self.calls = 0
 
-    async def search(self, query, *, max_results, topic="general", time_range=None, engines=None, language="all"):
+    async def search(
+        self, query, *, max_results, topic="general", time_range=None, engines=None, language="all",
+        non_blocking=False,
+    ):
         self.calls += 1
         return self._hits[:max_results]
 
 
-class _NewsMainOkGeneralOverload(BaseProvider):
-    """news 主路成功、通用补充路被闸门拒绝（用于验证 degraded 返回）。"""
+class _NewsMainOkGeneralNoCapacity(BaseProvider):
+    """news 主路成功、通用补充路**没拿到容量**（用于验证 degraded 原因）。
+
+    同时记录补充路是否用了 `non_blocking=True`（可选调用不得占用主源的排队额度）。
+    """
 
     name = "searxng"
 
     def __init__(self, hits: list[SearchHit]) -> None:
         self._hits = hits
         self.calls = 0
+        self.general_non_blocking: bool | None = None
 
-    async def search(self, query, *, max_results, topic="general", time_range=None, engines=None, language="all"):
+    async def search(
+        self, query, *, max_results, topic="general", time_range=None, engines=None, language="all",
+        non_blocking=False,
+    ):
         self.calls += 1
         if topic == "news":
             return self._hits[:max_results]
-        raise UpstreamOverloaded(reason="timeout", retry_after=2.5)
+        self.general_non_blocking = non_blocking
+        raise UpstreamOverloaded(reason="no_capacity", retry_after=2.5)
 
 
 class _NullExtractor:
@@ -256,9 +300,42 @@ async def test_overload_does_not_fall_back_to_secondary_provider(settings, tmp_p
     await pipeline.close()
 
 
-async def test_news_secondary_overload_returns_degraded_results(settings, tmp_path) -> None:
-    """已有结果时按 degraded=True 返回（不是 429、也不是空结果）。"""
-    provider = _NewsMainOkGeneralOverload(_hits(6))
+class _EmptySearxng(BaseProvider):
+    """主源正常返回但 0 条结果（会触发兜底源），自身不占闸门。"""
+
+    name = "searxng"
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    async def search(
+        self, query, *, max_results, topic="general", time_range=None, engines=None, language="all",
+        non_blocking=False,
+    ):
+        self.calls += 1
+        return []
+
+
+async def test_fallback_is_skipped_without_capacity(settings, tmp_path) -> None:
+    """兜底源非阻塞取容量：没容量就跳过并记 degraded，不排队拖慢主流程。"""
+    primary = _EmptySearxng()
+    fallback = _RecordingProvider("bing", _hits(5))
+    scoped = settings.model_copy(update={"upstream_max_concurrency": 1})
+    pipeline = await _make_pipeline(tmp_path, scoped, [primary, fallback])
+    await pipeline.gate.acquire()  # 占满唯一槽位
+
+    response = await pipeline.search(SearchRequest(query="兜底-无容量", max_results=3, depth="basic"))
+    pipeline.gate.release()
+
+    assert fallback.calls == 0  # 不排队、不调用
+    assert response.degraded is True
+    assert response.degraded_reason == "fallback_no_capacity"
+    await pipeline.close()
+
+
+async def test_news_general_supplement_skipped_without_capacity(settings, tmp_path) -> None:
+    """news 通用补充路没容量时跳过：主源结果照常返回 + degraded 记明原因（不是 429、也不是空结果）。"""
+    provider = _NewsMainOkGeneralNoCapacity(_hits(6))
     scoped = settings.model_copy(update={"news_include_general": True})
     pipeline = await _make_pipeline(tmp_path, scoped, [provider])
 
@@ -267,8 +344,9 @@ async def test_news_secondary_overload_returns_degraded_results(settings, tmp_pa
     )
 
     assert response.degraded is True
-    assert response.degraded_reason == "upstream_overloaded"
+    assert response.degraded_reason == "news_general_no_capacity"
     assert response.results  # 仍有可用结果
+    assert provider.general_non_blocking is True  # 可选补充路必须非阻塞
     await pipeline.close()
 
 

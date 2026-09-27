@@ -149,6 +149,20 @@ class UpstreamGate:
         # 走到这里说明拿到了槽位（release() 转交，_active 不变）
         self.metrics.acquire_seconds.observe(time.perf_counter() - started)
 
+    async def try_acquire(self) -> bool:
+        """**非阻塞**获取槽位：拿不到立即返回 False（不排队、不计入排队直方图）。
+
+        给「有容量才做」的可选上游调用用（news 的通用引擎补充、Bing 兜底）：
+        拿到容量是加分项，拿不到就跳过 —— 既不让可选调用拖慢主流程，也不让它占用
+        主源本该使用的排队额度。闸门关闭（limit<=0）时恒为 True。
+        """
+        if self.limit <= 0:
+            return True
+        if self._active < self.limit:
+            self._active += 1
+            return True
+        return False
+
     def release(self) -> None:
         """释放槽位；若有排队者，把槽位直接转交给队首（_active 不变）。"""
         if self.limit <= 0:
@@ -174,9 +188,19 @@ class UpstreamGate:
             self.release()
 
     @asynccontextmanager
-    async def track(self):
-        """占用槽位并记录「上游调用时长 + 结果」，供 `SearxngProvider` 使用。"""
-        await self.acquire()
+    async def track(self, *, non_blocking: bool = False):
+        """占用槽位并记录「上游调用时长 + 结果」，供 `SearxngProvider` 使用。
+
+        `non_blocking=True` 时改用 `try_acquire()`：拿不到容量立即抛
+        `UpstreamOverloaded(reason="no_capacity")`，不排队、不拖慢调用方。
+        """
+        if non_blocking:
+            if not await self.try_acquire():
+                # 可选调用的「没容量」：计入带标签的拒绝序列（reason=no_capacity），
+                # 便于与真正返回给客户端的 429（queue_full / timeout）区分开。
+                self._reject("no_capacity")
+        else:
+            await self.acquire()
         started = time.perf_counter()
         result = "ok"
         try:
@@ -211,12 +235,17 @@ class UpstreamGate:
             "gauge",
             [f"utf8search_upstream_waiting {self.waiting}"],
         )
+        # 只保留带 reason 标签的序列：无标签聚合线在 sum() 时会与带标签的重复计数。
         rejected = [
             f'utf8search_upstream_rejected_total{{reason="{reason}"}} {count}'
             for reason, count in sorted(m.rejected_by_reason.items())
         ]
-        rejected.append(f"utf8search_upstream_rejected_total {m.rejected_total}")
-        emit("utf8search_upstream_rejected_total", "被闸门拒绝（队列满 / 排队超时）的请求数", "counter", rejected)
+        emit(
+            "utf8search_upstream_rejected_total",
+            "被闸门拒绝的请求数（reason=queue_full / timeout / no_capacity，按原因分标签）",
+            "counter",
+            rejected,
+        )
 
         requests = [
             f'utf8search_upstream_requests_total{{result="{result}"}} {count}'
