@@ -1,4 +1,4 @@
-# utf8-search 一键部署：SearXNG（搜索聚合）+ 本服务（MCP + REST）
+# utf8-search 一键部署：SearXNG（搜索聚合）+ 本服务（MCP + REST）+ Caddy（TLS 反代）
 services:
   searxng:
     image: searxng/searxng:latest
@@ -33,8 +33,9 @@ services:
     depends_on:
       searxng:
         condition: service_healthy
+    # 只绑回环：公网只能经由 Caddy 的 443 访问，杜绝裸奔 8000
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     environment:
       - UTF8SEARCH_SEARXNG_URL=http://searxng:8080
       - UTF8SEARCH_API_KEYS=${UTF8SEARCH_API_KEYS:-}
@@ -42,3 +43,39 @@ services:
       - UTF8SEARCH_MCP_ALLOWED_HOSTS=${UTF8SEARCH_MCP_ALLOWED_HOSTS:-}
     volumes:
       - ./data:/app/data
+    healthcheck:
+      # 镜像里没有 curl，用自带 python 探活（/health 恒 200，代表进程与路由可用）
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request as u,sys; sys.exit(0 if u.urlopen('http://127.0.0.1:8000/health', timeout=5).status==200 else 1)
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # 反向代理 + 自动 HTTPS：对外只开 80/443，证书由 Caddy 自动申请与续期
+  caddy:
+    image: caddy:2-alpine
+    container_name: utf8-search-caddy
+    restart: unless-stopped
+    depends_on:
+      utf8-search:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"   # HTTP/3
+    environment:
+      # 无域名方案：sslip.io 免费 DNS 会把这个名字解析到 IP 内嵌的地址
+      - UTF8SEARCH_DOMAIN=${UTF8SEARCH_DOMAIN:-43.106.104.49.sslip.io}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # 证书与 ACME 账号必须持久化，否则每次重启都重新签发（会撞 Let's Encrypt 配额）
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -674,6 +674,65 @@ def _age_days(published: str | None) -> float | None:
     return age_days(published)
 
 
+# 新闻时效性判定口径（对齐 M5-5.2 报告与 docs/04 第 5.2 节）：
+#   带发布日期的结果中，落在「新鲜窗口」内的比例 ≥ 80% 即达标。
+# 窗口取 min(部署配置 news_fresh_days, 7)：部署可以更严（例如 3 天），但不能放宽到 7 天以上。
+NEWS_FRESH_RATIO_MIN = 0.8
+NEWS_FRESH_WINDOW_MAX_DAYS = 7
+
+
+def news_fresh_window_days(settings_days: int) -> float:
+    """实际使用的新闻新鲜度窗口：取 min(settings.news_fresh_days, 7)。
+
+    部署允许把窗口调得更严（更小的天数），但不允许放宽到 7 天以上 —— 本服务对「新鲜」
+    的产品定义就是 7 日（`.env.example` 的 `UTF8SEARCH_NEWS_FRESH_DAYS=7`），再宽这条
+    检查就失去意义了。
+    """
+    return float(min(int(settings_days), NEWS_FRESH_WINDOW_MAX_DAYS))
+
+
+def evaluate_news_freshness(
+    ages: list[float],
+    window_days: float,
+    min_ratio: float = NEWS_FRESH_RATIO_MIN,
+) -> tuple[bool, str]:
+    """按 M5-5.2 口径判定新闻时效性，返回 `(是否通过, 结论文案)`。
+
+    判定标准：**带发布日期**的结果中，落在 `window_days` 窗口内的比例 ≥ `min_ratio`
+    （默认 80%）。最旧值只在结论文案里作诊断输出，**不参与判定**。
+
+    早期实现写成「最旧一条 ≤ 3.0 天」，两处都与产品口径不符：
+
+    1. 窗口 3 天 vs 产品 7 天（`.env.example` 的 `UTF8SEARCH_NEWS_FRESH_DAYS` 也是 7）；
+    2. 判「最差值」而不是「比例」，只要混进一条稍旧的聚合帖，整项就被打红。
+
+    注意这是自检脚本的口径缺陷，**不表示产品新鲜度变差**。
+    """
+    if not ages:
+        return False, "无带发布日期结果，时效性无法判定"
+    window = float(window_days)
+    fresh = sum(1 for age in ages if age <= window)
+    total = len(ages)
+    ratio = fresh / total
+    oldest = max(ages)
+    passed = ratio >= min_ratio
+    detail = (
+        f"带日期 {total} 条中 {fresh} 条落在 {window:g} 天窗口内"
+        f"（覆盖率 {ratio:.0%}，门槛 {min_ratio:.0%}）；最旧 {oldest:.1f} 天（仅诊断，不参与判定）"
+    )
+    return passed, detail
+
+
+def _news_fresh_days() -> int:
+    """读取部署配置里的新闻新鲜度窗口；读不到就退回产品默认 7 天。"""
+    try:
+        from utf8_search.config import Settings
+
+        return int(Settings().news_fresh_days)
+    except Exception:  # noqa: BLE001 - 自检不应因读配置失败而中断
+        return NEWS_FRESH_WINDOW_MAX_DAYS
+
+
 def _expect_status(expected: int) -> Callable[[int, dict[str, Any]], tuple[bool, str]]:
     """构造一个「只看状态码」的判定函数。"""
 
@@ -832,14 +891,10 @@ async def check_rest(
                         skipped=True,
                     )
                 else:
-                    worst = max(ages)
-                    rec.add(
-                        "rest",
-                        "days=1 → time_range=day",
-                        worst <= 3.0,
-                        f"{len(ages)}/{len(results)} 条带日期，最旧 {worst:.1f} 天",
-                        sw.lap(),
-                    )
+                    # 判定口径对齐 M5-5.2：带日期结果中落在窗口内的比例 ≥ 80%（窗口 = min(配置, 7)）。
+                    window_days = news_fresh_window_days(_news_fresh_days())
+                    passed, detail = evaluate_news_freshness(ages, window_days)
+                    rec.add("rest", "days=1 → time_range=day", passed, detail, sw.lap())
 
         # 5) include_domains 必须真的生效（越界结果说明过滤被绕过）
         async def check_include_domains() -> None:
@@ -1001,6 +1056,34 @@ MANUAL_CLIENTS: tuple[tuple[str, str], ...] = (
 )
 
 
+def mask_api_key(api_key: str) -> str:
+    """把 API Key 掩码成「前 4 位…后 4 位」。
+
+    自检报告会随文档一起归档/分享，绝不能出现完整明文 Key（见 4.2 部署验收的
+    「发现但未改」问题）。太短的 Key 直接整体打码，避免掩码反而泄露大半。
+    """
+    text = (api_key or "").strip()
+    if not text:
+        return "(未提供)"
+    if len(text) <= 8:
+        return "*" * len(text)
+    return f"{text[:4]}…{text[-4:]}"
+
+
+def _reproduce_python_command() -> str:
+    """给报告里的「复现命令」挑一个可执行的解释器路径（平台自适应）。
+
+    原实现硬编码 `.\\.venv\\Scripts\\python.exe`，在 Linux/服务器上照抄会直接找不到文件。
+    优先用仓库内虚拟环境的解释器（相对路径，便于复制），不存在则退回当前 `sys.executable`。
+    """
+    relative = Path(".venv") / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+    if (REPO_ROOT / relative).exists():
+        candidate = str(relative)
+    else:
+        candidate = sys.executable
+    return f'"{candidate}"' if " " in candidate else candidate
+
+
 def render_report(rec: Recorder, args: argparse.Namespace, modes: list[str], servers: list[str]) -> str:
     """生成 Markdown 报告（含「人工联调清单」待回填表）。"""
     executed = rec.executed
@@ -1015,7 +1098,12 @@ def render_report(rec: Recorder, args: argparse.Namespace, modes: list[str], ser
     lines.append(f"- 运行环境：Python {sys.version.split()[0]} / {platform.platform()}")
     lines.append(f"- 仓库：`{REPO_ROOT}`")
     lines.append(f"- 覆盖通道：{', '.join(modes)}")
-    lines.append(f"- 服务实例：{'；'.join(servers) if servers else '（本次未启动 HTTP 实例）'}")
+    servers_text = "；".join(servers) if servers else "（本次未启动 HTTP 实例）"
+    # 兜底：报告会随代码/文档归档甚至外发，任何位置都不允许出现完整 API Key。
+    # 调用方已经用 mask_api_key() 掩码，这里再拦一道，防止后续新增的 servers 文案漏掩。
+    if args.api_key:
+        servers_text = servers_text.replace(args.api_key, mask_api_key(args.api_key))
+    lines.append(f"- 服务实例：{servers_text}")
     lines.append(f"- 查询：`{args.query}`；新闻查询：`{args.news_query}`；抽取 URL：`{args.fetch_url}`")
     verdict = "全部通过" if not failed else f"{len(failed)} 项失败"
     lines.append(f"- 结论：**{verdict}**（执行 {len(executed)} 项，跳过 {len(skipped)} 项）")
@@ -1066,12 +1154,15 @@ def render_report(rec: Recorder, args: argparse.Namespace, modes: list[str], ser
     lines.append("")
     lines.append("## 5. 复现命令")
     lines.append("")
-    lines.append("```powershell")
-    out = args.out or "data\\selfcheck43.md"
-    lines.append(f".\\.venv\\Scripts\\python.exe -u scripts\\mcp_selfcheck.py --mode {args.mode} --out {out}")
+    # 复现命令按当前平台生成：Windows 给 powershell + `.venv\Scripts\python.exe`，
+    # 其他平台给 bash + `.venv/bin/python`；拿不到虚拟环境时退回 sys.executable。
+    lines.append("```powershell" if os.name == "nt" else "```bash")
+    python_cmd = _reproduce_python_command()
+    out = args.out or str(Path("data") / "selfcheck43.md")
+    lines.append(f"{python_cmd} -u scripts/mcp_selfcheck.py --mode {args.mode} --out {out}")
     lines.append("# 复用已启动的服务（跳过临时实例）：")
     lines.append(
-        ".\\.venv\\Scripts\\python.exe -u scripts\\mcp_selfcheck.py --mode rest,http"
+        f"{python_cmd} -u scripts/mcp_selfcheck.py --mode rest,http"
         " --base-url http://127.0.0.1:8000 --api-key <你的 Key>"
     )
     lines.append("```")
@@ -1189,20 +1280,24 @@ async def run(args: argparse.Namespace) -> int:
                     if channel in modes:
                         rec.fail(channel, "启动临时实例", exc)
             else:
-                servers.append(f"{server.base_url}（临时实例，API Key={args.api_key}，不限流）")
+                servers.append(
+                    f"{server.base_url}（临时实例，API Key={mask_api_key(args.api_key)}，不限流）"
+                )
                 await _run_http_channels(rec, modes, base_url=server.base_url, api_key=args.api_key, args=args)
             finally:
                 await server.stop()
 
     if "ratelimit" in modes:
         print("- 通道 E：限流（独立实例 RPM=1）")
-        server = LocalServer(rate_limit_rpm=1, note="限流自检实例")
+        # 必须显式传 api_keys：否则 LocalServer 会退回模块默认的 SELFCHECK_KEY，
+        # 而下面的 check_ratelimit 用的是 --api-key 传进来的 Key，两项必然 401。
+        server = LocalServer(api_keys=args.api_key, rate_limit_rpm=1, note="限流自检实例")
         try:
             await server.start()
         except Exception as exc:  # noqa: BLE001
             rec.fail("ratelimit", "启动临时实例", exc)
         else:
-            servers.append(f"{server.base_url}（临时实例，API Key={args.api_key}，RPM=1）")
+            servers.append(f"{server.base_url}（临时实例，API Key={mask_api_key(args.api_key)}，RPM=1）")
             await check_ratelimit(
                 rec, base_url=server.base_url, api_key=args.api_key, query=args.query, timeout=args.timeout
             )
