@@ -145,6 +145,35 @@ SearXNG 引擎可用性（本镜像 2026.9.23，均已写入 `searxng/settings.y
   - 对照组 `https://example.com` → 正常返回正文（131 字符），未误伤
 - 日志佐证：`WARNING 拒绝抓取 http://127.0.0.1:8888/search：目标 IP 127.0.0.1 属于保留网段`。
 
+## 15. M5 上游并发闸门与过载快速返回（2026-09-27，分支 `feature/m5-concurrency-gate`）
+
+**背景**：`docs/04` §4.4 实测——并发 1-3 时 P50 ≈ 1.3s，并发 10 冷查询劣化到 ~12s；直连 SearXNG 探测显示
+上游聚合吞吐仅 1.3-2.0 req/s，**瓶颈在上游聚合而非本服务**。现状没有上游并发闸门，10 个请求同时压垮上游后
+全体一起变慢。目标改为「**宁可快速失败，不要一起慢**」。
+
+**范围**：新增 `src/utf8_search/core/upstream_gate.py`（闸门 + 最小指标集）、`/metrics` 端点、REST/MCP 过载映射、
+`Settings` 三个闸门参数；**不改**搜索语义 / 融合 / 时效 / 引擎健康自适应逻辑。
+
+| 编号 | 验收项 | 验证方式 | 通过标准 | 状态 |
+| --- | --- | --- | --- | --- |
+| 5.4-1 | 闸门放行 / 排队 / 拒绝判定 | 离线单测 `tests/test_upstream_gate.py` | limit 内立即放行；超限排队；队列满或等待超时立即抛 `UpstreamOverloaded` | [x] 13 条单测全绿 |
+| 5.4-2 | 闸门参数配置化 | `Settings` + `.env.example` | `UTF8SEARCH_UPSTREAM_MAX_CONCURRENCY/QUEUE_LIMIT/MAX_WAIT` 可解析，默认 3 / 6 / 2.5s | [x] 默认值与 env 覆盖均有单测 |
+| 5.4-3 | 过载不被吞成空结果 | 离线回归：provider 抛 `UpstreamOverloaded` | `pipeline.search` 抛 `UpstreamOverloaded`，**不返回 0 条** | [x] `test_pipeline_raises_overload_instead_of_returning_empty` |
+| 5.4-4 | 过载不降级到兜底源 | 离线：searxng 过载时兜底 provider 调用数为 0 | 直接上抛，不把压力转嫁给更脆弱的抓取源 | [x] `test_overload_does_not_fall_back_to_secondary_provider` |
+| 5.4-5 | REST 过载映射 | 离线：桩 pipeline 抛过载 → `POST /v1/search` | HTTP 429 + `Retry-After` | [x] 实测 429 + `Retry-After: 3` |
+| 5.4-6 | MCP 过载映射 | 离线：`web_search` 过载 | 返回可读 `isError` 文本（非空结果、不是「没搜到」） | [x] `ToolError` 文本含「上游搜索过载」「秒后重试」 |
+| 5.4-7 | `/metrics` 最小指标集 | 离线：`GET /metrics`（沿用 REST 鉴权） | Prometheus 文本：等待数、被拒计数、排队时长与上游延迟直方图 | [x] 单测 + loadtest 实抓均通过 |
+| 5.4-8 | metrics 可关闭 | `UTF8SEARCH_METRICS_ENABLED=false` | 端点不可用 | [x] 404 |
+| 5.4-9 | 并发 10 冷查询不出现 12s 级 P95 | `scripts/loadtest.py --concurrency 10 --n 50` | P95 远低于 12s，超出部分快速 429 | [x] news@10 P95 9030→**5382ms**；@30 12268→**2831ms** |
+| 5.4-10 | general 与 news 两组对比 | loadtest 两组各跑基线/改动后 | 输出 P50/P90/P95/max/QPS、5xx/超时计数、成功数 vs P95 权衡表 | [x] 报告 §3.1/§3.2（含 @30 饱和复现） |
+| 5.4-11 | 单请求延迟不回退 | 单并发 P50 对比 | 退化 ≤ 5%（>5% 停下汇报） | [x] 单并发 P95 +2.0%、P50 更低 |
+| 5.4-12 | 不回退既有能力 | 离线套件全绿 | 质量过滤 / 时效分层 / 引擎健康逻辑未被改动 | [x] `pytest -q -m "not net"` → 251 passed |
+| 5.4-13 | 报告归档 | `docs/reports/m5-concurrency-gate-20260927.md` | 写明 12s 根因经实测确认是哪一段、闸门消掉了哪一段、news 占两槽位的影响 | [x] 报告 §2/§5 |
+
+**风险 / 取舍**：闸门是**单进程**的（本项目 `serve` 单 worker；多 worker 需按 worker 数分摊，手册说明）；
+高并发下成功率会下降（预期取舍，loadtest 给权衡数据）；`/metrics` 沿用 REST 鉴权（避免经 Caddy 对外裸奔）。
+**不在本轮**：人工项 2-9、3-9；M6。
+
 ## 14. M4-4.2 云服务器部署验收（2026-09-25）
 
 **背景**：`docs/04-后续路线图.md` 第 4.2 节要求「Linux VPS + `docker compose up -d`，SearXNG + 应用均健康；反向代理 + HTTPS，配置 `UTF8SEARCH_MCP_ALLOWED_HOSTS`；开启 `UTF8SEARCH_API_KEYS`，确认 401/429 行为；`data/` 卷持久化验证；产出 `docs/05-服务器部署手册.md`」。
@@ -779,3 +808,4 @@ Cursor、Cherry Studio、Dify、n8n、自研 Agent；任一跑不通则回修文
 - **2026-09-27 · 收口轮**（`fix/test-env-decoupling`）· 结论：A、B 两分支合并进 `main`（合并提交 `f30bf8c`、`71665f3`）；`tests/conftest.py` 解耦生产 `.env` 鉴权（`3ef9ed2`）；3-4 与 3-3 结案；`docs/04` 状态刷新（§1 缺口表、§4.2/§4.4/§7 陈旧标记）。· 关键数字：生产 `.env` 原样不动下 `pytest -q -m "not net"` → **235 passed / 0 failed**；24h 长稳可用率 100%、采样覆盖率 100%。· 证据：`docs/reports/m4-4.4-soak-24h-20260926.md`。· 后续动作：人工项 **2-9（相关性抽检）与 3-9（真实客户端联调）待用户本人完成**。
 - **2026-09-25~26 · A 轮**（`feature/m4-4.2-cloud-deploy`）· 结论：阿里云 `43.106.104.49` 完成云部署验收——SearXNG + 应用 + Caddy(TLS) 三容器 healthy、Let's Encrypt 真证书、Host 白名单 421、鉴权/限流、`data/` 持久化、全通道自检 **24/24**；并修自检脚本三处自身缺陷（时效性口径对齐 M5-5.2、ratelimit 复用 `--api-key`、报告只输出 Key 掩码）。· 证据：`docs/reports/m4-4.2-deploy-20260925.md`、`docs/reports/m4-4.2-deploy-selfcheck-20260925.md`、`docs/05-服务器部署手册.md`。· 后续动作：无（安全组已放行；仅剩证书 2026-12-24 到期前自动续期依赖 80/443 长期放行）。
 - **2026-09-26~27 · B 轮**（`fix/soak-longrun-metrics`）· 结论：长稳判定加固（有结果可用率 / SKIP 不补跑 / 休眠假样本 / 覆盖率下限 95% / 覆盖窗口按 CSV 全部行含预热）、`--status` 收尾不再误报心跳；24h 长稳跑满并通过。· 关键数字：PID 223395，289 行 / 287 计入统计，可用率 100%、采样覆盖率 100%、异常 0、疑似休眠 0，内存抬升后走平（+1.1%）。· 证据：`docs/reports/m4-4.4-soak-24h-20260926.md`、`docs/reports/m4-4.4-soak-coverage-floor-20260926.md`。· 后续动作：无。
+- **2026-09-27 · M5 并发闸门轮**（`feature/m5-concurrency-gate`）· 结论：新增上游并发闸门（默认 3 / 6 / 2.5s）+ 过载快速返回（REST 429 + `Retry-After`、MCP 可读 `ToolError`、已有结果时 `degraded` 标记）+ `/metrics`（Prometheus 文本，沿用 REST 鉴权）；过载**不降级到兜底源**、**不被吞成空结果**；搜索语义 / 融合 / 时效 / 引擎健康逻辑未改。· 关键数字：并发 30 冷查询基线 P50 10675ms / P95 12268ms（复现 §4.4 的 12s 量级，日志 37 次重试、30 次上游失败），改动后 P95 **2831ms**、上游 error **0**；news@10 P95 9030→**5382ms**；单请求 P95 +2.0%（≤5%）；离线 **251 passed**。· 证据：`docs/reports/m5-concurrency-gate-20260927.md`。· 后续动作：人工项 **2-9、3-9 待用户本人完成**；多 worker 部署时闸门上限需按 worker 数分摊（已在 `.env.example` 写明）。
