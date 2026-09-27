@@ -71,7 +71,8 @@ def _write_case(
 
 
 def test_status_suppresses_heartbeat_warning_when_finished(tmp_path, capsys) -> None:
-    """正常收尾（finished=True）：心跳停在最后一次采样是预期的，不得误报超期。"""
+    """正常收尾（finished=True）：心跳停在最后一次采样是预期的，不得误报超期；
+    同时「覆盖窗口」按 CSV 全部行打印，并另附「计入统计窗口」参考值。"""
     args = _write_case(tmp_path, finished=True, heartbeat_age_s=3600)
 
     assert soak._print_status(args) == 0
@@ -79,6 +80,9 @@ def test_status_suppresses_heartbeat_warning_when_finished(tmp_path, capsys) -> 
     printed = capsys.readouterr().out
     assert "finished=True" in printed
     assert "⚠ 心跳已超过 3 个采样周期" not in printed
+    assert "覆盖窗口" in printed
+    assert "0.33 h，按 CSV 全部行含预热" in printed
+    assert "计入统计窗口" in printed
 
 
 def test_status_warns_on_stale_heartbeat_when_not_finished(tmp_path, capsys) -> None:
@@ -90,15 +94,3 @@ def test_status_warns_on_stale_heartbeat_when_not_finished(tmp_path, capsys) -> 
     printed = capsys.readouterr().out
     assert "finished=False" in printed
     assert "⚠ 心跳已超过 3 个采样周期" in printed
-
-
-def test_status_prints_coverage_window_over_all_rows(tmp_path, capsys) -> None:
-    """--status 的「覆盖窗口」按 CSV 全部行给出，并另附「计入统计窗口」参考值。"""
-    args = _write_case(tmp_path, finished=True, heartbeat_age_s=10)
-
-    assert soak._print_status(args) == 0
-
-    printed = capsys.readouterr().out
-    assert "覆盖窗口" in printed
-    assert "0.33 h，按 CSV 全部行含预热" in printed
-    assert "计入统计窗口" in printed
