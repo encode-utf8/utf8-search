@@ -62,6 +62,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--concurrency", type=int, default=10, help="并发数")
     parser.add_argument("--n", type=int, default=50, help="总请求数")
     parser.add_argument("--mode", default="basic", help="深度模式；多个用逗号分隔并按请求轮换，如 basic,advanced")
+    parser.add_argument("--topic", default="general", help="搜索主题：general / news（news 会多打一路通用引擎兜底）")
     parser.add_argument("--max-results", type=int, default=5, help="每次查询返回的结果数")
     parser.add_argument("--timeout", type=float, default=60.0, help="单个请求的超时（秒）")
     parser.add_argument("--warmup", type=int, default=2, help="预热请求数（不计入统计）")
@@ -84,10 +85,11 @@ async def _one_request(
     headers: dict[str, str],
     query: str,
     mode: str,
+    topic: str,
     max_results: int,
 ) -> dict[str, object]:
     """发一个搜索请求，返回状态码与耗时（异常也被归一化成结果，不向上抛）。"""
-    payload = {"query": query, "search_depth": mode, "max_results": max_results}
+    payload = {"query": query, "search_depth": mode, "topic": topic, "max_results": max_results}
     started = time.perf_counter()
     try:
         response = await client.post(search_url, headers=headers, json=payload)
@@ -145,6 +147,7 @@ async def run(args: argparse.Namespace) -> int:
                 headers=headers,
                 query=query,
                 mode=modes[index % len(modes)],
+                topic=args.topic,
                 max_results=args.max_results,
             )
             status = result["status"] if result["status"] is not None else result["error"]
@@ -163,6 +166,7 @@ async def run(args: argparse.Namespace) -> int:
                     headers=headers,
                     query=query,
                     mode=modes[index % len(modes)],
+                    topic=args.topic,
                     max_results=args.max_results,
                 )
 
@@ -225,6 +229,7 @@ async def run(args: argparse.Namespace) -> int:
             "concurrency": args.concurrency,
             "n": args.n,
             "mode": args.mode,
+            "topic": args.topic,
             "wall_seconds": wall,
             "rss_before": rss_before,
             "rss_after": rss_after,

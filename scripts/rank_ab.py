@@ -80,7 +80,8 @@ async def collect_snapshot(args: argparse.Namespace) -> dict[str, object]:
     try:
         for index, (category, query) in enumerate(QUERIES, start=1):
             request = SearchRequest(query=query, max_results=args.max_results, depth="basic")
-            hits, engines_used, failed = await pipeline._collect_hits(request)
+            # 第 4 个返回值是 M5 并发保护的 degraded 标记（本脚本只关心候选集，忽略即可）
+            hits, engines_used, failed, _degraded = await pipeline._collect_hits(request)
             entries.append(
                 {
                     "id": index,

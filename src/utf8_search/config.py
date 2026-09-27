@@ -147,6 +147,27 @@ class Settings(BaseSettings):
         default=5.0, gt=0, description="deep 模式的单页下载上限（秒）；大页较多，需比 advanced 宽松"
     )
     max_fetch_concurrency: int = Field(default=24, ge=1, description="并发抓取上限")
+    # ---------- 上游并发闸门（M5 并发保护） ----------
+    # 背景：docs/04 §4.4 实测并发 10 冷查询会劣化到 ~12s，瓶颈在上游聚合（吞吐仅 1.3-2.0 req/s）。
+    # 闸门只限制「同时打到 SearXNG 的聚合请求数」，不改搜索语义；目标是「宁可快速失败，不要一起慢」。
+    upstream_max_concurrency: int = Field(
+        default=3,
+        ge=0,
+        description="同时打到 SearXNG 的聚合请求上限（0 = 关闭闸门，不推荐）；实测并发 1-3 时 P50≈1.3s",
+    )
+    upstream_queue_limit: int = Field(
+        default=6,
+        ge=0,
+        description="上游闸门允许排队的请求数上限；队列满立即返回 429，避免把上游压垮",
+    )
+    upstream_max_wait: float = Field(
+        default=2.5,
+        gt=0,
+        description="上游闸门排队等待上限（秒）；超过立即返回 429，避免所有请求一起慢",
+    )
+    metrics_enabled: bool = Field(
+        default=True, description="是否暴露 Prometheus 文本格式的 /metrics（沿用 REST 鉴权）"
+    )
     fetch_early_stop_ratio: float = Field(
         default=0.5, gt=0, le=1.0, description="深度模式读到该比例的目标页面即提前返回（0-1）"
     )

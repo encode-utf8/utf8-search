@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
+from utf8_search.core.upstream_gate import UpstreamOverloaded
 from utf8_search.models import ExtractItem, ExtractResponse, SearchResponse, SearchResult
 from utf8_search.server import http_api
 
@@ -59,6 +60,9 @@ class StubPipeline:
             response_time=0.1,
             request_id="req-2",
         )
+
+    def render_metrics(self) -> str:
+        return "# TYPE utf8search_upstream_active gauge\nutf8search_upstream_active 0\n"
 
 
 def _client(monkeypatch) -> tuple[TestClient, StubPipeline]:
@@ -117,6 +121,40 @@ def test_extract_endpoint(monkeypatch) -> None:
     payload = response.json()
     assert payload["results"][0]["raw_content"] == "# 正文"
     assert payload["failed_results"] == []
+
+
+def test_search_returns_429_with_retry_after_on_upstream_overload(monkeypatch) -> None:
+    """上游过载且无结果 → 明确 429 + Retry-After，而不是空结果。"""
+    client, stub = _client(monkeypatch)
+
+    async def overloaded(request):
+        raise UpstreamOverloaded(reason="queue_full", retry_after=2.5)
+
+    monkeypatch.setattr(stub, "search", overloaded)
+    response = client.post("/search", json={"query": "过载"})
+
+    assert response.status_code == 429
+    assert response.headers.get("Retry-After") == "3"
+    assert "过载" in response.json()["detail"]
+
+
+def test_metrics_endpoint_renders_prometheus_text(monkeypatch) -> None:
+    """`/metrics` 返回 Prometheus 文本（本项目默认开启，沿用 REST 鉴权）。"""
+    client, _ = _client(monkeypatch)
+    response = client.get("/metrics")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/plain")
+    assert "utf8search_upstream_active" in response.text
+
+
+def test_metrics_endpoint_can_be_disabled(monkeypatch) -> None:
+    """`UTF8SEARCH_METRICS_ENABLED=false` 时端点整体关闭（404）。"""
+    client, _ = _client(monkeypatch)
+    monkeypatch.setattr(
+        http_api, "settings", http_api.settings.model_copy(update={"metrics_enabled": False})
+    )
+    assert client.get("/metrics").status_code == 404
 
 
 def test_health_endpoint(monkeypatch) -> None:

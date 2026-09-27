@@ -8,6 +8,7 @@ from typing import Any
 
 import httpx
 
+from ..core.upstream_gate import UpstreamGate
 from .base import BaseProvider, SearchHit
 from .engine_health import EngineHealthTracker
 
@@ -32,6 +33,7 @@ class SearxngProvider(BaseProvider):
         news_engines: list[str] | None = None,
         news_pass_time_range: bool = False,
         engine_health: EngineHealthTracker | None = None,
+        gate: UpstreamGate | None = None,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.client = client
@@ -47,6 +49,9 @@ class SearxngProvider(BaseProvider):
         self.timeout_limit = timeout_limit
         # 引擎健康度自适应（M5-5.1，见 engine_health.py）：None 表示关闭，行为与旧版一致
         self.engine_health = engine_health
+        # 上游并发闸门（M5 并发保护，见 core/upstream_gate.py）：None 表示不起闸门（测试/离线场景）。
+        # 闸门包住**整个 search()**（含内部的瞬时错误重试），因此一次搜索只占一个槽位。
+        self.gate = gate
         # 上一次查询里不可用的引擎，供上层判断是否需要降级到兜底源（保留旧接口）
         self.unresponsive_engines: list[str] = []
         # 引擎名 -> 失败原因：旧实现只取了名字、把原因丢掉了，而原因正是分级退避的依据
@@ -55,6 +60,40 @@ class SearxngProvider(BaseProvider):
         self.constraint_ignored = False
 
     async def search(
+        self,
+        query: str,
+        *,
+        max_results: int,
+        topic: str = "general",
+        time_range: str | None = None,
+        engines: list[str] | None = None,
+        language: str = "all",
+    ) -> list[SearchHit]:
+        """调用 `/search?format=json`，返回归一化结果（经过上游并发闸门）。
+
+        闸门在这里而不是在 pipeline 里，是为了让**重试也算同一个槽位**：重试放大并发正是
+        §4.4 里 12s 的来源之一。过载时抛 `UpstreamOverloaded`，由上层映射成 429 / MCP 错误。
+        """
+        if self.gate is None:
+            return await self._search_impl(
+                query,
+                max_results=max_results,
+                topic=topic,
+                time_range=time_range,
+                engines=engines,
+                language=language,
+            )
+        async with self.gate.track():
+            return await self._search_impl(
+                query,
+                max_results=max_results,
+                topic=topic,
+                time_range=time_range,
+                engines=engines,
+                language=language,
+            )
+
+    async def _search_impl(
         self,
         query: str,
         *,
