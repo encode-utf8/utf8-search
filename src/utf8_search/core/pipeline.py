@@ -296,8 +296,12 @@ class SearchPipeline:
         - **绝不被 `except Exception` 吞成「返回 0 条」**——一条结果都没有时直接向上抛，由接口层映射成
           429 / MCP 可读错误；
         - **主源过载时绝不降级到兜底源**（Bing 等）——过载是全局保护，把压力转嫁给更脆弱的抓取源只会扩大故障面；
-        - **可选上游调用改用非阻塞取容量**（news 的通用引擎补充、Bing 兜底）：有容量才补，没容量跳过并把
-          原因写进 `degraded_reason`，主源与整体延迟不受影响（news 的等效并发因此接近 limit，而不是 limit/2）。
+        - **按「跳过是否会导致返回空结果」区分两类调用**：
+          * **兜底型**（Bing 兜底、news 的通用引擎补充）：只在主源凑不满 `max_results` 时触发，
+            跳过就会把空/残缺结果交给用户 → **不许静默跳过**，按 `upstream_optional_wait` 有限等待取容量，
+            拿不到直接 429（`fallback_no_capacity` / `no_capacity`）；
+          * **锦上添花型**（少几条候选无妨）：可跳过并记 `degraded_reason`（当前产品路径没有这种调用，
+            因此正常情况下 `degraded` 为 false）。
         """
         pages_cap = self._page_budget(request)
         want = max(request.max_results, pages_cap)
@@ -322,29 +326,25 @@ class SearchPipeline:
         overloaded: UpstreamOverloaded | None = None
         degraded_reasons: list[str] = []
 
-        # 新闻主题：通用引擎兜底请求与主源的新闻请求互不依赖，先并发发出去，
-        # 拿到主源结果后再汇合。这样新闻主题只多花「较慢的那一次」的延迟。
-        general_task: asyncio.Task | None = None
-        if request.topic == "news" and self.settings.news_include_general:
-            general_task = asyncio.create_task(self._collect_general_extra(request, want))
-
         # 主源：SearXNG；仅在「结果拿不满用户需要的条数」或主源失败时才启用兜底源，
         # 避免深度模式下为了凑够抓取页数而白白多打一次外部请求。
         for index, provider in enumerate(self.providers):
             if index > 0 and len(hits) >= request.max_results:
                 break
-            # 兜底源（index>0）走**非阻塞**取容量：有容量才补，没容量跳过并记 degraded，
-            # 既不排队拖慢主流程，也不把压力转嫁给更脆弱的抓取源。
+            # 兜底源（index>0）属于**兜底型**调用：它只在「主源凑不满 max_results」时才会走到这里，
+            # 跳过它就可能让用户拿到空/残缺结果，所以**不许静默跳过**——按 `upstream_optional_wait`
+            # 有限等待取容量，等不到直接抛 `UpstreamOverloaded`（→ 429），绝不返回空结果。
             optional = index > 0
             acquired_optional = False
             if optional:
-                # 有限等待（默认 0.5s）：给兜底源一点机会，但绝不占用主源的排队额度
                 acquired_optional = await self.gate.try_acquire(
                     timeout=self.settings.upstream_optional_wait
                 )
                 if not acquired_optional:
-                    degraded_reasons.append("fallback_no_capacity")
-                    continue
+                    self.gate.metrics.record_rejected("fallback_no_capacity")
+                    raise UpstreamOverloaded(
+                        reason="fallback_no_capacity", retry_after=self.gate.retry_after
+                    )
             try:
                 provider_hits = await provider.search(
                     request.query,
@@ -379,18 +379,20 @@ class SearchPipeline:
                 if len(hits) >= request.max_results and index == 0:
                     break
 
-        # 汇合并发的通用兜底结果（新闻源对中文长尾覆盖差，用通用结果补齐候选；
-        # 融合阶段会按 URL 去重）
-        if general_task is not None:
+        # 主源过载且一条结果都没有 → 直接 429；不再去试补充路，避免在同一个饱和的上游上继续排队。
+        if overloaded is not None and not hits:
+            raise overloaded
+
+        # 新闻主题：**主源结果不足时才补**（复用 5.2 的判据：不够填满 max_results 才去补）。
+        # 这条补充路存在的唯一理由就是补中文长尾的 0 结果（实测新闻引擎 8 条查询里 3 条直接 0 条），
+        # 所以它同样是**兜底型**：拿不到容量就直接 429，不允许静默跳过并把空结果交给用户。
+        # 改成「不足才补 + 串行」后，news 每请求的上游需求从 ~2 降到 ~1（多数请求只打主源）。
+        if self._needs_general_extra(hits, request):
             try:
-                extras, extra_engines, extra_failed = await general_task
+                extras, extra_engines, extra_failed = await self._collect_general_extra(request, want)
             except UpstreamOverloaded as exc:
-                # 第二路（通用引擎补充，非阻塞取容量）没拿到容量 / 被拒：已有结果则降级返回，
-                # 一条结果都没有时由下面的判断统一上抛。
-                degraded_reasons.append(
-                    "news_general_no_capacity" if exc.reason == "no_capacity" else "upstream_overloaded"
-                )
-                # 这是**可选路**被拒，不代表主源过载：不参与「是否上抛」的判断。
+                # 兜底型调用拿不到容量 → 直接 429（不返回空/残缺结果）
+                raise exc from None
             except Exception as exc:  # noqa: BLE001 - 兜底检索失败不应影响新闻主流程
                 logger.warning("新闻补充检索（通用引擎）失败: %s", exc)
                 failed_engines.append("searxng:general")
@@ -400,7 +402,7 @@ class SearchPipeline:
                 failed_engines.extend(extra_failed)
 
         if overloaded is not None and hits:
-            # 主源过载但仍有结果（例如 news 的通用补充路先拿到了候选）→ 降级返回
+            # 主源过载但仍有结果 → 降级返回（保留可用结果）
             degraded_reasons.append("upstream_overloaded")
         if overloaded is not None and not hits:
             # 一条结果都没有、且原因是上游过载 —— 必须让调用方看到明确信号，不能返回空列表。
@@ -408,6 +410,18 @@ class SearchPipeline:
         if hits:
             await self.cache.set(query_key, [h.to_dict() for h in hits], self.settings.cache_query_ttl)
         return hits, engines_used, failed_engines, (",".join(dict.fromkeys(degraded_reasons)) or None)
+
+    def _needs_general_extra(self, hits: list[SearchHit], request: SearchRequest) -> bool:
+        """news 主题下是否需要再补一路通用引擎（**兜底型**判据）。
+
+        判据复用 5.2 那条：**主源结果不够填满用户要的条数**（`len(hits) < max_results`）才去补。
+        这与「跳过这次调用是否会导致返回空结果」一致：新闻引擎对中文长尾会直接返回 0 条
+        （实测 8 条查询里 3 条 0 条），不补就等于把空/残缺结果交给用户 —— 所以补充路属于兜底型，
+        拿不到容量要直接 429，不许静默跳过。
+        """
+        if request.topic != "news" or not self.settings.news_include_general:
+            return False
+        return len(hits) < request.max_results
 
     async def _collect_general_extra(
         self, request: SearchRequest, want: int

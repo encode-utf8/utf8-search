@@ -155,11 +155,11 @@ async def test_try_acquire_with_bounded_wait_succeeds_when_slot_frees() -> None:
 
 # ---------------------------------------------------------------- 配置解析
 def test_gate_settings_defaults_and_env_override(monkeypatch) -> None:
-    """默认 3 / 12 / 4.0s（「排队优先」档，见参数矩阵）；`UTF8SEARCH_UPSTREAM_*` 可覆盖，metrics 开关可关。"""
+    """默认 3 / 12 / 4.0s / 1.0s（见参数矩阵与 OPTIONAL_WAIT 重扫）；env 可覆盖，metrics 开关可关。"""
     base = Settings()
     assert (base.upstream_max_concurrency, base.upstream_queue_limit) == (3, 12)
     assert base.upstream_max_wait == pytest.approx(4.0)
-    assert base.upstream_optional_wait == pytest.approx(0.5)
+    assert base.upstream_optional_wait == pytest.approx(1.0)
     assert base.metrics_enabled is True
     gate = UpstreamGate.from_settings(base)
     assert (gate.limit, gate.queue_limit, gate.max_wait) == (3, 12, pytest.approx(4.0))
@@ -261,26 +261,25 @@ class _RecordingProvider(BaseProvider):
         return self._hits[:max_results]
 
 
-class _NewsMainOkGeneralNoCapacity(BaseProvider):
-    """news 主路成功、通用补充路**没拿到容量**（用于验证 degraded 原因）。
-
-    同时记录补充路用的有限等待秒数（可选调用不得占用主源的排队额度）。
-    """
+class _NewsProvider(BaseProvider):
+    """news 主源假实现：主路返回给定 hits，通用补充路记录调用次数/等待参数后报 no_capacity。"""
 
     name = "searxng"
 
     def __init__(self, hits: list[SearchHit]) -> None:
         self._hits = hits
-        self.calls = 0
+        self.news_calls = 0
+        self.general_calls = 0
         self.general_optional_wait: float | None = None
 
     async def search(
         self, query, *, max_results, topic="general", time_range=None, engines=None, language="all",
         optional_wait=None,
     ):
-        self.calls += 1
         if topic == "news":
+            self.news_calls += 1
             return self._hits[:max_results]
+        self.general_calls += 1
         self.general_optional_wait = optional_wait
         raise UpstreamOverloaded(reason="no_capacity", retry_after=2.5)
 
@@ -338,38 +337,55 @@ class _EmptySearxng(BaseProvider):
         return []
 
 
-async def test_fallback_is_skipped_without_capacity(settings, tmp_path) -> None:
-    """兜底源非阻塞取容量：没容量就跳过并记 degraded，不排队拖慢主流程。"""
+async def test_fallback_without_capacity_raises_429_instead_of_empty(settings, tmp_path) -> None:
+    """兜底源属于兜底型：拿不到容量必须 429（抛 UpstreamOverloaded），**不许静默跳过返回空结果**。"""
     primary = _EmptySearxng()
     fallback = _RecordingProvider("bing", _hits(5))
     scoped = settings.model_copy(update={"upstream_max_concurrency": 1})
     pipeline = await _make_pipeline(tmp_path, scoped, [primary, fallback])
     await pipeline.gate.acquire()  # 占满唯一槽位
 
-    response = await pipeline.search(SearchRequest(query="兜底-无容量", max_results=3, depth="basic"))
+    with pytest.raises(UpstreamOverloaded) as info:
+        await pipeline.search(SearchRequest(query="兜底-无容量", max_results=3, depth="basic"))
     pipeline.gate.release()
 
     assert fallback.calls == 0  # 不排队、不调用
-    assert response.degraded is True
-    assert response.degraded_reason == "fallback_no_capacity"
+    assert info.value.reason == "fallback_no_capacity"
     await pipeline.close()
 
 
-async def test_news_general_supplement_skipped_without_capacity(settings, tmp_path) -> None:
-    """news 通用补充路没容量时跳过：主源结果照常返回 + degraded 记明原因（不是 429、也不是空结果）。"""
-    provider = _NewsMainOkGeneralNoCapacity(_hits(6))
+async def test_news_general_extra_not_called_when_main_source_sufficient(settings, tmp_path) -> None:
+    """结构优化：主源结果够填满 max_results 时**不再触发**通用补充路（news 每请求上游需求 ~1）。"""
+    provider = _NewsProvider(_hits(6))
     scoped = settings.model_copy(update={"news_include_general": True})
     pipeline = await _make_pipeline(tmp_path, scoped, [provider])
 
     response = await pipeline.search(
-        SearchRequest(query="过载降级-news", max_results=3, depth="basic", topic="news")
+        SearchRequest(query="news-充足", max_results=3, depth="basic", topic="news")
     )
 
-    assert response.degraded is True
-    assert response.degraded_reason == "news_general_no_capacity"
-    assert response.results  # 仍有可用结果
-    # 可选补充路必须走「有限等待」而不是占用主源排队额度
-    assert provider.general_optional_wait == pytest.approx(0.5)
+    assert provider.news_calls == 1
+    assert provider.general_calls == 0  # 不足才补 → 充足时不补
+    assert response.degraded is False
+    assert response.results
+    await pipeline.close()
+
+
+async def test_news_general_extra_without_capacity_raises_429(settings, tmp_path) -> None:
+    """主源不足时补充路是兜底型：拿不到容量直接 429，不返回空/残缺结果。"""
+    provider = _NewsProvider(_hits(1))  # 主源只给 1 条 < max_results=3 → 触发补充路
+    scoped = settings.model_copy(update={"news_include_general": True})
+    pipeline = await _make_pipeline(tmp_path, scoped, [provider])
+
+    with pytest.raises(UpstreamOverloaded) as info:
+        await pipeline.search(
+            SearchRequest(query="news-不足", max_results=3, depth="basic", topic="news")
+        )
+
+    assert provider.general_calls == 1
+    assert info.value.reason == "no_capacity"
+    # 兜底型调用走「有限等待」而不是无限排队或静默跳过
+    assert provider.general_optional_wait == pytest.approx(1.0)
     await pipeline.close()
 
 

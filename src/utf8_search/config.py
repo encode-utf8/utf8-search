@@ -157,7 +157,9 @@ class Settings(BaseSettings):
     )
     # 默认值来自 2026-09-27 的参数矩阵扫描（见 docs/reports/m5-concurrency-gate-20260927.md）：
     # 「排队优先、拒绝为例外」——queue 6 时 @10 只有 18% 成功率，queue 12 才把 @10 拉到 100%；
-    # max_wait 2.5s 时 @30 只有 18%，4.0s 到 25%（且 @10 仍 100%）。取满足两条选点标准的最小 max_wait。
+    # max_wait 取满足「@10 ≥90% 且 P95 ≤6s」的最小值 4.0s（@30 实测 15-27%，在 25% 阈值附近抖动）。
+    # 兜底型调用的 OPTIONAL_WAIT 在「主源不足才补」结构改完后重扫 1.0/1.5/3.0s，
+    # 取满足「news@10 降级率 ≤30% 且 空结果率 ≤10% 且 P95 ≤6.5s」的最小值 1.0s。
     upstream_queue_limit: int = Field(
         default=12,
         ge=0,
@@ -169,11 +171,11 @@ class Settings(BaseSettings):
         description="上游闸门排队等待上限（秒）；超过立即返回 429，避免所有请求一起慢",
     )
     upstream_optional_wait: float = Field(
-        default=0.5,
+        default=1.0,
         ge=0,
         description=(
-            "可选上游调用（news 的通用引擎补充、Bing 兜底）拿容量的有限等待（秒）；"
-            "0 = 纯非阻塞（拿不到立即跳过）。给一点等待可显著降低 news 的降级率"
+            "兜底型上游调用（news 的通用引擎补充、Bing 兜底）取容量的有限等待（秒）。"
+            "0 = 立即失败。等不到容量即 429，绝不静默跳过（跳过会返回空结果）"
         ),
     )
     metrics_enabled: bool = Field(
