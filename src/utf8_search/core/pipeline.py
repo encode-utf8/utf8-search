@@ -338,7 +338,10 @@ class SearchPipeline:
             optional = index > 0
             acquired_optional = False
             if optional:
-                acquired_optional = await self.gate.try_acquire()
+                # 有限等待（默认 0.5s）：给兜底源一点机会，但绝不占用主源的排队额度
+                acquired_optional = await self.gate.try_acquire(
+                    timeout=self.settings.upstream_optional_wait
+                )
                 if not acquired_optional:
                     degraded_reasons.append("fallback_no_capacity")
                     continue
@@ -438,8 +441,9 @@ class SearchPipeline:
                     time_range=request.time_range,
                     engines=extra_engines,
                     language=self.settings.language,
-                    # 可选补充路：非阻塞取容量，拿不到就跳过（由 _collect_hits 记 degraded）
-                    non_blocking=True,
+                    # 可选补充路：**有限等待**取容量，拿不到就跳过（由 _collect_hits 记 degraded）。
+                    # 这条路的唯一理由就是补中文长尾的 0 结果，所以给 0.5s 等待换更低的降级率。
+                    optional_wait=self.settings.upstream_optional_wait,
                 )
             except UpstreamOverloaded:
                 # 过载必须穿透到 _collect_hits 决定「降级返回」还是「上抛 429」，

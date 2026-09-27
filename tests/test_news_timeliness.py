@@ -55,7 +55,7 @@ class _DateProvider(BaseProvider):
 
     async def search(
         self, query, *, max_results, topic="general", time_range=None, engines=None, language="all",
-        non_blocking=False,
+        optional_wait=None,
     ):
         return self._hits[:max_results]
 
@@ -85,7 +85,7 @@ class _RecordingProvider(BaseProvider):
 
     async def search(
         self, query, *, max_results, topic="general", time_range=None, engines=None, language="all",
-        non_blocking=False,
+        optional_wait=None,
     ):  # noqa: ANN001
         self.calls.append(
             {"topic": topic, "time_range": time_range, "engines": engines, "max_results": max_results}
@@ -327,7 +327,7 @@ class _ConcurrencyProbeProvider(BaseProvider):
 
     async def search(
         self, query, *, max_results, topic="general", time_range=None, engines=None, language="all",
-        non_blocking=False,
+        optional_wait=None,
     ):  # noqa: ANN001
         if topic == "news":
             try:

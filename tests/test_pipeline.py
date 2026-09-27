@@ -26,7 +26,7 @@ class FakeProvider(BaseProvider):
 
     async def search(
         self, query, *, max_results, topic="general", time_range=None, engines=None, language="all",
-        non_blocking=False,
+        optional_wait=None,
     ):
         self.calls += 1
         if self._delay:

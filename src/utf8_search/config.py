@@ -168,6 +168,14 @@ class Settings(BaseSettings):
         gt=0,
         description="上游闸门排队等待上限（秒）；超过立即返回 429，避免所有请求一起慢",
     )
+    upstream_optional_wait: float = Field(
+        default=0.5,
+        ge=0,
+        description=(
+            "可选上游调用（news 的通用引擎补充、Bing 兜底）拿容量的有限等待（秒）；"
+            "0 = 纯非阻塞（拿不到立即跳过）。给一点等待可显著降低 news 的降级率"
+        ),
+    )
     metrics_enabled: bool = Field(
         default=True, description="是否暴露 Prometheus 文本格式的 /metrics（沿用 REST 鉴权）"
     )

@@ -119,19 +119,38 @@ async def test_try_acquire_fails_fast_without_queueing_or_histogram() -> None:
     assert gate.active == 0
 
 
-async def test_track_non_blocking_reports_no_capacity() -> None:
-    """`track(non_blocking=True)` 拿不到容量时抛 reason=no_capacity，且不排队。"""
+async def test_track_optional_reports_no_capacity_after_bounded_wait() -> None:
+    """`track(optional_wait=...)` 有限等待后仍拿不到容量 → reason=no_capacity（只等这么久，不无限等）。"""
     gate = UpstreamGate(limit=1, queue_limit=2, max_wait=5.0)
     await gate.acquire()
 
+    started = asyncio.get_running_loop().time()
     with pytest.raises(UpstreamOverloaded) as info:
-        async with gate.track(non_blocking=True):
+        async with gate.track(optional_wait=0.05):
             pass
+    waited = asyncio.get_running_loop().time() - started
 
     assert info.value.reason == "no_capacity"
+    assert 0.04 <= waited < 0.5  # 只等了约定的 0.05s，没有排到主源的 5s 上限
     assert gate.metrics.rejected_by_reason == {"no_capacity": 1}
-    assert gate.metrics.acquire_seconds.count == 0
+    assert gate.metrics.acquire_seconds.count == 1  # 有限等待确实排过队 → 计入排队直方图
     gate.release()
+
+
+async def test_try_acquire_with_bounded_wait_succeeds_when_slot_frees() -> None:
+    """有限等待期间有人释放 → try_acquire 返回 True 并拿到槽位。"""
+    gate = UpstreamGate(limit=1, queue_limit=2, max_wait=5.0)
+    await gate.acquire()
+
+    async def release_soon() -> None:
+        await asyncio.sleep(0.02)
+        gate.release()
+
+    releaser = asyncio.create_task(release_soon())
+    assert await gate.try_acquire(timeout=1.0) is True
+    assert gate.active == 1
+    gate.release()
+    await releaser
 
 
 # ---------------------------------------------------------------- 配置解析
@@ -140,6 +159,7 @@ def test_gate_settings_defaults_and_env_override(monkeypatch) -> None:
     base = Settings()
     assert (base.upstream_max_concurrency, base.upstream_queue_limit) == (3, 12)
     assert base.upstream_max_wait == pytest.approx(4.0)
+    assert base.upstream_optional_wait == pytest.approx(0.5)
     assert base.metrics_enabled is True
     gate = UpstreamGate.from_settings(base)
     assert (gate.limit, gate.queue_limit, gate.max_wait) == (3, 12, pytest.approx(4.0))
@@ -147,10 +167,12 @@ def test_gate_settings_defaults_and_env_override(monkeypatch) -> None:
     monkeypatch.setenv("UTF8SEARCH_UPSTREAM_MAX_CONCURRENCY", "2")
     monkeypatch.setenv("UTF8SEARCH_UPSTREAM_QUEUE_LIMIT", "0")
     monkeypatch.setenv("UTF8SEARCH_UPSTREAM_MAX_WAIT", "1.5")
+    monkeypatch.setenv("UTF8SEARCH_UPSTREAM_OPTIONAL_WAIT", "0.2")
     monkeypatch.setenv("UTF8SEARCH_METRICS_ENABLED", "false")
     override = Settings()
     assert (override.upstream_max_concurrency, override.upstream_queue_limit) == (2, 0)
     assert override.upstream_max_wait == pytest.approx(1.5)
+    assert override.upstream_optional_wait == pytest.approx(0.2)
     assert override.metrics_enabled is False
 
 
@@ -217,7 +239,7 @@ class _OverloadProvider(BaseProvider):
 
     async def search(
         self, query, *, max_results, topic="general", time_range=None, engines=None, language="all",
-        non_blocking=False,
+        optional_wait=None,
     ):
         self.calls += 1
         raise UpstreamOverloaded(reason="queue_full", retry_after=2.5)
@@ -233,7 +255,7 @@ class _RecordingProvider(BaseProvider):
 
     async def search(
         self, query, *, max_results, topic="general", time_range=None, engines=None, language="all",
-        non_blocking=False,
+        optional_wait=None,
     ):
         self.calls += 1
         return self._hits[:max_results]
@@ -242,7 +264,7 @@ class _RecordingProvider(BaseProvider):
 class _NewsMainOkGeneralNoCapacity(BaseProvider):
     """news 主路成功、通用补充路**没拿到容量**（用于验证 degraded 原因）。
 
-    同时记录补充路是否用了 `non_blocking=True`（可选调用不得占用主源的排队额度）。
+    同时记录补充路用的有限等待秒数（可选调用不得占用主源的排队额度）。
     """
 
     name = "searxng"
@@ -250,16 +272,16 @@ class _NewsMainOkGeneralNoCapacity(BaseProvider):
     def __init__(self, hits: list[SearchHit]) -> None:
         self._hits = hits
         self.calls = 0
-        self.general_non_blocking: bool | None = None
+        self.general_optional_wait: float | None = None
 
     async def search(
         self, query, *, max_results, topic="general", time_range=None, engines=None, language="all",
-        non_blocking=False,
+        optional_wait=None,
     ):
         self.calls += 1
         if topic == "news":
             return self._hits[:max_results]
-        self.general_non_blocking = non_blocking
+        self.general_optional_wait = optional_wait
         raise UpstreamOverloaded(reason="no_capacity", retry_after=2.5)
 
 
@@ -310,7 +332,7 @@ class _EmptySearxng(BaseProvider):
 
     async def search(
         self, query, *, max_results, topic="general", time_range=None, engines=None, language="all",
-        non_blocking=False,
+        optional_wait=None,
     ):
         self.calls += 1
         return []
@@ -346,7 +368,8 @@ async def test_news_general_supplement_skipped_without_capacity(settings, tmp_pa
     assert response.degraded is True
     assert response.degraded_reason == "news_general_no_capacity"
     assert response.results  # 仍有可用结果
-    assert provider.general_non_blocking is True  # 可选补充路必须非阻塞
+    # 可选补充路必须走「有限等待」而不是占用主源排队额度
+    assert provider.general_optional_wait == pytest.approx(0.5)
     await pipeline.close()
 
 

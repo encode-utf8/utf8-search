@@ -68,15 +68,16 @@ class SearxngProvider(BaseProvider):
         time_range: str | None = None,
         engines: list[str] | None = None,
         language: str = "all",
-        non_blocking: bool = False,
+        optional_wait: float | None = None,
     ) -> list[SearchHit]:
         """调用 `/search?format=json`，返回归一化结果（经过上游并发闸门）。
 
         闸门在这里而不是在 pipeline 里，是为了让**重试也算同一个槽位**：重试放大并发正是
         §4.4 里 12s 的来源之一。过载时抛 `UpstreamOverloaded`，由上层映射成 429 / MCP 错误。
 
-        `non_blocking=True`（news 的通用引擎补充路用它）：拿不到容量立即抛
-        `UpstreamOverloaded(reason="no_capacity")`，不排队 —— 可选调用不该抢占主源的排队额度。
+        `optional_wait=<秒>`（news 的通用引擎补充路用它）：最多等这么久拿容量，拿不到就抛
+        `UpstreamOverloaded(reason="no_capacity")` —— 可选调用不该抢占主源的排队额度，
+        但给一点有限等待能显著降低「该补中文长尾却补不上」的降级率。
         """
         if self.gate is None:
             return await self._search_impl(
@@ -87,7 +88,7 @@ class SearxngProvider(BaseProvider):
                 engines=engines,
                 language=language,
             )
-        async with self.gate.track(non_blocking=non_blocking):
+        async with self.gate.track(optional_wait=optional_wait):
             return await self._search_impl(
                 query,
                 max_results=max_results,

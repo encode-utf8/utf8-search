@@ -149,19 +149,40 @@ class UpstreamGate:
         # 走到这里说明拿到了槽位（release() 转交，_active 不变）
         self.metrics.acquire_seconds.observe(time.perf_counter() - started)
 
-    async def try_acquire(self) -> bool:
-        """**非阻塞**获取槽位：拿不到立即返回 False（不排队、不计入排队直方图）。
+    async def try_acquire(self, timeout: float = 0.0) -> bool:
+        """获取槽位但**不进入主源的排队额度**；拿不到返回 False。
+
+        - `timeout=0`（默认）：纯非阻塞，拿不到立即 False，不排队、不写排队直方图；
+        - `timeout>0`：有限等待 —— 先试一次，没容量最多等 `timeout` 秒；等到的计入排队直方图
+          （它确实排了队），超时仍拿不到则返回 False。
 
         给「有容量才做」的可选上游调用用（news 的通用引擎补充、Bing 兜底）：
-        拿到容量是加分项，拿不到就跳过 —— 既不让可选调用拖慢主流程，也不让它占用
-        主源本该使用的排队额度。闸门关闭（limit<=0）时恒为 True。
+        拿到是加分项，拿不到就跳过 —— 既不让可选调用抢占主源的排队额度，
+        也不让它无限期拖慢主流程。闸门关闭（limit<=0）时恒为 True。
         """
         if self.limit <= 0:
             return True
         if self._active < self.limit:
             self._active += 1
             return True
-        return False
+        if timeout <= 0:
+            return False
+
+        event = asyncio.Event()
+        self._waiters.append(event)
+        started = time.perf_counter()
+        try:
+            await asyncio.wait_for(event.wait(), timeout=timeout)
+        except (asyncio.TimeoutError, TimeoutError):
+            try:
+                self._waiters.remove(event)
+            except ValueError:
+                pass  # 到点同时被 release() 转交 → 视为成功
+            else:
+                self.metrics.acquire_seconds.observe(time.perf_counter() - started)
+                return False
+        self.metrics.acquire_seconds.observe(time.perf_counter() - started)
+        return True
 
     def release(self) -> None:
         """释放槽位；若有排队者，把槽位直接转交给队首（_active 不变）。"""
@@ -188,19 +209,19 @@ class UpstreamGate:
             self.release()
 
     @asynccontextmanager
-    async def track(self, *, non_blocking: bool = False):
+    async def track(self, *, optional_wait: float | None = None):
         """占用槽位并记录「上游调用时长 + 结果」，供 `SearxngProvider` 使用。
 
-        `non_blocking=True` 时改用 `try_acquire()`：拿不到容量立即抛
-        `UpstreamOverloaded(reason="no_capacity")`，不排队、不拖慢调用方。
+        - `optional_wait=None`（默认）→ **主源路径**：阻塞取容量（排队优先）；
+        - `optional_wait=<秒>` → **可选调用路径**：最多等这么久（`try_acquire(timeout=...)`），
+          拿不到就抛 `UpstreamOverloaded(reason="no_capacity")`，不占用主源的排队额度。
         """
-        if non_blocking:
-            if not await self.try_acquire():
-                # 可选调用的「没容量」：计入带标签的拒绝序列（reason=no_capacity），
-                # 便于与真正返回给客户端的 429（queue_full / timeout）区分开。
-                self._reject("no_capacity")
-        else:
+        if optional_wait is None:
             await self.acquire()
+        elif not await self.try_acquire(timeout=optional_wait):
+            # 可选调用的「没容量」：计入带标签的拒绝序列（reason=no_capacity），
+            # 便于与真正返回给客户端的 429（queue_full / timeout）区分开。
+            self._reject("no_capacity")
         started = time.perf_counter()
         result = "ok"
         try:
