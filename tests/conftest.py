@@ -1,10 +1,19 @@
-"""测试公共配置：所有离线测试不依赖网络与外部服务。"""
+"""测试公共配置：所有离线测试不依赖网络与外部服务，也不依赖生产 `.env` 的鉴权设置。"""
 
 from __future__ import annotations
 
-import pytest
+import os
 
-from utf8_search.config import Settings
+# 必须在**任何测试模块导入之前**执行。`utf8_search.server.http_api` 在模块级调用
+# `get_settings()` 构造 `Settings`，而生产 `.env` 里 `UTF8SEARCH_API_KEYS` 非空会打开鉴权，
+# 于是与鉴权无关的接口用例（`tests/test_api.py`）会拿到 401 —— 这是测试与运行环境的耦合。
+# 这里把该变量中性化，保证 `Settings` 首次构造就落在「鉴权关闭」。
+# 鉴权行为本身仍由 `tests/test_auth.py` 自建 `AccessGuard` 真实覆盖，不受影响。
+os.environ["UTF8SEARCH_API_KEYS"] = ""
+
+import pytest  # noqa: E402 - 需先完成上面的环境中性化
+
+from utf8_search.config import Settings  # noqa: E402 - 同上
 
 
 @pytest.fixture
