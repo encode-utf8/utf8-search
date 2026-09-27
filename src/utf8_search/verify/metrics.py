@@ -562,7 +562,9 @@ def summarize_soak_rows(
     另外给出两类额外信息：
 
     - **覆盖窗口**：24h 长稳允许中断后续跑，因此「时长」按 CSV 首末时间戳计算，
-      而不是单个进程的 `elapsed_s`（后者重启后会归零）；
+      而不是单个进程的 `elapsed_s`（后者重启后会归零）。覆盖窗口取 **CSV 全部行**
+      （含预热）的首末时间戳，对应「覆盖 ≥ 24h」口径，输出在 `coverage_window_*`；
+      只含「计入统计行」的窗口仍保留在 `window_*`（原字段语义不变，作参考值）；
     - **样本归类**：有结果 / 空结果 / 异常 / 跳过 / 疑似休眠（suspect）分别计数。
       「跳过」是进程休眠后**没有跑**的采样槽位（见 `scripts/soak.py` 的 SKIP 逻辑）：
       它们不计入可用率分母，但必须在结论里可见，否则会被静默当成连续覆盖。
@@ -626,6 +628,22 @@ def summarize_soak_rows(
     last = _parse_timestamp(measured[-1]["timestamp"]) if measured else None
     window_seconds = max(0.0, (last - first).total_seconds()) if (first and last) else 0.0
 
+    # 覆盖窗口：按 **CSV 全部行**（含预热）的首末时间戳算。24h 长稳的「覆盖 ≥ 24h」口径
+    # 针对的是挂机整体时长；预热只是「不计入质量统计」，不代表这段时间没在跑，所以不能
+    # 把预热从覆盖时长里扣掉（旧口径扣掉预热后同一份 24h 产物只剩 23.8h）。
+    # 原 `window_*` 字段语义保持不变（=计入统计的窗口），这里只**新增**覆盖窗口字段。
+    coverage_first_row = next((row for row in rows if _parse_timestamp(row.get("timestamp"))), None)
+    coverage_last_row = next(
+        (row for row in reversed(rows) if _parse_timestamp(row.get("timestamp"))), None
+    )
+    coverage_first = _parse_timestamp(coverage_first_row["timestamp"]) if coverage_first_row else None
+    coverage_last = _parse_timestamp(coverage_last_row["timestamp"]) if coverage_last_row else None
+    coverage_window_seconds = (
+        max(0.0, (coverage_last - coverage_first).total_seconds())
+        if (coverage_first and coverage_last)
+        else 0.0
+    )
+
     return {
         "samples": len(measured),
         "warmup_rows": len(rows) - len(measured),
@@ -652,6 +670,10 @@ def summarize_soak_rows(
         "window_hours": window_seconds / 3600.0,
         "first_timestamp": measured[0]["timestamp"] if measured else None,
         "last_timestamp": measured[-1]["timestamp"] if measured else None,
+        "coverage_window_seconds": coverage_window_seconds,
+        "coverage_window_hours": coverage_window_seconds / 3600.0,
+        "coverage_first_timestamp": coverage_first_row["timestamp"] if coverage_first_row else None,
+        "coverage_last_timestamp": coverage_last_row["timestamp"] if coverage_last_row else None,
         "passed": passed,
         "notes": notes,
         "failures": errors,

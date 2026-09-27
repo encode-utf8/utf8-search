@@ -253,6 +253,31 @@ def test_summarize_soak_rows_passes_and_reports_window() -> None:
     assert summary["latency"]["count"] == 10
 
 
+def test_summarize_soak_rows_coverage_window_includes_warmup() -> None:
+    """覆盖窗口按 CSV 全部行（含预热）算，计入统计的窗口另给；原字段语义不变。"""
+    summary = summarize_soak_rows(_synthetic_rows())  # 12 行，其中 2 个预热
+
+    # 全部行 00:00 -> 00:55 = 55 分钟（覆盖 ≥ 24h 的口径看这个）
+    assert summary["coverage_window_hours"] == pytest.approx(55 / 60)
+    assert summary["coverage_first_timestamp"] == "2026-09-24 00:00:00"
+    assert summary["coverage_last_timestamp"] == "2026-09-24 00:55:00"
+    # 计入统计行 00:10 -> 00:55 = 45 分钟（原字段 window_* 语义保持）
+    assert summary["window_hours"] == pytest.approx(45 / 60)
+    assert summary["coverage_window_hours"] > summary["window_hours"]
+
+
+def test_summarize_soak_rows_coverage_window_tolerates_bad_timestamps() -> None:
+    """坏时间戳不参与覆盖窗口首末取值（与计入统计窗口同样容错，不崩）。"""
+    rows = _synthetic_rows(count=10, warmup=0)
+    rows[0]["timestamp"] = "not-a-date"
+
+    summary = summarize_soak_rows(rows)
+
+    assert summary["coverage_first_timestamp"] == "2026-09-24 00:05:00"
+    assert summary["coverage_last_timestamp"] == "2026-09-24 00:45:00"
+    assert summary["coverage_window_hours"] == pytest.approx(40 / 60)
+
+
 def test_summarize_soak_rows_fails_on_low_availability() -> None:
     """失败样本拉低可用率 -> 不通过，并保留失败明细供定位。"""
     summary = summarize_soak_rows(_synthetic_rows(failures=2))

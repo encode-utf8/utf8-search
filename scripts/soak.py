@@ -270,6 +270,9 @@ def _json_payload(
         "availability": summary["availability"],
         "availability_including_empty": summary["availability_including_empty"],
         "coverage_ratio": summary["coverage_ratio"],
+        "coverage_window_hours": summary["coverage_window_hours"],
+        "coverage_first_timestamp": summary["coverage_first_timestamp"],
+        "coverage_last_timestamp": summary["coverage_last_timestamp"],
         "window_hours": summary["window_hours"],
         "latency": summary["latency"],
         "rss": summary["rss"],
@@ -292,10 +295,14 @@ def _print_summary(
     rss = summary["rss"]  # type: ignore[assignment]
 
     print("\n== 长稳结果 ==")
-    if summary["first_timestamp"]:
+    if summary["coverage_first_timestamp"]:
         print(
-            f"采样区间    : {summary['first_timestamp']} -> {summary['last_timestamp']}"
-            f"（覆盖 {float(summary['window_hours']):.2f} h）"
+            f"覆盖窗口    : {summary['coverage_first_timestamp']} -> {summary['coverage_last_timestamp']}"
+            f"（{float(summary['coverage_window_hours']):.2f} h，按 CSV 全部行含预热）"
+        )
+        print(
+            f"计入统计窗口: {summary['first_timestamp']} -> {summary['last_timestamp']}"
+            f"（{float(summary['window_hours']):.2f} h，已剔除预热，仅作参考）"
         )
     print(f"采样点数    : {summary['samples']}（预热 {summary['warmup_rows']} 个已剔除）")
     print(f"有结果      : {summary['succeeded']}（可用率分子，判定口径）")
@@ -358,7 +365,9 @@ def _print_status(args: argparse.Namespace) -> int:
         )
         print(f"心跳        : {heartbeat}（{'n/a' if age is None else f'{age:.0f}s 前'}）")
         print(f"已写样本    : {meta.get('samples_written')}")
-        if age is not None and age > 3 * interval:
+        # finished=True 表示挂机已正常收尾，心跳自然停在最后一次采样；
+        # 此时再报「心跳超期」是误报，只有未收尾（finished=False）才提示可能卡住/被杀。
+        if age is not None and age > 3 * interval and not bool(meta.get("finished")):
             print(f"⚠ 心跳已超过 3 个采样周期（{3 * interval:.0f}s）：进程可能卡住或已被强杀")
 
     rows = load_soak_rows(csv_path)
@@ -381,8 +390,12 @@ def _print_status(args: argparse.Namespace) -> int:
         f"RSS {format_bytes(last.get('rss_bytes'))}"
     )
     print(
-        f"覆盖窗口    : {summary['first_timestamp']} -> {summary['last_timestamp']}"
-        f"（{float(summary['window_hours']):.2f} h）"
+        f"覆盖窗口    : {summary['coverage_first_timestamp']} -> {summary['coverage_last_timestamp']}"
+        f"（{float(summary['coverage_window_hours']):.2f} h，按 CSV 全部行含预热）"
+    )
+    print(
+        f"计入统计窗口: {summary['first_timestamp']} -> {summary['last_timestamp']}"
+        f"（{float(summary['window_hours']):.2f} h，已剔除预热，仅作参考）"
     )
     print(
         f"累计可用率  : 有结果 {float(summary['availability']):.2%}"
