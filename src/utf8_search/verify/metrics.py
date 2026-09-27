@@ -23,6 +23,15 @@ MEMORY_GROWTH_FLOOR_BYTES = 50 * 1024 * 1024
 # 长稳可用率门槛（docs/04 第 4.4 节：≥ 99%）
 MIN_AVAILABILITY = 0.99
 
+# 长稳「采样覆盖率」下限。SKIP 槽位不进可用率分母，于是「跳过 60% 槽位 + 剩下的全成功」
+# 能凑出可用率 100%，而 window_hours 按首末时间戳仍显示 24h —— 这是「假绿」换了个维度
+# 又出现。因此覆盖率本身必须是硬门槛：低于该下限直接判不通过，且结论要写明实际覆盖率。
+MIN_COVERAGE = 0.95
+
+# 长稳「疑似休眠」判定：单次采样耗时超过 interval 的这个倍数，说明进程被挂起过
+# （机器休眠 / cgroup 冻结 / 断网重试），这个耗时不是服务的真实延迟，必须排除出分位统计。
+SOAK_SUSPECT_LATENCY_FACTOR = 3.0
+
 # 相关性抽检门槛（docs/04 第 4.4 节：top5 中 ≥ 4 条相关）
 RELEVANCE_PER_QUERY_MIN = 4
 RELEVANCE_MIN_PASS_RATIO = 0.9
@@ -54,6 +63,23 @@ def summarize_latencies(values: list[float]) -> dict[str, float]:
         "max": max(values),
         "mean": statistics.fmean(values),
     }
+
+
+def is_suspect_latency(
+    latency_ms: float, interval_s: float | None, factor: float = SOAK_SUSPECT_LATENCY_FACTOR
+) -> bool:
+    """单次采样耗时是否异常（疑似进程休眠 / 被挂起）。
+
+    本机 24h 首轮出现过 `latency_ms=6280716`（≈104 分钟，远超 300s 采样间隔）的假样本：
+    请求本身早就返回了，是进程被系统挂起后 `perf_counter` 才继续走。这种样本算进 P50/P95
+    会把分位彻底带偏，因此标记为 suspect 并排除出分位；它仍是「有结果」的采样，
+    所以照常计入可用率与 RSS 序列。
+
+    `interval_s` 缺失或非法时不做判定（返回 False），以免旧数据被误标。
+    """
+    if not interval_s or interval_s <= 0:
+        return False
+    return float(latency_ms) > factor * float(interval_s) * 1000.0
 
 
 def evaluate_load_test(
@@ -104,6 +130,8 @@ def evaluate_soak(
     total: int,
     succeeded: int,
     rss_series: list[float],
+    empty: int = 0,
+    errors: int | None = None,
     min_availability: float = MIN_AVAILABILITY,
     growth_ratio: float = MEMORY_GROWTH_RATIO,
     growth_floor_bytes: float = MEMORY_GROWTH_FLOOR_BYTES,
@@ -111,25 +139,51 @@ def evaluate_soak(
     """长稳判定，返回 (是否通过, 结论列表, 明细)。
 
     通过标准（docs/04 第 4.4 节）：
-    1. 可用率 = 成功次数 / 总次数 ≥ 99%；
+    1. **有结果可用率** = 有结果的样本数 / 总样本数 ≥ 99%；
     2. 内存无持续增长：比较有效 RSS 序列「头 25%」与「尾 25%」的中位数，
        相对增长 > 20% 且绝对增长 > 50MB 才判为增长。
 
+    口径（4.2 挂机首轮暴露的「假绿」问题）：采样「没抛异常」不等于「搜到了东西」。
+    本机曾连续 115 个样本返回 0 结果（约 10.7h 全空），旧口径仍算出 100% 可用率。
+    因此这里把三类样本分开计数、分别展示：
+
+    - `succeeded`：请求成功且**有结果** —— 唯一计入可用率分子的样本；
+    - `empty`：请求成功但**0 结果**（上游全挂 / 风控时的典型表现）；
+    - `errors`：请求抛异常（超时、连接失败、5xx 等）。
+
+    结论里同时给出「含空结果可用率」= (succeeded + empty) / total 作为参考，
+    **判定只用「有结果可用率」**。
+
     `rss_series` 应由调用方剔除预热样本后传入（单位：字节）。
     """
-    details: dict[str, float] = {"availability": 0.0, "rss_samples": float(len(rss_series))}
+    if errors is None:
+        errors = max(0, total - succeeded - empty)
+
+    details: dict[str, float] = {
+        "availability": 0.0,
+        "availability_including_empty": 0.0,
+        "empty": float(empty),
+        "errors": float(errors),
+        "rss_samples": float(len(rss_series)),
+    }
     if total <= 0:
         return False, ["没有产生任何采样，无法判定"], details
 
     notes: list[str] = []
     passed = True
     availability = succeeded / total
+    availability_including_empty = (succeeded + empty) / total
     details["availability"] = availability
+    details["availability_including_empty"] = availability_including_empty
     if availability < min_availability:
         passed = False
-        notes.append(f"可用率 {availability:.2%} 低于门槛 {min_availability:.0%}")
+        notes.append(f"有结果可用率 {availability:.2%} 低于门槛 {min_availability:.0%}")
     else:
-        notes.append(f"可用率 {availability:.2%} 达标（≥ {min_availability:.0%}）")
+        notes.append(f"有结果可用率 {availability:.2%} 达标（≥ {min_availability:.0%}）")
+    notes.append(
+        f"含空结果可用率 {availability_including_empty:.2%}（仅作参考：空结果不计成功）"
+    )
+    notes.append(f"失败明细：空结果 {empty} 个、异常 {errors} 个")
 
     if len(rss_series) >= 8:
         head, tail = _split_head_tail(rss_series)
@@ -448,6 +502,13 @@ def load_soak_rows(path: str | Path) -> list[dict[str, object]]:
     刻意做成容错的：挂机进程被强杀时最后一行可能是半截的，直接 `csv.DictReader`
     会给出一堆字符串与空值；这里丢弃「没有时间戳或没有延迟」的行，保证**用已有样本
     也能复算结论**（这正是 24h 首轮挂机失败后暴露出来的需求）。
+
+    兼容性：新增的 `suspect` / `skipped` 两列按「有则解析、无则给默认值」处理，
+    因此**旧格式（12 列）的 CSV 仍然能解析**，只是 suspect 记为未知（None），
+    汇总时若提供 `interval_s` 会按采样间隔回算。
+
+    `skipped=True` 的行表示「该采样槽位没跑」（进程休眠后落后超过 2 个周期），
+    这类行没有延迟但必须保留，否则汇总会把它静默当成连续覆盖。
     """
     import csv
 
@@ -460,8 +521,10 @@ def load_soak_rows(path: str | Path) -> list[dict[str, object]]:
         for raw in csv.DictReader(handle):
             timestamp = (raw.get("timestamp") or "").strip()
             latency = _as_float(raw.get("latency_ms"))
-            if not timestamp or latency is None:
+            skipped = _as_bool(raw.get("skipped"))
+            if not timestamp or (latency is None and not skipped):
                 continue
+            raw_suspect = raw.get("suspect")
             rows.append(
                 {
                     "index": int(_as_float(raw.get("index")) or 0),
@@ -469,13 +532,16 @@ def load_soak_rows(path: str | Path) -> list[dict[str, object]]:
                     "elapsed_s": _as_float(raw.get("elapsed_s")) or 0.0,
                     "warmup": _as_bool(raw.get("warmup")),
                     "ok": _as_bool(raw.get("ok")),
-                    "latency_ms": latency,
+                    "latency_ms": latency if latency is not None else 0.0,
                     "results": int(_as_float(raw.get("results")) or 0),
                     "pages_read": int(_as_float(raw.get("pages_read")) or 0),
                     "cached": _as_bool(raw.get("cached")),
                     "rss_bytes": _as_float(raw.get("rss_bytes")),
                     "query": str(raw.get("query") or ""),
                     "error": str(raw.get("error") or ""),
+                    # 旧格式没有这两列：suspect 记为 None（未知），skipped 记为 False
+                    "suspect": None if raw_suspect is None else _as_bool(raw_suspect),
+                    "skipped": skipped,
                 }
             )
     return rows
@@ -484,40 +550,112 @@ def load_soak_rows(path: str | Path) -> list[dict[str, object]]:
 def summarize_soak_rows(
     rows: list[dict[str, object]],
     *,
+    interval_s: float | None = None,
     min_availability: float = MIN_AVAILABILITY,
+    min_coverage: float = MIN_COVERAGE,
     growth_ratio: float = MEMORY_GROWTH_RATIO,
     growth_floor_bytes: float = MEMORY_GROWTH_FLOOR_BYTES,
 ) -> dict[str, object]:
     """汇总长稳样本并给出判定（在线采样与事后复算共用这一条路径）。
 
-    判定沿用 `evaluate_soak`（可用率 ≥ 99% + 内存头尾中位数无持续增长），
-    另外额外给出**覆盖窗口**：24h 长稳允许中断后续跑，因此「时长」按 CSV 首末
-    时间戳计算，而不是单个进程的 `elapsed_s`（后者重启后会归零）。
+    判定沿用 `evaluate_soak`（**有结果**可用率 ≥ 99% + 内存头尾中位数无持续增长），
+    另外给出两类额外信息：
+
+    - **覆盖窗口**：24h 长稳允许中断后续跑，因此「时长」按 CSV 首末时间戳计算，
+      而不是单个进程的 `elapsed_s`（后者重启后会归零）。覆盖窗口取 **CSV 全部行**
+      （含预热）的首末时间戳，对应「覆盖 ≥ 24h」口径，输出在 `coverage_window_*`；
+      只含「计入统计行」的窗口仍保留在 `window_*`（原字段语义不变，作参考值）；
+    - **样本归类**：有结果 / 空结果 / 异常 / 跳过 / 疑似休眠（suspect）分别计数。
+      「跳过」是进程休眠后**没有跑**的采样槽位（见 `scripts/soak.py` 的 SKIP 逻辑）：
+      它们不计入可用率分母，但必须在结论里可见，否则会被静默当成连续覆盖。
+
+    除了可用率，**采样覆盖率**（`sampled / measured`）也是硬门槛（`min_coverage`）：
+    SKIP 不进可用率分母，若不额外卡覆盖率，「跳过 60% 槽位 + 其余全成功」会假绿，
+    而 `window_hours` 按首末时间戳看仍是 24h。
+
+    `interval_s` 用于在旧格式 CSV（没有 `suspect` 列）上回算疑似休眠样本；不传则
+    只认 CSV 里写明的 suspects。
     """
     measured = [row for row in rows if not row.get("warmup")]
-    succeeded = [row for row in measured if row.get("ok")]
+    skipped = [row for row in measured if row.get("skipped")]
+    sampled = [row for row in measured if not row.get("skipped")]  # 真正打到服务的样本
+    succeeded = [row for row in sampled if row.get("ok") and int(row.get("results") or 0) > 0]
+    empty = [row for row in sampled if row.get("ok") and int(row.get("results") or 0) == 0]
+    errors = [row for row in sampled if not row.get("ok")]
+    # RSS 序列沿用「所有实际采样点」，suspect 样本照常保留（内存不会因为进程被挂起而失真）
     rss_series = [float(row["rss_bytes"]) for row in measured if row.get("rss_bytes")]
-    latencies = [float(row["latency_ms"]) for row in succeeded if row.get("latency_ms") is not None]
+    suspects = [row for row in succeeded if _row_is_suspect(row, interval_s)]
+    # 延迟分位只用「有结果且非疑似休眠」的样本：休眠期间那条 104 分钟的假样本必须排除
+    latencies = [
+        float(row["latency_ms"])
+        for row in succeeded
+        if row.get("latency_ms") is not None and not _row_is_suspect(row, interval_s)
+    ]
 
     passed, notes, details = evaluate_soak(
-        total=len(measured),
+        total=len(sampled),
         succeeded=len(succeeded),
+        empty=len(empty),
+        errors=len(errors),
         rss_series=rss_series,
         min_availability=min_availability,
         growth_ratio=growth_ratio,
         growth_floor_bytes=growth_floor_bytes,
     )
 
+    coverage_ratio = (len(sampled) / len(measured)) if measured else 0.0
+    if skipped:
+        notes.append(
+            f"跳过 {len(skipped)} 个采样槽位（进程休眠后落后 > 2 个周期，不补跑）："
+            f"实际覆盖 {len(sampled)}/{len(measured)}（{coverage_ratio:.1%}），这些槽位不计入可用率"
+        )
+    # 覆盖率下限：SKIP 不进可用率分母，只有把覆盖率也当硬门槛才能挡住这一类假绿。
+    if measured and coverage_ratio < min_coverage:
+        passed = False
+        notes.append(
+            f"采样覆盖率 {coverage_ratio:.1%} 低于下限 {min_coverage:.0%}："
+            f"有效采样 {len(sampled)}/{len(measured)}，跳过 {len(skipped)} 个槽位，长稳判定不通过"
+        )
+    else:
+        notes.append(f"采样覆盖率 {coverage_ratio:.1%}（下限 {min_coverage:.0%}）")
+    if suspects:
+        notes.append(
+            f"疑似休眠样本 {len(suspects)} 个（单次耗时 > {SOAK_SUSPECT_LATENCY_FACTOR:.0f}×采样间隔）："
+            "已排除出延迟分位，仍计入可用率与 RSS"
+        )
+
     first = _parse_timestamp(measured[0]["timestamp"]) if measured else None
     last = _parse_timestamp(measured[-1]["timestamp"]) if measured else None
     window_seconds = max(0.0, (last - first).total_seconds()) if (first and last) else 0.0
+
+    # 覆盖窗口：按 **CSV 全部行**（含预热）的首末时间戳算。24h 长稳的「覆盖 ≥ 24h」口径
+    # 针对的是挂机整体时长；预热只是「不计入质量统计」，不代表这段时间没在跑，所以不能
+    # 把预热从覆盖时长里扣掉（旧口径扣掉预热后同一份 24h 产物只剩 23.8h）。
+    # 原 `window_*` 字段语义保持不变（=计入统计的窗口），这里只**新增**覆盖窗口字段。
+    coverage_first_row = next((row for row in rows if _parse_timestamp(row.get("timestamp"))), None)
+    coverage_last_row = next(
+        (row for row in reversed(rows) if _parse_timestamp(row.get("timestamp"))), None
+    )
+    coverage_first = _parse_timestamp(coverage_first_row["timestamp"]) if coverage_first_row else None
+    coverage_last = _parse_timestamp(coverage_last_row["timestamp"]) if coverage_last_row else None
+    coverage_window_seconds = (
+        max(0.0, (coverage_last - coverage_first).total_seconds())
+        if (coverage_first and coverage_last)
+        else 0.0
+    )
 
     return {
         "samples": len(measured),
         "warmup_rows": len(rows) - len(measured),
         "succeeded": len(succeeded),
-        "failed": len(measured) - len(succeeded),
+        "empty": len(empty),
+        "errors": len(errors),
+        "skipped": len(skipped),
+        "suspect": len(suspects),
+        "failed": len(errors),
         "availability": float(details.get("availability", 0.0)),
+        "availability_including_empty": float(details.get("availability_including_empty", 0.0)),
+        "coverage_ratio": coverage_ratio,
         "latency": summarize_latencies(latencies),
         "rss": {
             "samples": len(rss_series),
@@ -532,10 +670,31 @@ def summarize_soak_rows(
         "window_hours": window_seconds / 3600.0,
         "first_timestamp": measured[0]["timestamp"] if measured else None,
         "last_timestamp": measured[-1]["timestamp"] if measured else None,
+        "coverage_window_seconds": coverage_window_seconds,
+        "coverage_window_hours": coverage_window_seconds / 3600.0,
+        "coverage_first_timestamp": coverage_first_row["timestamp"] if coverage_first_row else None,
+        "coverage_last_timestamp": coverage_last_row["timestamp"] if coverage_last_row else None,
         "passed": passed,
         "notes": notes,
-        "failures": [row for row in measured if not row.get("ok")],
+        "failures": errors,
+        "empty_rows": empty,
+        "skipped_rows": skipped,
     }
+
+
+def _row_is_suspect(row: dict[str, object], interval_s: float | None) -> bool:
+    """样本是否疑似进程休眠。
+
+    优先用 CSV 里写明的 `suspect` 列（采样当时算的，最准）；旧格式没有该列时，
+    用 `interval_s` 按 `latency_ms` 回算。
+    """
+    flag = row.get("suspect")
+    if flag is not None:
+        return bool(flag)
+    latency = row.get("latency_ms")
+    if latency is None:
+        return False
+    return is_suspect_latency(float(latency), interval_s)
 
 
 def process_alive(pid: int) -> bool:
