@@ -22,8 +22,19 @@ class SearchRequest(BaseModel):
     include_domains: list[str] | None = Field(default=None, description="仅保留这些域名")
     exclude_domains: list[str] | None = Field(default=None, description="排除这些域名")
     include_raw_content: bool = Field(default=False, description="是否附带完整正文")
+    include_usage: bool = Field(
+        default=False,
+        description="Tavily 兼容：为 true 时在响应里附带 usage（本服务免费，credits 恒 0）",
+    )
     engines: list[str] | None = Field(default=None, description="指定搜索引擎（调试用）")
     max_pages: int | None = Field(default=None, ge=0, le=60, description="覆盖深度模式的抓取页数")
+
+
+class ResultImage(BaseModel):
+    """结果内嵌图片（Tavily 兼容：`results[].images[] = {url, description}`）。"""
+
+    url: str = ""
+    description: str | None = None
 
 
 class SearchResult(BaseModel):
@@ -36,6 +47,14 @@ class SearchResult(BaseModel):
     score: float = 0.0
     engine: str = ""
     published_date: str | None = None
+    # ---- Tavily 兼容字段（M6）：官方 results[] 还含这三项；我们只做加法，不改既有字段语义 ----
+    favicon: str | None = Field(
+        default=None, description="Tavily 兼容：结果站点图标。本服务不采集 favicon，恒为 null"
+    )
+    images: list[ResultImage] = Field(
+        default_factory=list, description="Tavily 兼容：结果内嵌图片。本服务不做图片搜索，恒为空数组"
+    )
+    id: str = Field(default="", description="Tavily 兼容：结果唯一 id（= request_id-序号）")
 
 
 class SearchResponse(BaseModel):
@@ -59,6 +78,14 @@ class SearchResponse(BaseModel):
     answer: str | None = None
     follow_up_questions: list[str] | None = None
     images: list[str] = Field(default_factory=list)
+    # ---- Tavily 兼容字段（M6 补齐）----
+    auto_parameters: dict[str, str] = Field(
+        default_factory=dict,
+        description="Tavily 兼容：实际生效的关键参数（我们不做自动推断，这里回显 topic/search_depth）",
+    )
+    usage: dict[str, Any] | None = Field(
+        default=None, description="Tavily 兼容：仅 include_usage=true 时给出；本服务免费，credits 恒 0"
+    )
 
 
 class ExtractRequest(BaseModel):
@@ -76,6 +103,10 @@ class ExtractItem(BaseModel):
     raw_content: str
     title: str | None = None
     chars: int = 0
+    # Tavily 兼容（M6）：官方 /extract 的 results[] 含 images
+    images: list[ResultImage] = Field(
+        default_factory=list, description="Tavily 兼容：本服务不做图片提取，恒为空数组"
+    )
 
 
 class ExtractResponse(BaseModel):

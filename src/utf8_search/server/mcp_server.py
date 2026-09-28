@@ -47,6 +47,9 @@ async def web_search(
     include_domains: Annotated[list[str] | None, Field(description="仅保留这些域名，如 ['gov.cn']")] = None,
     exclude_domains: Annotated[list[str] | None, Field(description="排除这些域名")] = None,
     include_raw_content: Annotated[bool, Field(description="是否额外返回完整正文（token 消耗更大）")] = False,
+    include_usage: Annotated[
+        bool, Field(description="Tavily 兼容：为 true 时在返回里附带 usage（本服务免费，credits 恒 0）")
+    ] = False,
 ) -> dict[str, Any]:
     """联网搜索：返回带标题、URL、摘要（深度模式附带正文）的结果列表，可直接作为引用来源。"""
     pipeline = await get_pipeline()
@@ -59,6 +62,7 @@ async def web_search(
         include_domains=include_domains,
         exclude_domains=exclude_domains,
         include_raw_content=include_raw_content,
+        include_usage=include_usage,
     )
     try:
         response = await pipeline.search(request)
