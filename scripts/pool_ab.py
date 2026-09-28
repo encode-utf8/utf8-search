@@ -46,6 +46,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--pools", default="24,32,40", help="要比较的候选池大小，逗号分隔")
     parser.add_argument("--out", default="", help="JSON 输出路径")
     parser.add_argument("--score-dir", default="data/measure", help="人工打分模板输出目录")
+    parser.add_argument("--score-prefix", default="pool", help="打分模板文件名前缀（默认 pool → pool24-scores.csv）")
+    parser.add_argument(
+        "--detail-out",
+        default="",
+        help="可读对照明细 md 输出路径（默认 docs/reports/m6-pool-ab-detail-<日期>.md）",
+    )
     return parser.parse_args()
 
 
@@ -98,7 +104,13 @@ async def run(args: argparse.Namespace) -> int:
                     "distinct_hosts": len(hosts),
                     "rank_ms": round(rank_ms, 2),
                     "top": [
-                        {"title": item.title, "url": item.url, "domain": registrable_domain(item.url)}
+                        {
+                            "title": item.title,
+                            "url": item.url,
+                            "domain": registrable_domain(item.url),
+                            "content": item.content or "",
+                            "published_date": item.published_date or "",
+                        }
                         for item in top
                     ],
                 }
@@ -182,15 +194,103 @@ async def run(args: argparse.Namespace) -> int:
     # ---------------- 人工打分模板（与 relevance.py --score-file 兼容） ----------------
     score_dir = Path(args.score_dir)
     score_dir.mkdir(parents=True, exist_ok=True)
+    templates: dict[int, Path] = {}
     for pool in (pools[0], pools[-1]):
-        path = score_dir / f"pool{pool}-scores.csv"
+        path = score_dir / f"{args.score_prefix}{pool}-scores.csv"
         with path.open("w", encoding="utf-8", newline="") as handle:
             writer = csv.writer(handle)
             writer.writerow(["id", "scores", "note"])
             for idx, entry in enumerate(per_query, start=1):
                 writer.writerow([idx, "", f"[pool{pool}] {entry['query']}"])
+        templates[pool] = path
         print(f"打分模板（pool={pool}）: {path.resolve()}")
+
+    write_detail(per_query, summary, pools, args, templates)
     return 0
+
+
+def _cell(text: object, limit: int = 90) -> str:
+    """Markdown 表格单元格：压成单行、截断、转义竖线。"""
+    flat = " ".join(str(text or "").split())
+    flat = flat[:limit] + ("…" if len(flat) > limit else "")
+    return flat.replace("|", "\\|")
+
+
+def write_detail(
+    per_query: list[dict[str, object]],
+    summary: dict[str, object],
+    pools: list[int],
+    args: argparse.Namespace,
+    templates: dict[int, Path],
+) -> Path:
+    """写可读对照明细（池 24 与池 40 并列），供人工打分。"""
+    low, high = pools[0], pools[-1]
+    out = (
+        Path(args.detail_out)
+        if args.detail_out
+        else Path("docs/reports") / f"m6-pool-ab-detail-{datetime.now():%Y%m%d}.md"
+    )
+    lines: list[str] = [
+        f"# 候选池 {low} vs {high} 对照明细（人工打分用）",
+        "",
+        f"- 生成时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+        "- **数据来源**：**同一批候选切片而来** —— 每条查询只发**一次**上游请求（索取 "
+        f"{args.max_pool} 条），再在本地取前 {low} / {high} 条分别排序。",
+        "- ⚠️ **不可与重新采集的结果混用**：本文件里的两列来自同一次采集；另跑一次脚本会得到不同的候选集。",
+        f"- 打分模板：`{templates[low].name}`（先填这份）、`{templates[high].name}`（仅在必要时对照）",
+        f"- 打分规则：scores 的 5 位依次对应排名 1-5，**非零即为相关**；门槛 20 条里 ≥18 条满足「相关 ≥4」。",
+        "",
+        "## 怎么用（交付说明）",
+        "",
+        f"1. **先只填 `{templates[low].name}`**（池 {low} = 当前默认）——这份用于**关闭 2-9**"
+        "（与 `docs/reports/m2-9-relevance-20260928.md` 是同一批 20 条查询，但采集批次不同，二者选一即可，别混填）。",
+        f"2. **只有**当池 {low} 那份打出 **< 18/20**（未达 90% 门槛）时，才需要再填 `{templates[high].name}` 做对照，"
+        f"看「把候选池从 {low} 放大到 {high}」能不能救回来。",
+        "3. 判定命令（不联网）：`.venv/bin/python scripts/relevance.py --score-file <填好的 csv>`",
+        "",
+        "## 汇总",
+        "",
+        f"| 指标 | 池 {low} | 池 {high} |",
+        "| --- | --- | --- |",
+    ]
+    by_pool = summary.get("by_pool") or {}
+    for label, key in (
+        ("覆盖率均值", "coverage_mean"),
+        ("覆盖率最低", "coverage_min"),
+        ("独立站点均值", "distinct_hosts_mean"),
+        ("排序耗时 P50", "rank_ms_p50"),
+        ("多留候选进 top5（条）", "new_in_top5_total"),
+        ("进 top5 占槽位", "new_in_top5_ratio"),
+        ("至少进 1 条的查询占比", "queries_with_new_in_top5_pct"),
+        ("top5 变化（条/查询）", "top5_changed_mean"),
+    ):
+        row_low = by_pool.get(str(low), {})
+        row_high = by_pool.get(str(high), {})
+        lines.append(f"| {label} | {row_low.get(key, '-')} | {row_high.get(key, '-')} |")
+    lines.append("")
+
+    for idx, entry in enumerate(per_query, start=1):
+        lines.append(f"## {idx}. {entry['query']}")
+        lines.append("")
+        for pool in (low, high):
+            pool_top = entry["pools"][str(pool)]["top"]  # type: ignore[index]
+            lines.append(f"**池 {pool}**（候选 {entry['pools'][str(pool)]['candidates']} 条，"  # type: ignore[index]
+                         f"覆盖 {entry['pools'][str(pool)]['coverage_mean']}，"  # type: ignore[index]
+                         f"独立站点 {entry['pools'][str(pool)]['distinct_hosts']}，"  # type: ignore[index]
+                         f"新进 top5 {entry['pools'][str(pool)]['new_in_top5']} 条）")
+            lines.append("")
+            lines.append("| 排名 | 标题 | 域名 | 摘要 | URL |")
+            lines.append("| --- | --- | --- | --- | --- |")
+            for rank, item in enumerate(pool_top, start=1):
+                lines.append(
+                    f"| {rank} | {_cell(item.get('title'))} | {_cell(item.get('domain'), 40)} | "
+                    f"{_cell(item.get('content'))} | {_cell(item.get('url'), 80)} |"
+                )
+            lines.append("")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(f"对照明细 md: {out.resolve()}")
+    return out
 
 
 def main() -> int:

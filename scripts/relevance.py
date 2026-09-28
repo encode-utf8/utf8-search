@@ -18,6 +18,7 @@ import argparse
 import asyncio
 import csv
 import json
+import math
 import statistics
 import sys
 from datetime import datetime
@@ -215,15 +216,31 @@ async def collect(args: argparse.Namespace) -> list[dict[str, object]]:
 
 def write_report(collected: list[dict[str, object]], args: argparse.Namespace, out: Path) -> Path:
     """把明细写成 Markdown，并生成人工打分模板 CSV。"""
+    min_pass_queries = math.ceil(len(QUERIES) * MIN_PASS_RATIO)  # 20 × 90% → 18
+    cache_state = (
+        "已禁用缓存（`--no-cache`），全部为本次实时采集"
+        if args.no_cache
+        else "启用缓存（未传 `--no-cache`），可能复用到历史结果"
+    )
     lines: list[str] = [
         "# 相关性抽检报告（验收项 2-9）",
         "",
         f"- 生成时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
         f"- 深度模式：{args.depth}，每条取前 {args.max_results} 条",
         "- 查询构成：20 条中英混合，覆盖 新闻 / 技术 / 政策 / 商品 各 5 条",
-        f"- 打分方式：把同名 `-scores.csv` 的 `scores` 列填成 {args.max_results} 个 0/1（1=相关），"
-        "再执行 `python scripts/relevance.py --score-file <该文件>`",
-        f"- 通过标准：top5 中相关数 ≥ {PER_QUERY_MIN} 的查询占比 ≥ {MIN_PASS_RATIO:.0%}",
+        f"- **采集缓存状态**：{cache_state}",
+        "",
+        "## 打分规则（先读这三条）",
+        "",
+        f"1. **门槛**：20 条查询里，满足「top5 中相关条数 ≥ {PER_QUERY_MIN}」的查询数要 **≥ "
+        f"{min_pass_queries} 条**（即 ≥ {MIN_PASS_RATIO:.0%}）。",
+        f"2. **scores 的 {args.max_results} 位依次对应排名 1-{args.max_results}**"
+        "（第 1 位 = 排名第 1 的结果），逐位填 0/1。",
+        "3. **非零数字一律视为「相关」**（填 1 最规范；填 2 或其它非零值同样按相关计）。",
+        "",
+        f"- 判定命令：`python scripts/relevance.py --score-file {out.with_name(out.stem + '-scores.csv').name}`",
+        f"- 通过标准（脚本口径）：top5 中相关数 ≥ {PER_QUERY_MIN} 的查询占比 ≥ {MIN_PASS_RATIO:.0%}",
+        f"- 速览版（不带正文字数/发布时间/URL）：`{out.with_name(out.stem + '-brief.md').name}`",
         "",
     ]
 
@@ -271,8 +288,48 @@ def write_report(collected: list[dict[str, object]], args: argparse.Namespace, o
             writer.writerow([entry["id"], "", ""])
     print(f"\n明细报告: {out.resolve()}")
     print(f"打分模板: {template.resolve()}")
+    write_brief(collected, args, out)
     print("提示：scores 填 5 个 0/1（第 1 位对应排名第 1 的结果），填好后用 --score-file 判定")
     return out
+
+
+def write_brief(collected: list[dict[str, object]], args: argparse.Namespace, out: Path) -> Path:
+    """写「速览版」明细：每条查询 5 行，「打勾位 | 标题 | 域名 | 摘要 80 字」，便于快速打分。
+
+    刻意去掉正文字数 / 发布时间 / URL 等干扰列；标题与摘要仍与明细报告同源（同一批采集结果）。
+    """
+    lines: list[str] = [
+        "# 相关性抽检速览版（验收项 2-9，配合同名 `-scores.csv` 使用）",
+        "",
+        f"- 生成时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+        f"- 深度模式：{args.depth}；每条查询 5 行，第一列是「打勾位」（= 排名，填到 scores 的对应位）",
+        "- 打分：**非零即为相关**；门槛 20 条里 ≥18 条满足「相关 ≥4」",
+        "",
+    ]
+    for entry in collected:
+        lines.append(f"## {entry['id']}. [{entry['category']}] {entry['query']}")
+        lines.append("")
+        if entry["error"]:
+            lines.append(f"> 查询失败：{entry['error']}")
+            lines.append("")
+            continue
+        if not entry["items"]:
+            lines.append("> 无结果")
+            lines.append("")
+            continue
+        lines.append("| 打勾位 | 标题 | 域名 | 摘要 |")
+        lines.append("| --- | --- | --- | --- |")
+        for item in entry["items"]:
+            snippet = _escape(_snippet(str(item.get("content") or item.get("snippet") or ""), limit=80))
+            lines.append(
+                f"| {item['rank']} | {_escape(str(item['title']))} | "
+                f"{_escape(str(item['domain']))} | {snippet} |"
+            )
+        lines.append("")
+    brief = out.with_name(out.stem + "-brief.md")
+    brief.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(f"速览版: {brief.resolve()}")
+    return brief
 
 
 def _aggregate_hygiene(collected: list[dict[str, object]]) -> dict[str, float]:
