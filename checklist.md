@@ -171,7 +171,7 @@ SearXNG 引擎可用性（本镜像 2026.9.23，均已写入 `searxng/settings.y
 | 6-5 | REST 与 MCP 同一套字段 | 同上 | `web_search` 输出 ⊇ 官方字段路径，且含本轮补齐字段 | [x] |
 | 6-6 | 错误码与限流语义 | 同上 | 400/401/429 形态；429 带 `Retry-After`；用官方 SDK 的异常分支断言能分类且不崩 | [x] 校验错误 **422 → 400 已对齐**（400 → `BadRequestError`），`detail` 形态保持既有约定 + 追加顶层 `error`；官方 SDK 的 `detail.error` 取法有 try/except 兜底 |
 | 6-7 | 不改既有字段语义 | `pytest -q -m "not net"` | 全绿 | [x] **265 passed, 4 deselected** |
-| 6-9 | 校验错误码对齐 Tavily 400（收口） | `tests/test_tavily_compat.py` | 用官方 SDK 的异常类型断言：400 → `BadRequestError`；401/429 语义不变；429 仍带 `Retry-After`；body 的 `error` 可读 | [x] 新增/改写 2 条用例；理由（SDK 对 422 走 `raise_for_status` 通用分支）写入报告 §7 |
+| 6-9 | 校验错误码对齐 Tavily 400（收口） | `tests/test_tavily_compat.py` | 用官方 SDK 的异常类型断言：400 → `BadRequestError`；401/429 语义不变；429 仍带 `Retry-After`；body 的 `error` 可读 | [x] 新增/改写 2 条用例；理由（SDK 对 422 走 `raise_for_status` 通用分支）写入报告 §7。**决策：不做「形状→422 / 语义→400」逐类分流**——① 官方 SDK 没有 422 分支、真 Tavily 的形状错误也走通用分支，统一 400 是超集行为；② 形状与语义边界模糊（缺字段 vs 值写错同属 `Literal` 校验），分流要按 pydantic `type` 硬编码、每加字段都要重判；③ 收益只对「照官方 422 示例写死」的客户端有效，基本不存在。若将来确有客户端要求，**改一处异常处理器即可**（已记入 `docs/04` §8 遗留任务） |
 | 6-8 | 人工验收操作单（附带产出） | `docs/reports/manual-acceptance-checklist-20260928.md` | 2-9 的填分步骤与命令、3-9 每个客户端的最小操作与预期现象 | [x] 供用户本人照着做 |
 
 ## 15. M5 上游并发闸门与过载快速返回（2026-09-27，分支 `feature/m5-concurrency-gate`）
