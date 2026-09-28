@@ -84,6 +84,10 @@ class TavilySearchBody(BaseModel):
     include_answer: bool = Field(default=False, description="本服务不自带 LLM，该项恒为空")
     include_raw_content: bool = False
     include_images: bool = False
+    include_usage: bool = Field(
+        default=False,
+        description="Tavily 兼容：为 true 时在响应里附带 usage（本服务免费，credits 恒 0）",
+    )
     engines: list[str] | None = None
     max_pages: int | None = Field(default=None, ge=0, le=60, description="覆盖深度模式抓取页数")
 
@@ -108,6 +112,7 @@ class TavilySearchBody(BaseModel):
             include_domains=self.include_domains,
             exclude_domains=self.exclude_domains,
             include_raw_content=self.include_raw_content,
+            include_usage=self.include_usage,
             engines=self.engines,
             max_pages=self.max_pages,
         )
@@ -137,11 +142,29 @@ async def mcp_auth_middleware(request: Request, call_next):
             )
         except HTTPException as exc:
             return JSONResponse(
-                {"error": exc.detail},
+                {"detail": exc.detail, "error": exc.detail},
                 status_code=exc.status_code,
                 headers=getattr(exc, "headers", None) or {},
             )
     return await call_next(request)
+
+
+@app.exception_handler(HTTPException)
+async def _tavily_compatible_error_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    """错误体同时给出 `detail`（本服务既有形态）与顶层 `error`（Tavily 兼容补充）。
+
+    Tavily 官方把消息放在 `detail.error`；官方 Python SDK 取消息的写法是
+    `body.get("detail", {}).get("error")`，且**外面套了 try/except**：拿到字符串形式的 `detail` 时
+    会静默兜底成空串、不会崩（见 `docs/reports/tavily-official-search-20260928.md` §4）。
+    我们保持 `detail` 为字符串（不改既有字段语义，老客户端不被打断），另加顶层 `error` 字符串，
+    这样 Tavily 风格与旧客户端都能拿到明确消息；429 继续带 `Retry-After`。
+    """
+    detail = exc.detail if isinstance(exc.detail, str) else str(exc.detail)
+    return JSONResponse(
+        {"detail": exc.detail, "error": detail},
+        status_code=exc.status_code,
+        headers=getattr(exc, "headers", None) or {},
+    )
 
 
 async def _authorize(request: Request, body_api_key: str | None = None) -> str:

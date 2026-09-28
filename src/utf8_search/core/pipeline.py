@@ -171,6 +171,11 @@ class SearchPipeline:
             response.cached = True
             response.request_id = request_id
             response.response_time = round(time.perf_counter() - started, 3)
+            # Tavily 兼容（M6）：结果级 id 跟着本次 request_id 重新盖章，避免缓存复用后 id 与 request_id 不一致
+            for index, item in enumerate(response.results):
+                item.id = f"{request_id}-{index}"
+            response.auto_parameters = {"topic": request.topic, "search_depth": request.depth}
+            response.usage = {"credits": 0} if request.include_usage else None
             return response
 
         # 1) 取原始结果（多源并发 + 兜底）。
@@ -187,6 +192,9 @@ class SearchPipeline:
             merged, pages_read = await self._enrich_with_content(request, merged)
 
         results = merged[: request.max_results]
+        # Tavily 兼容（M6）：补结果级 id 与 auto_parameters/usage（只加字段，不改已有字段语义）
+        for index, item in enumerate(results):
+            item.id = f"{request_id}-{index}"
         response = SearchResponse(
             query=request.query,
             results=results,
@@ -199,6 +207,8 @@ class SearchPipeline:
             failed_engines=failed_engines,
             degraded=degraded_reason is not None,
             degraded_reason=degraded_reason,
+            auto_parameters={"topic": request.topic, "search_depth": request.depth},
+            usage={"credits": 0} if request.include_usage else None,
         )
         await self.cache.set(result_key, response.model_dump(mode="json"), self.settings.cache_result_ttl)
         return response
