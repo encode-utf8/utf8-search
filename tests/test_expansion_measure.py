@@ -13,6 +13,7 @@ from utf8_search.config import Settings
 from utf8_search.core.pipeline import SearchPipeline
 from utf8_search.models import SearchRequest
 from utf8_search.providers.base import BaseProvider, SearchHit
+from utf8_search.providers.searxng import SearxngProvider
 from utf8_search.verify.expansion import ExpansionMetrics, expansion_needed
 
 
@@ -98,6 +99,41 @@ async def test_candidate_target_matches_topic_pools(tmp_path) -> None:
     assert news == 30
 
 
+async def test_candidate_target_honours_configured_pool(tmp_path) -> None:
+    """候选池大小可参数化（阶段 2a 的 A/B/C 就靠它），改默认值仍需用户拍板。"""
+    settings = _settings(rank_candidate_pool=40, news_candidate_pool=40)
+    pipeline = await _pipeline(tmp_path, settings, _CountingProvider(1))
+
+    target = pipeline._candidate_target(SearchRequest(query="q", max_results=5, depth="basic"))
+    await pipeline.close()
+
+    assert target == 40
+
+
+async def test_provider_records_raw_result_count() -> None:
+    """上游**原始**返回条数被记录下来（我们自己会把 hits 截断，所以必须单独记）。"""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "results": [
+                    {"url": f"https://site{i}.example/a", "title": f"t{i}", "content": "c", "engine": "brave"}
+                    for i in range(30)
+                ],
+                "unresponsive_engines": [],
+            },
+        )
+
+    client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+    provider = SearxngProvider("http://searxng-test", client, timeout_limit=None)
+    hits = await provider.search("q", max_results=5)
+    await client.aclose()
+
+    assert len(hits) == 5  # 我们截断到 max_results
+    assert provider.raw_result_count == 30  # 但原始条数被记下来
+
+
 async def test_measurement_adds_no_upstream_calls(tmp_path) -> None:
     """关键回归：埋点**不增加上游调用**（一次搜索仍然只有一次主源调用），且样本被记录。"""
     provider = _CountingProvider(30)
@@ -130,6 +166,7 @@ async def test_expansion_metrics_render_into_pipeline_metrics(tmp_path) -> None:
         "utf8search_upstream_active",  # 闸门族仍在
         "utf8search_expansion_samples_total",
         "utf8search_expansion_candidates_bucket",
+        "utf8search_expansion_raw_candidates_bucket",
         "utf8search_expansion_coverage_bucket",
         "utf8search_expansion_distinct_hosts_bucket",
         "utf8search_expansion_trigger_total",

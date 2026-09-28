@@ -58,6 +58,11 @@ class SearxngProvider(BaseProvider):
         self.unresponsive_reasons: dict[str, str] = {}
         # 上一次查询的 engines 约束是否被 SearXNG 忽略（点名引擎全部未注册时会回退到默认引擎集合）
         self.constraint_ignored = False
+        # 上一次查询 SearXNG **原始返回**的结果条数（`payload["results"]` 长度，未截断）。
+        # 用途（M6 阶段 2a）：判断「候选池上限（rank_candidate_pool）到底是不是约束」——
+        # 我们自己会把 hits 截到 max_results，所以从候选数看不出上游到底给了多少。
+        # 注意：与 unresponsive_engines 一样，这是「最近一次请求」的状态，并发下会被其它请求覆盖。
+        self.raw_result_count = 0
 
     async def search(
         self,
@@ -159,6 +164,7 @@ class SearxngProvider(BaseProvider):
         self.constraint_ignored = bool(
             used_engines and sources and not (sources & set(used_engines))
         )
+        self.raw_result_count = len(payload.get("results") or [])
         if self.constraint_ignored:
             logger.warning(
                 "SearXNG 忽略了 engines 约束：请求 %s，实际结果来自 %s"

@@ -336,17 +336,26 @@ class SearchPipeline:
         hosts = {registrable_domain(item.url) for item in results}
         hosts.discard("")
         reason = expansion_needed(len(hits), target, coverage)
+        # SearXNG 原始返回条数（未截断）：用于判断「候选池上限是不是约束」（M6 阶段 2a）。
+        # 与 unresponsive_engines 同一模式：provider 上的「最近一次请求」状态，单并发下准确。
+        raw_candidates: int | None = None
+        for provider in self.providers:
+            if provider.name == "searxng":
+                raw_candidates = getattr(provider, "raw_result_count", None)
+                break
         self.expansion_metrics.observe(
             candidates=len(hits),
+            raw_candidates=raw_candidates,
             target=target,
             coverage_mean=coverage,
             distinct_hosts=len(hosts),
             reason=reason,
         )
         logger.debug(
-            "扩展埋点：候选 %d/%d（%s） 覆盖率 %s 独立站点 %d",
+            "扩展埋点：候选 %d/%d（原始 %s）（%s） 覆盖率 %s 独立站点 %d",
             len(hits),
             target,
+            raw_candidates,
             reason or "充足",
             f"{coverage:.2f}" if coverage is not None else "n/a",
             len(hosts),

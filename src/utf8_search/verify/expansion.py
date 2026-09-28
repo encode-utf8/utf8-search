@@ -17,6 +17,7 @@ from ..core.upstream_gate import Histogram, render_histogram
 
 # 直方图分桶：按「候选数 / 目标 / 覆盖率 / 独立站点数」的实际量纲选，便于报告里直接视觉读分布
 CANDIDATE_BUCKETS: tuple[float, ...] = (0, 4, 8, 12, 16, 24, 32, 48)
+RAW_BUCKETS: tuple[float, ...] = (0, 12, 24, 32, 48, 64, 96)
 TARGET_BUCKETS: tuple[float, ...] = (0, 5, 12, 24, 30)
 COVERAGE_BUCKETS: tuple[float, ...] = (0.2, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 HOST_BUCKETS: tuple[float, ...] = (0, 1, 2, 3, 4, 5, 8)
@@ -52,6 +53,7 @@ class ExpansionMetrics:
 
     def __init__(self) -> None:
         self.candidates = Histogram(CANDIDATE_BUCKETS)
+        self.raw_candidates = Histogram(RAW_BUCKETS)
         self.targets = Histogram(TARGET_BUCKETS)
         self.coverage = Histogram(COVERAGE_BUCKETS)
         self.distinct_hosts = Histogram(HOST_BUCKETS)
@@ -63,6 +65,7 @@ class ExpansionMetrics:
         self,
         *,
         candidates: int,
+        raw_candidates: int | None = None,
         target: int,
         coverage_mean: float | None,
         distinct_hosts: int,
@@ -70,6 +73,8 @@ class ExpansionMetrics:
     ) -> None:
         self.samples += 1
         self.candidates.observe(float(candidates))
+        if raw_candidates is not None:
+            self.raw_candidates.observe(float(raw_candidates))
         self.targets.observe(float(target))
         if coverage_mean is not None:
             self.coverage.observe(float(coverage_mean))
@@ -96,6 +101,11 @@ class ExpansionMetrics:
         )
         for metric, hist, help_text in (
             ("utf8search_expansion_candidates", self.candidates, "主源返回的候选数（扩展埋点）"),
+            (
+                "utf8search_expansion_raw_candidates",
+                self.raw_candidates,
+                "SearXNG 原始返回的结果条数（未截断；用于判断候选池上限是不是约束）",
+            ),
             ("utf8search_expansion_target", self.targets, "本次向主源索取的候选池目标值"),
             ("utf8search_expansion_coverage", self.coverage, "查询词覆盖率（分母=用户原始查询词）"),
             ("utf8search_expansion_distinct_hosts", self.distinct_hosts, "最终结果的独立站点数"),

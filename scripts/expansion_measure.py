@@ -109,6 +109,11 @@ async def _measure_one(pipeline: SearchPipeline, query: str, depth: str, max_res
         return {"query": query, "error": f"overloaded:{exc.reason}", "target": target}
     merged = await pipeline._rank_hits(hits, request)
     results = merged[:max_results]
+    raw_candidates: int | None = None
+    for provider in pipeline.providers:
+        if provider.name == "searxng":
+            raw_candidates = getattr(provider, "raw_result_count", None)
+            break
     coverage = (
         sum(query_coverage(query, item) for item in results) / len(results) if results else None
     )
@@ -119,6 +124,7 @@ async def _measure_one(pipeline: SearchPipeline, query: str, depth: str, max_res
         "query": query,
         "target": target,
         "candidates": len(hits),
+        "raw_candidates": raw_candidates,
         "results": len(results),
         "coverage_mean": None if coverage is None else round(coverage, 4),
         "distinct_hosts": len(hosts),
@@ -182,6 +188,7 @@ async def run(args: argparse.Namespace) -> int:
             else:
                 print(
                     f"[{index:>2}/{len(labelled)}] {group:<11} 候选 {sample['candidates']:>2}/{sample['target']:<2}"
+                    f"（原始 {sample['raw_candidates']}）"
                     f" 覆盖 {float(sample['coverage_mean'] or 0):.2f} 独立站点 {sample['distinct_hosts']}"
                     f" {'→ 候选不足:' + str(sample['reason']) if sample['reason'] else '→ 充足'}  {query}"
                 )
@@ -197,10 +204,16 @@ async def run(args: argparse.Namespace) -> int:
         "measured": len(ok),
         "failed": len(samples) - len(ok),
         "candidates": _quantiles([float(s["candidates"]) for s in ok]),  # type: ignore[arg-type]
+        "raw_candidates": _quantiles(
+            [float(s["raw_candidates"]) for s in ok if s.get("raw_candidates") is not None]  # type: ignore[arg-type]
+        ),
         "targets": _quantiles([float(s["target"]) for s in ok]),  # type: ignore[arg-type]
         "coverage_mean": _quantiles([float(s["coverage_mean"]) for s in ok if s["coverage_mean"] is not None]),  # type: ignore[arg-type]
         "distinct_hosts": _quantiles([float(s["distinct_hosts"]) for s in ok]),  # type: ignore[arg-type]
         "hist_candidates": _histogram([int(s["candidates"]) for s in ok], [6, 12, 16, 24, 32]),  # type: ignore[arg-type]
+        "hist_raw_candidates": _histogram(
+            [int(s["raw_candidates"]) for s in ok if s.get("raw_candidates") is not None], [12, 24, 32, 48, 64]  # type: ignore[arg-type]
+        ),
         "hist_coverage": _histogram([int(float(s["coverage_mean"]) * 10) for s in ok if s["coverage_mean"] is not None], [4, 6, 8, 9]),
         "hist_hosts": _histogram([int(s["distinct_hosts"]) for s in ok], [2, 3, 4, 5]),  # type: ignore[arg-type]
         "placeholder_trigger": {
@@ -212,10 +225,11 @@ async def run(args: argparse.Namespace) -> int:
     }
 
     print("\n== 分布（分位数）==")
-    for key in ("candidates", "targets", "coverage_mean", "distinct_hosts"):
+    for key in ("raw_candidates", "candidates", "targets", "coverage_mean", "distinct_hosts"):
         print(f"{key:<15} {summary[key]}")  # type: ignore[index]
     print("\n== 直方图 ==")
-    print("候选数        ", summary["hist_candidates"])
+    print("原始返回条数  ", summary["hist_raw_candidates"])
+    print("候选数(截断后)", summary["hist_candidates"])
     print("覆盖率(×10)   ", summary["hist_coverage"])
     print("独立站点数    ", summary["hist_hosts"])
     print("\n== 预计触发率（占位口径：候选 < 目标）==")
