@@ -62,6 +62,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--concurrency", type=int, default=10, help="并发数")
     parser.add_argument("--n", type=int, default=50, help="总请求数")
     parser.add_argument("--mode", default="basic", help="深度模式；多个用逗号分隔并按请求轮换，如 basic,advanced")
+    parser.add_argument("--topic", default="general", help="搜索主题：general / news（news 会多打一路通用引擎兜底）")
     parser.add_argument("--max-results", type=int, default=5, help="每次查询返回的结果数")
     parser.add_argument("--timeout", type=float, default=60.0, help="单个请求的超时（秒）")
     parser.add_argument("--warmup", type=int, default=2, help="预热请求数（不计入统计）")
@@ -84,13 +85,20 @@ async def _one_request(
     headers: dict[str, str],
     query: str,
     mode: str,
+    topic: str,
     max_results: int,
 ) -> dict[str, object]:
     """发一个搜索请求，返回状态码与耗时（异常也被归一化成结果，不向上抛）。"""
-    payload = {"query": query, "search_depth": mode, "max_results": max_results}
+    payload = {"query": query, "search_depth": mode, "topic": topic, "max_results": max_results}
     started = time.perf_counter()
     try:
         response = await client.post(search_url, headers=headers, json=payload)
+        body: dict[str, object] = {}
+        if response.status_code == 200:
+            try:
+                body = response.json()
+            except Exception:  # noqa: BLE001 - 非 JSON 响应按「无结果」处理
+                body = {}
         return {
             "query": query,
             "mode": mode,
@@ -98,6 +106,10 @@ async def _one_request(
             "latency_ms": (time.perf_counter() - started) * 1000,
             "error": None,
             "detail": "",
+            # 降级与召回（M5 并发闸门）：degraded 表示可选上游调用被跳过，结果可能不完整
+            "degraded": bool(body.get("degraded")),
+            "degraded_reason": body.get("degraded_reason"),
+            "results": len(body.get("results") or []),
         }
     except httpx.TimeoutException as exc:
         return {
@@ -107,6 +119,9 @@ async def _one_request(
             "latency_ms": (time.perf_counter() - started) * 1000,
             "error": "timeout",
             "detail": str(exc),
+            "degraded": False,
+            "degraded_reason": None,
+            "results": None,
         }
     except Exception as exc:  # noqa: BLE001 - 连接被拒 / 协议错误等统一归为传输错误
         return {
@@ -116,6 +131,9 @@ async def _one_request(
             "latency_ms": (time.perf_counter() - started) * 1000,
             "error": "transport",
             "detail": str(exc),
+            "degraded": False,
+            "degraded_reason": None,
+            "results": None,
         }
 
 
@@ -145,6 +163,7 @@ async def run(args: argparse.Namespace) -> int:
                 headers=headers,
                 query=query,
                 mode=modes[index % len(modes)],
+                topic=args.topic,
                 max_results=args.max_results,
             )
             status = result["status"] if result["status"] is not None else result["error"]
@@ -163,6 +182,7 @@ async def run(args: argparse.Namespace) -> int:
                     headers=headers,
                     query=query,
                     mode=modes[index % len(modes)],
+                    topic=args.topic,
                     max_results=args.max_results,
                 )
 
@@ -183,6 +203,9 @@ async def run(args: argparse.Namespace) -> int:
     rate_limited = [r for r in client_errors if r["status"] == 429]
     timeouts = [r for r in results if r["error"] == "timeout"]
     transport_errors = [r for r in results if r["error"] == "transport"]
+    degraded = [r for r in succeeded if r.get("degraded")]
+    empty_results = [r for r in succeeded if (r.get("results") or 0) == 0]
+    degraded_empty = [r for r in degraded if (r.get("results") or 0) == 0]
 
     stats = summarize_latencies([float(r["latency_ms"]) for r in succeeded])
     passed, notes = evaluate_load_test(
@@ -201,7 +224,23 @@ async def run(args: argparse.Namespace) -> int:
     print(f"服务端 5xx    : {len(server_errors)}")
     print(f"请求超时      : {len(timeouts)}")
     print(f"连接/传输错误 : {len(transport_errors)}")
+    if succeeded:
+        print(
+            f"降级（可选上游被跳过）: {len(degraded)}/{len(succeeded)}"
+            f"（{len(degraded) / len(succeeded):.1%}，按成功数计）"
+            + (f"；原因：{sorted({str(r.get('degraded_reason')) for r in degraded})}" if degraded else "")
+        )
+        print(
+            f"空结果（0 条）: {len(empty_results)}/{len(succeeded)}（{len(empty_results) / len(succeeded):.1%}，按成功数计）"
+        )
+        if degraded:
+            print(
+                f"其中降级请求的空结果: {len(degraded_empty)}/{len(degraded)}"
+                f"（{len(degraded_empty) / len(degraded):.1%}）"
+            )
     print(f"墙钟耗时      : {wall:.2f}s（吞吐 {len(results) / wall:.1f} req/s）")
+    if succeeded:
+        print(f"有效吞吐      : {len(succeeded) / wall:.1f} req/s（成功数 / 墙钟；不含 429）")
     if stats["count"]:
         print(
             f"延迟（成功）  : P50 {stats['p50']:.0f}ms  P90 {stats['p90']:.0f}ms  "
@@ -225,6 +264,7 @@ async def run(args: argparse.Namespace) -> int:
             "concurrency": args.concurrency,
             "n": args.n,
             "mode": args.mode,
+            "topic": args.topic,
             "wall_seconds": wall,
             "rss_before": rss_before,
             "rss_after": rss_after,
@@ -235,6 +275,9 @@ async def run(args: argparse.Namespace) -> int:
                 "server_errors": len(server_errors),
                 "timeouts": len(timeouts),
                 "transport_errors": len(transport_errors),
+                "degraded": len(degraded),
+                "empty_results": len(empty_results),
+                "degraded_empty": len(degraded_empty),
                 **stats,
             },
             "passed": passed,

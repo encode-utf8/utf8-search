@@ -24,7 +24,10 @@ class FakeProvider(BaseProvider):
         self._fail = fail
         self.calls = 0
 
-    async def search(self, query, *, max_results, topic="general", time_range=None, engines=None, language="all"):
+    async def search(
+        self, query, *, max_results, topic="general", time_range=None, engines=None, language="all",
+        optional_wait=None,
+    ):
         self.calls += 1
         if self._delay:
             await asyncio.sleep(self._delay)
@@ -273,4 +276,3 @@ async def test_news_topic_keeps_aggregator_pages_general_drops_them(settings, tm
     # 两种口径下同站限流都生效：同一域名最多 2 条（其余靠补回机制兜底，不会掏空结果）
     assert sum(1 for r in news_top if "smzdm.com" in r.url) <= 4
     await pipeline.close()
-

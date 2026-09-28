@@ -44,6 +44,7 @@ from ..rank.recency import (
     has_recency_intent,
     mark_stale_by_title_year,
 )
+from .upstream_gate import UpstreamGate, UpstreamOverloaded
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +82,7 @@ class SearchPipeline:
         cache: CacheStore,
         providers: list[BaseProvider],
         extractor: PageExtractor,
+        gate: UpstreamGate | None = None,
     ) -> None:
         self.settings = settings
         self.client = client
@@ -88,6 +90,8 @@ class SearchPipeline:
         self.providers = providers
         self.extractor = extractor
         self._semaphore = asyncio.Semaphore(settings.max_fetch_concurrency)
+        # 上游并发闸门：与 provider 共享同一个实例，/metrics 也从这里取
+        self.gate = gate if gate is not None else UpstreamGate.from_settings(settings)
 
     # ------------------------------------------------------------------ 构建
     @classmethod
@@ -121,6 +125,8 @@ class SearchPipeline:
         )
         await cache.open()
 
+        # 闸门必须先于 provider 构造：SearxngProvider 直接持有它（重试也算同一个槽位）
+        gate = UpstreamGate.from_settings(settings)
         providers: list[BaseProvider] = [
             SearxngProvider(
                 settings.searxng_url,
@@ -132,17 +138,25 @@ class SearchPipeline:
                 # 引擎健康度自适应（M5-5.1）：开关关闭时 from_settings 返回 None，
                 # provider 会完全跳过自适应逻辑，等价于旧行为
                 engine_health=EngineHealthTracker.from_settings(settings),
+                # 上游并发闸门（M5 并发保护）：包住整次 search（含重试），过载抛 UpstreamOverloaded
+                gate=gate,
             ),
             BingHtmlProvider(client),
         ]
         jina = JinaReader(client, prefix=settings.jina_prefix) if settings.enable_jina_fallback else None
         extractor = PageExtractor(settings, client, cache, jina=jina)
-        return cls(settings, client=client, cache=cache, providers=providers, extractor=extractor)
+        return cls(
+            settings, client=client, cache=cache, providers=providers, extractor=extractor, gate=gate
+        )
 
     async def close(self) -> None:
         """释放资源。"""
         await self.client.aclose()
         await self.cache.close()
+
+    def render_metrics(self) -> str:
+        """渲染上游闸门指标（Prometheus 文本格式，供 `/metrics` 使用）。"""
+        return self.gate.render_metrics()
 
     # ------------------------------------------------------------------ 搜索
     async def search(self, request: SearchRequest) -> SearchResponse:
@@ -159,8 +173,10 @@ class SearchPipeline:
             response.response_time = round(time.perf_counter() - started, 3)
             return response
 
-        # 1) 取原始结果（多源并发 + 兜底）
-        hits, engines_used, failed_engines = await self._collect_hits(request)
+        # 1) 取原始结果（多源并发 + 兜底）。
+        # 上游过载且**一条结果都没有**时，_collect_hits 会向上抛 UpstreamOverloaded（→ 429），
+        # 而不是返回空列表把「过载」伪装成「没搜到」。
+        hits, engines_used, failed_engines, degraded_reason = await self._collect_hits(request)
 
         # 2) 融合、去重、重排、过滤、时效分层（不含正文抓取）
         merged = await self._rank_hits(hits, request)
@@ -181,6 +197,8 @@ class SearchPipeline:
             pages_read=pages_read,
             engines_used=engines_used,
             failed_engines=failed_engines,
+            degraded=degraded_reason is not None,
+            degraded_reason=degraded_reason,
         )
         await self.cache.set(result_key, response.model_dump(mode="json"), self.settings.cache_result_ttl)
         return response
@@ -268,8 +286,23 @@ class SearchPipeline:
             logger.debug("质量过滤：%s", hygiene)
         return filtered
 
-    async def _collect_hits(self, request: SearchRequest) -> tuple[list[SearchHit], list[str], list[str]]:
-        """从各 Provider 收集原始结果，主源不足时自动兜底。"""
+    async def _collect_hits(
+        self, request: SearchRequest
+    ) -> tuple[list[SearchHit], list[str], list[str], str | None]:
+        """从各 Provider 收集原始结果，主源不足时自动兜底。
+
+        返回 `(hits, engines_used, failed_engines, degraded_reason)`。上游过载（`UpstreamOverloaded`）：
+
+        - **绝不被 `except Exception` 吞成「返回 0 条」**——一条结果都没有时直接向上抛，由接口层映射成
+          429 / MCP 可读错误；
+        - **主源过载时绝不降级到兜底源**（Bing 等）——过载是全局保护，把压力转嫁给更脆弱的抓取源只会扩大故障面；
+        - **按「跳过是否会导致返回空结果」区分两类调用**：
+          * **兜底型**（Bing 兜底、news 的通用引擎补充）：只在主源凑不满 `max_results` 时触发，
+            跳过就会把空/残缺结果交给用户 → **不许静默跳过**，按 `upstream_optional_wait` 有限等待取容量，
+            拿不到直接 429（`fallback_no_capacity` / `no_capacity`）；
+          * **锦上添花型**（少几条候选无妨）：可跳过并记 `degraded_reason`（当前产品路径没有这种调用，
+            因此正常情况下 `degraded` 为 false）。
+        """
         pages_cap = self._page_budget(request)
         want = max(request.max_results, pages_cap)
         if request.topic == "news":
@@ -285,23 +318,33 @@ class SearchPipeline:
 
         cached_hits = await self.cache.get(query_key)
         if cached_hits is not None:
-            return [SearchHit(**item) for item in cached_hits], ["cache"], []
+            return [SearchHit(**item) for item in cached_hits], ["cache"], [], None
 
         engines_used: list[str] = []
         failed_engines: list[str] = []
         hits: list[SearchHit] = []
-
-        # 新闻主题：通用引擎兜底请求与主源的新闻请求互不依赖，先并发发出去，
-        # 拿到主源结果后再汇合。这样新闻主题只多花「较慢的那一次」的延迟。
-        general_task: asyncio.Task | None = None
-        if request.topic == "news" and self.settings.news_include_general:
-            general_task = asyncio.create_task(self._collect_general_extra(request, want))
+        overloaded: UpstreamOverloaded | None = None
+        degraded_reasons: list[str] = []
 
         # 主源：SearXNG；仅在「结果拿不满用户需要的条数」或主源失败时才启用兜底源，
         # 避免深度模式下为了凑够抓取页数而白白多打一次外部请求。
         for index, provider in enumerate(self.providers):
             if index > 0 and len(hits) >= request.max_results:
                 break
+            # 兜底源（index>0）属于**兜底型**调用：它只在「主源凑不满 max_results」时才会走到这里，
+            # 跳过它就可能让用户拿到空/残缺结果，所以**不许静默跳过**——按 `upstream_optional_wait`
+            # 有限等待取容量，等不到直接抛 `UpstreamOverloaded`（→ 429），绝不返回空结果。
+            optional = index > 0
+            acquired_optional = False
+            if optional:
+                acquired_optional = await self.gate.try_acquire(
+                    timeout=self.settings.upstream_optional_wait
+                )
+                if not acquired_optional:
+                    self.gate.metrics.record_rejected("fallback_no_capacity")
+                    raise UpstreamOverloaded(
+                        reason="fallback_no_capacity", retry_after=self.gate.retry_after
+                    )
             try:
                 provider_hits = await provider.search(
                     request.query,
@@ -311,10 +354,17 @@ class SearchPipeline:
                     engines=request.engines,
                     language=self.settings.language,
                 )
+            except UpstreamOverloaded as exc:
+                # 过载是全局保护：不降级到兜底源、也不吞成空结果，直接中止本轮上游收集。
+                overloaded = exc
+                break
             except Exception as exc:
                 logger.warning("Provider %s 搜索失败: %s", provider.name, exc)
                 failed_engines.append(provider.name)
                 continue
+            finally:
+                if optional and acquired_optional:
+                    self.gate.release()
 
             if provider.name == "searxng":
                 unresponsive = getattr(provider, "unresponsive_engines", [])
@@ -329,11 +379,20 @@ class SearchPipeline:
                 if len(hits) >= request.max_results and index == 0:
                     break
 
-        # 汇合并发的通用兜底结果（新闻源对中文长尾覆盖差，用通用结果补齐候选；
-        # 融合阶段会按 URL 去重）
-        if general_task is not None:
+        # 主源过载且一条结果都没有 → 直接 429；不再去试补充路，避免在同一个饱和的上游上继续排队。
+        if overloaded is not None and not hits:
+            raise overloaded
+
+        # 新闻主题：**主源结果不足时才补**（复用 5.2 的判据：不够填满 max_results 才去补）。
+        # 这条补充路存在的唯一理由就是补中文长尾的 0 结果（实测新闻引擎 8 条查询里 3 条直接 0 条），
+        # 所以它同样是**兜底型**：拿不到容量就直接 429，不允许静默跳过并把空结果交给用户。
+        # 改成「不足才补 + 串行」后，news 每请求的上游需求从 ~2 降到 ~1（多数请求只打主源）。
+        if self._needs_general_extra(hits, request):
             try:
-                extras, extra_engines, extra_failed = await general_task
+                extras, extra_engines, extra_failed = await self._collect_general_extra(request, want)
+            except UpstreamOverloaded as exc:
+                # 兜底型调用拿不到容量 → 直接 429（不返回空/残缺结果）
+                raise exc from None
             except Exception as exc:  # noqa: BLE001 - 兜底检索失败不应影响新闻主流程
                 logger.warning("新闻补充检索（通用引擎）失败: %s", exc)
                 failed_engines.append("searxng:general")
@@ -342,9 +401,27 @@ class SearchPipeline:
                 engines_used.extend(extra_engines)
                 failed_engines.extend(extra_failed)
 
+        if overloaded is not None and hits:
+            # 主源过载但仍有结果 → 降级返回（保留可用结果）
+            degraded_reasons.append("upstream_overloaded")
+        if overloaded is not None and not hits:
+            # 一条结果都没有、且原因是上游过载 —— 必须让调用方看到明确信号，不能返回空列表。
+            raise overloaded
         if hits:
             await self.cache.set(query_key, [h.to_dict() for h in hits], self.settings.cache_query_ttl)
-        return hits, engines_used, failed_engines
+        return hits, engines_used, failed_engines, (",".join(dict.fromkeys(degraded_reasons)) or None)
+
+    def _needs_general_extra(self, hits: list[SearchHit], request: SearchRequest) -> bool:
+        """news 主题下是否需要再补一路通用引擎（**兜底型**判据）。
+
+        判据复用 5.2 那条：**主源结果不够填满用户要的条数**（`len(hits) < max_results`）才去补。
+        这与「跳过这次调用是否会导致返回空结果」一致：新闻引擎对中文长尾会直接返回 0 条
+        （实测 8 条查询里 3 条 0 条），不补就等于把空/残缺结果交给用户 —— 所以补充路属于兜底型，
+        拿不到容量要直接 429，不许静默跳过。
+        """
+        if request.topic != "news" or not self.settings.news_include_general:
+            return False
+        return len(hits) < request.max_results
 
     async def _collect_general_extra(
         self, request: SearchRequest, want: int
@@ -378,7 +455,14 @@ class SearchPipeline:
                     time_range=request.time_range,
                     engines=extra_engines,
                     language=self.settings.language,
+                    # 可选补充路：**有限等待**取容量，拿不到就跳过（由 _collect_hits 记 degraded）。
+                    # 这条路的唯一理由就是补中文长尾的 0 结果，所以给 0.5s 等待换更低的降级率。
+                    optional_wait=self.settings.upstream_optional_wait,
                 )
+            except UpstreamOverloaded:
+                # 过载必须穿透到 _collect_hits 决定「降级返回」还是「上抛 429」，
+                # 不能被这里的 except Exception 吞成「补充检索失败」。
+                raise
             except Exception as exc:  # noqa: BLE001 - 补充检索失败不应影响新闻主流程
                 logger.warning("新闻补充检索（通用引擎）失败: %s", exc)
                 failed_engines.append("searxng:general")

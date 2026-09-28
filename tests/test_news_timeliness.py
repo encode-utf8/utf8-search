@@ -53,7 +53,10 @@ class _DateProvider(BaseProvider):
     def __init__(self, hits: list[SearchHit]) -> None:
         self._hits = hits
 
-    async def search(self, query, *, max_results, topic="general", time_range=None, engines=None, language="all"):
+    async def search(
+        self, query, *, max_results, topic="general", time_range=None, engines=None, language="all",
+        optional_wait=None,
+    ):
         return self._hits[:max_results]
 
 
@@ -81,7 +84,8 @@ class _RecordingProvider(BaseProvider):
         self.calls: list[dict] = []
 
     async def search(
-        self, query, *, max_results, topic="general", time_range=None, engines=None, language="all"
+        self, query, *, max_results, topic="general", time_range=None, engines=None, language="all",
+        optional_wait=None,
     ):  # noqa: ANN001
         self.calls.append(
             {"topic": topic, "time_range": time_range, "engines": engines, "max_results": max_results}
@@ -308,39 +312,33 @@ async def test_general_topic_does_not_trigger_extra_call(settings, tmp_path) -> 
     assert [c["topic"] for c in provider.calls] == ["general"]
 
 
-class _ConcurrencyProbeProvider(BaseProvider):
-    """探测「新闻请求」与「通用引擎补充请求」是否真的并发。
-
-    news 那一路会等 general 那一路先启动：如果实现退回成串行（先 news 再 general），
-    news 会一直等到超时，`concurrent` 就是 False。
-    """
+class _SequentialProbeProvider(BaseProvider):
+    """记录 news 主路与通用补充路的调用顺序与次数（M5 并发闸门：不足才补、串行）。"""
 
     name = "searxng"
 
-    def __init__(self) -> None:
-        self.general_started = asyncio.Event()
-        self.concurrent = False
+    def __init__(self, news_hits: list[SearchHit]) -> None:
+        self._news_hits = news_hits
+        self.order: list[str] = []
 
     async def search(
-        self, query, *, max_results, topic="general", time_range=None, engines=None, language="all"
+        self, query, *, max_results, topic="general", time_range=None, engines=None, language="all",
+        optional_wait=None,
     ):  # noqa: ANN001
-        if topic == "news":
-            try:
-                await asyncio.wait_for(self.general_started.wait(), timeout=1.0)
-                self.concurrent = True
-            except asyncio.TimeoutError:
-                self.concurrent = False
-        else:
-            self.general_started.set()
-        return []
+        self.order.append(topic)
+        return list(self._news_hits) if topic == "news" else []
 
 
-async def test_news_and_general_requests_run_concurrently(settings, tmp_path) -> None:
-    """两路上游请求必须并发发出：新闻主题只多花「较慢那一次」的延迟。
+async def test_news_general_extra_is_sequential_and_skipped_when_source_sufficient(
+    settings, tmp_path
+) -> None:
+    """news 的上游需求降到 ~1：主源够填满 max_results 时不补；不足时**串行**补第二路。
 
-    实测这项优化把 topic=news 的端到端耗时从 2.6-5.6s 压到 1.1-1.3s。
+    背景（M5 并发闸门）：补充路是**兜底型**（跳过会返回空结果），改成「不足才补」后
+    典型请求只打一路上游，闸门下的等效并发从 limit/2 回到接近 limit；代价是需要补的请求
+    变成串行两跳（不再并发双打来省延迟）。
     """
-    provider = _ConcurrencyProbeProvider()
+    provider = _SequentialProbeProvider([_hit(i, None) for i in range(1, 6)])  # 够 max_results=5
     cache = CacheStore(str(tmp_path / "concurrent.db"))
     await cache.open()
     pipeline = SearchPipeline(
@@ -350,15 +348,19 @@ async def test_news_and_general_requests_run_concurrently(settings, tmp_path) ->
         providers=[provider],
         extractor=_DateExtractor(None),
     )
-    await asyncio.wait_for(
-        pipeline.search(
-            SearchRequest(query="新闻", max_results=5, depth="basic", topic="news", time_range="day")
-        ),
-        timeout=5.0,
+    await pipeline.search(
+        SearchRequest(query="新闻充足", max_results=5, depth="basic", topic="news", time_range="day")
+    )
+    assert provider.order == ["news"]  # 充足 → 不补
+
+    provider._news_hits = [_hit(1, None)]  # 主源只给 1 条 → 触发补充路
+    await pipeline.search(
+        SearchRequest(query="新闻不足", max_results=5, depth="basic", topic="news", time_range="day")
     )
     await pipeline.close()
 
-    assert provider.concurrent is True
+    # 串行：先 news 主路，后 general 补充路（不再是并发双打）
+    assert provider.order == ["news", "news", "general"]
 
 
 # ---------------------------------------------------------------- 日期回补的按需触发

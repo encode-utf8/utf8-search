@@ -9,11 +9,12 @@
 from __future__ import annotations
 
 import logging
+import math
 from contextlib import asynccontextmanager
 from typing import Annotated, Any, Literal
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from mcp.server.transport_security import TransportSecuritySettings
 from pydantic import BaseModel, ConfigDict, Field
 from starlette.exceptions import HTTPException
@@ -22,6 +23,7 @@ from .. import __version__
 from ..auth import get_guard
 from ..config import Settings, get_settings
 from ..core.runtime import get_pipeline, shutdown_pipeline
+from ..core.upstream_gate import UpstreamOverloaded
 from ..models import ExtractRequest, SearchRequest
 from .mcp_server import mcp
 
@@ -191,13 +193,41 @@ async def health() -> dict[str, Any]:
     return payload
 
 
+@app.get("/metrics", include_in_schema=False)
+async def metrics_endpoint(request: Request) -> PlainTextResponse:
+    """Prometheus 文本格式指标（M5 并发保护）。
+
+    只暴露上游闸门的最小指标集（等待数 / 被拒计数 / 排队时长 / 上游延迟直方图），不引第三方依赖。
+    **沿用 REST 鉴权**：/metrics 也会经 Caddy 对外可达，所以默认不能裸奔；Prometheus 用 bearer token 抓取。
+    `UTF8SEARCH_METRICS_ENABLED=false` 时端点整体关闭。
+    """
+    if not settings.metrics_enabled:
+        raise HTTPException(status_code=404, detail="metrics 已关闭（UTF8SEARCH_METRICS_ENABLED=false）")
+    await _authorize(request)
+    pipeline = await get_pipeline()
+    return PlainTextResponse(pipeline.render_metrics(), media_type="text/plain; version=0.0.4; charset=utf-8")
+
+
 @app.post("/search")
 @app.post("/v1/search")
 async def search_endpoint(body: TavilySearchBody, request: Request) -> dict[str, Any]:
     """联网搜索（Tavily 兼容）。"""
     await _authorize(request, body.api_key)
     pipeline = await get_pipeline()
-    response = await pipeline.search(body.to_search_request())
+    try:
+        response = await pipeline.search(body.to_search_request())
+    except UpstreamOverloaded as exc:
+        # 过载且没有任何结果 → 明确信号，而不是把「过载」伪装成「没搜到」。
+        # 已有结果的情况在 pipeline 里按 degraded=True 正常返回 200，不会走到这里。
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                f"上游搜索过载（{exc.reason}）：已返回明确失败而不是挂到超时，"
+                f"请 {math.ceil(exc.retry_after)} 秒后重试。"
+            ),
+            # Retry-After 向上取整：不能给一个比实际需要更短的等待时间
+            headers={"Retry-After": str(math.ceil(exc.retry_after))},
+        ) from exc
     payload = response.model_dump(mode="json")
     if not body.include_images:
         payload.pop("images", None)

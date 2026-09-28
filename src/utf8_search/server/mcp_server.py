@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import logging
+import math
 from typing import Annotated, Any, Literal
 
 from mcp.server import MCPServer
+from mcp.server.mcpserver.exceptions import ToolError
 from pydantic import Field
 
 from .. import __version__
 from ..core.runtime import get_pipeline
+from ..core.upstream_gate import UpstreamOverloaded
 from ..models import ExtractRequest, SearchRequest
 
 logger = logging.getLogger(__name__)
@@ -57,7 +60,15 @@ async def web_search(
         exclude_domains=exclude_domains,
         include_raw_content=include_raw_content,
     )
-    response = await pipeline.search(request)
+    try:
+        response = await pipeline.search(request)
+    except UpstreamOverloaded as exc:
+        # 过载要给出**可理解的错误**，不能返回空结果 —— 空结果会被 LLM 误读成「没有搜到」。
+        # MCP 侧用 ToolError，SDK 会转成 isError=true + 这段文本。
+        raise ToolError(
+            f"上游搜索过载（{exc.reason}）：本次未返回任何结果，请约 {math.ceil(exc.retry_after)} 秒后重试；"
+            "请勿把本次当作「没有搜到」，也不要立即并发重试。"
+        ) from exc
     return response.model_dump(mode="json")
 
 

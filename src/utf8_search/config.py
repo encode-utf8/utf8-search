@@ -147,6 +147,40 @@ class Settings(BaseSettings):
         default=5.0, gt=0, description="deep 模式的单页下载上限（秒）；大页较多，需比 advanced 宽松"
     )
     max_fetch_concurrency: int = Field(default=24, ge=1, description="并发抓取上限")
+    # ---------- 上游并发闸门（M5 并发保护） ----------
+    # 背景：docs/04 §4.4 实测并发 10 冷查询会劣化到 ~12s，瓶颈在上游聚合（吞吐仅 1.3-2.0 req/s）。
+    # 闸门只限制「同时打到 SearXNG 的聚合请求数」，不改搜索语义；目标是「宁可快速失败，不要一起慢」。
+    upstream_max_concurrency: int = Field(
+        default=3,
+        ge=0,
+        description="同时打到 SearXNG 的聚合请求上限（0 = 关闭闸门，不推荐）；实测并发 1-3 时 P50≈1.3s",
+    )
+    # 默认值来自 2026-09-27 的参数矩阵扫描（见 docs/reports/m5-concurrency-gate-20260927.md）：
+    # 「排队优先、拒绝为例外」——queue 6 时 @10 只有 18% 成功率，queue 12 才把 @10 拉到 100%；
+    # max_wait 取满足「@10 ≥90% 且 P95 ≤6s」的最小值 4.0s（@30 实测 15-27%，在 25% 阈值附近抖动）。
+    # 兜底型调用的 OPTIONAL_WAIT 在「主源不足才补」结构改完后重扫 1.0/1.5/3.0s，
+    # 取满足「news@10 降级率 ≤30% 且 空结果率 ≤10% 且 P95 ≤6.5s」的最小值 1.0s。
+    upstream_queue_limit: int = Field(
+        default=12,
+        ge=0,
+        description="上游闸门允许排队的请求数上限；队列满立即返回 429，避免把上游压垮",
+    )
+    upstream_max_wait: float = Field(
+        default=4.0,
+        gt=0,
+        description="上游闸门排队等待上限（秒）；超过立即返回 429，避免所有请求一起慢",
+    )
+    upstream_optional_wait: float = Field(
+        default=1.0,
+        ge=0,
+        description=(
+            "兜底型上游调用（news 的通用引擎补充、Bing 兜底）取容量的有限等待（秒）。"
+            "0 = 立即失败。等不到容量即 429，绝不静默跳过（跳过会返回空结果）"
+        ),
+    )
+    metrics_enabled: bool = Field(
+        default=True, description="是否暴露 Prometheus 文本格式的 /metrics（沿用 REST 鉴权）"
+    )
     fetch_early_stop_ratio: float = Field(
         default=0.5, gt=0, le=1.0, description="深度模式读到该比例的目标页面即提前返回（0-1）"
     )

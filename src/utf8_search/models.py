@@ -50,6 +50,10 @@ class SearchResponse(BaseModel):
     pages_read: int = Field(default=0, description="深度模式下实际读到的页面数")
     engines_used: list[str] = Field(default_factory=list)
     failed_engines: list[str] = Field(default_factory=list)
+    # 上游过载降级标记（M5 并发保护）：为 true 时结果可能不完整（例如 news 的第二路上游被闸门拒绝），
+    # 但仍有可用结果，因此按 200 返回并带上该标记，而不是 429。
+    degraded: bool = Field(default=False, description="上游过载导致的降级返回（结果可能不完整）")
+    degraded_reason: str | None = Field(default=None, description="降级原因，如 upstream_overloaded")
 
     # ---- Tavily 兼容字段（本服务不自带 LLM，恒为空）----
     answer: str | None = None
