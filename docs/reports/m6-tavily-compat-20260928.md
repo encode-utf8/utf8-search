@@ -1,4 +1,4 @@
-# M6 Tavily 兼容性逐字段核对与补齐（2026-09-28）
+# M6 Tavily 兼容性逐字段核对与补齐（2026-09-28，含同日收口：校验错误码 422 → 400）
 
 - 分支：`feature/m6-tavily-compat`（基于 `main` @ `726d0b7`）
 - 对照依据（**留档、可复核，不凭记忆**）：
@@ -18,14 +18,17 @@
 - **会导致客户端报错的**：核对后**没有**「必崩」项 —— 官方 SDK 不校验成功响应、错误体有 try/except 兜底；
   唯一有风险的是「按字段遍历」时缺 `results[].images/favicon/id` 与顶层 `usage/auto_parameters`，
   已按「可直接补齐」处理。
+- **收口补充（同日第二轮）**：`RequestValidationError` 的状态码由 FastAPI 默认的 **422 对齐为 Tavily 的 400**
+  —— 官方 SDK 对 400 抛 `BadRequestError`、对 422 走 `raise_for_status()` 通用分支，按 Tavily 写的客户端
+  会**走错异常分支**，属兼容缺口而非风格差异（详见 §7）。
 
 ## 1. 请求字段对照
 
 | 字段 | 我方 `/v1/search` | Tavily | 差异 | 影响 |
 | --- | --- | --- | --- | --- |
 | `query` | ✅ 必填 | ✅ 必填 | 无 | — |
-| `search_depth` | ✅ `basic`/`advanced`/`deep` | ✅ 含 `fast`/`ultra-fast` 等 | **取值集不同**（我们没有 fast/ultra-fast；`deep` 是我们特有的深度抓取） | 传非我方取值 → 422；Tavily 客户端默认 `basic`，实际风险低（见 §4） |
-| `max_results` | ✅ 1-20 | ✅ 上限更高 | 上限不同 | 传 >20 → 422 |
+| `search_depth` | ✅ `basic`/`advanced`/`deep` | ✅ 含 `fast`/`ultra-fast` 等 | **取值集不同**（我们没有 fast/ultra-fast；`deep` 是我们特有的深度抓取） | 传非我方取值 → **400**（已对齐 Tavily，见 §3）；Tavily 客户端默认 `basic`，实际风险低 |
+| `max_results` | ✅ 1-20 | ✅ 上限更高 | 上限不同 | 传 >20 → **400**（已对齐） |
 | `topic` | ✅ `general`/`news` | ✅ 同 | 无 | — |
 | `time_range` | ✅ `day`/`week`/`month`/`year` | ✅ 同 | 无 | — |
 | `days` | ✅ 保留（内部换算 `time_range`） | ⛔ 当前文档无（改用 `start_date`/`end_date`） | 我方多支持（超集） | 无 |
@@ -76,8 +79,8 @@
 | --- | --- | --- | --- |
 | 鉴权失败 | **401** `{"detail": "<str>", "error": "<str>"}` | **401** `{"detail": {"error": "<str>"}}` | 形状不同（我们**不改** `detail` 的字符串类型）：官方 SDK 的 `body.get("detail", {}).get("error")` 会走到它自己的 `try/except` 兜底 → **不崩**，但消息为空串；我们额外给的顶层 `error` 让消息可读（测试断言了这一点） |
 | 限流 | **429** + **`Retry-After`** | **429**（文档未列 `Retry-After`） | 我们多给 `Retry-After`（超集） |
-| 请求体校验失败 | **422** `{"detail": [ ... ]}`（FastAPI 默认） | **422** `{"detail": [ ... ]}`（官方示例同形） | 一致 |
-| 参数语义非法（如非法 topic） | **422**（Pydantic 校验） | **400** | 状态码不同：官方 SDK 对 422 走 `raise_for_status()` → `requests.HTTPError`，而不是 `BadRequestError`；**均为异常、不会静默成功**，已在 §4 记为已知差异 |
+| 请求体/参数校验失败 | **400** `{"detail": [ ... ], "error": "<可读汇总>"}` | **400** `{"detail": {"error": ...}}` | 状态码**已对齐**（原为 FastAPI 默认的 422）；body 形态保持既有约定（`detail` 列表）并追加顶层 `error` |
+| 参数语义非法（如非法 topic） | **400**（Pydantic 校验 + 显式处理器） | **400** | 一致 |
 | 套餐/额度 | 不产生 | **432/433/403** | 语义不同（本服务免费，无套餐） |
 | 服务端错误 | **500** `{"detail": "Internal Server Error"}` | **500** `{"detail": {"error": "Internal Server Error"}}` | 同 401 的形状差异 |
 | 超时 | 上游 `search_timeout_limit+3`（默认 5.5s）×1 次重试；闸门排队上限 4.0s | SDK 侧 `timeout` 参数 | Tavily 的 `timeout` 请求参数我们忽略；客户端应使用自己的 HTTP 超时 |
@@ -96,18 +99,18 @@
 
 ## 5. 回归测试
 
-`tests/test_tavily_compat.py`（8 条，全部离线）：
+`tests/test_tavily_compat.py`（9 条，全部离线）：
 
 1. **官方示例响应能被我们的模型直接解析**（`SearchResponse.model_validate(官方示例)`，含字符串 `response_time` 的兼容）；
 2. **我们的 REST 响应覆盖官方示例里的每个字段路径**（含 `results[].images[].url` 这种嵌套路径；
    空数组按「字段存在」判定，因为我们不做图片搜索）；
 3. **MCP 工具输出与 REST 同一套字段**；
 4. **官方 SDK 的错误解析写法能解析我们的 401/429**（不抛、分类正确、`Retry-After` 存在、顶层 `error` 可读）；
-5. 422 校验错误的 `detail` 是列表（与 Tavily 官方示例同形）；
+5. **校验错误是 400 + `BadRequestError`**（官方 SDK 分支断言），`detail` 仍是列表、顶层 `error` 可读；
 6. **真实 pipeline 会给结果盖章** `id=<request_id>-<序号>` 并回显 `auto_parameters`/`usage`；
 7. `/extract` 的 `results[].images` 与 `failed_results[].{url,error}` 与官方一致。
 
-离线全量：`pytest -q -m "not net"` → **264 passed, 4 deselected**。
+离线全量：`pytest -q -m "not net"` → **265 passed, 4 deselected**。
 
 ## 6. 有意保留的差异（与理由）
 
@@ -119,4 +122,37 @@
    需要严格过滤的客户端请自行传 `time_range`/`include_domains` 等我们已实现的参数。
 6. **`detail` 保持字符串**（不改成 Tavily 的 `detail.error` 对象）：这是既有字段语义，改了会打断老客户端；
    官方 SDK 对此有兜底、不会崩，且我们补了顶层 `error`。
-7. **非法参数的 422 vs Tavily 的 400**：保持 FastAPI 默认校验语义（422 + 列表型 `detail`，与 Tavily 的 422 同形）。
+7. ~~非法参数的 422 vs Tavily 的 400~~ → **本轮已对齐为 400**（见 §7），不再作为保留差异。
+
+## 7. 本轮收口：校验错误码 422 → 400（对齐 Tavily）
+
+**改了什么**：为 FastAPI 的 `RequestValidationError` 显式注册异常处理器，把请求体/参数校验失败的状态码
+从框架默认的 **422 改成 400**；响应体保持既有形态（`detail` 仍是错误列表）并**追加顶层 `error`**（可读汇总，
+例如 `body.topic: Input should be 'general' or 'news'`）。其它错误码（401/429/404/400-业务/500）语义一律未动。
+
+**为什么改（不是风格差异，是兼容缺口）**：官方 Python SDK 的分支是
+
+```python
+if response.status_code == 429:   raise UsageLimitExceededError(detail)
+elif response.status_code in [403, 432, 433]: raise ForbiddenError(detail)
+elif response.status_code == 401: raise InvalidAPIKeyError(detail)
+elif response.status_code == 400: raise BadRequestError(detail)
+else:                             raise response.raise_for_status()   # ← 422 落到这里
+```
+
+按 Tavily 写的客户端会把「参数写错」当成 `requests.HTTPError` 通用异常，而不是它自己 catch 的
+`BadRequestError`——**异常分支走错**，错误处理逻辑（重试/提示/回退）全部失效。
+
+**对齐后仍与 Tavily 有的差异**（其余 6 条见 §6）：
+
+- `detail` 仍是**字符串/列表**（Tavily 是 `detail.error` 对象）——保持不变以免打断既有客户端；
+  官方 SDK 对此有 try/except 兜底不会崩，我们额外给顶层 `error` 让消息可读；
+- 校验错误的 `detail` 内容是 FastAPI/Pydantic 风格（`type`/`loc`/`msg`/`input`），与 Tavily 官方示例的 422 结构一致；
+- `409`/`422` 等状态码我们不再产生（校验失败统一 400）。
+
+> ⚠️ **一个需要你知道的口径细节**：官方错误表里有**两种**情况——「参数语义非法」（如 `Invalid topic`）是 **400**，
+> 而「请求体**形状**校验失败」的官方示例（同一份 FastAPI 风格的 `detail` 列表）**标的是 422**。
+> 我们的 Pydantic 校验会把这两类都归到同一个入口，本轮按指示**统一成 400**（保证官方 SDK 一定落到
+> `BadRequestError`）。副作用：**形状类**校验错误的码与 Tavily 文档的 422 示例不同（语义类则完全一致）。
+> 如果你更希望逐类对齐（语义→400、形状→422），需要按错误类型分流，我可以下一轮做——本轮不做，
+> 以免把状态码规则复杂化。
