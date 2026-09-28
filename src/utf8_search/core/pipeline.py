@@ -35,7 +35,7 @@ from ..providers.bing_html import BingHtmlProvider
 from ..providers.jina_reader import JinaReader
 from ..providers.engine_health import EngineHealthTracker
 from ..providers.searxng import SearxngProvider
-from ..rank.diversity import apply_rank_filters
+from ..rank.diversity import apply_rank_filters, query_coverage, registrable_domain
 from ..rank.fusion import filter_domains, filter_low_quality, fuse, rerank
 from ..rank.recency import (
     age_days,
@@ -44,6 +44,7 @@ from ..rank.recency import (
     has_recency_intent,
     mark_stale_by_title_year,
 )
+from ..verify.expansion import ExpansionMetrics, expansion_needed
 from .upstream_gate import UpstreamGate, UpstreamOverloaded
 
 logger = logging.getLogger(__name__)
@@ -92,6 +93,8 @@ class SearchPipeline:
         self._semaphore = asyncio.Semaphore(settings.max_fetch_concurrency)
         # 上游并发闸门：与 provider 共享同一个实例，/metrics 也从这里取
         self.gate = gate if gate is not None else UpstreamGate.from_settings(settings)
+        # 查询扩展埋点（M6 阶段 1）：只记录分布，不改变任何行为、不增加上游调用
+        self.expansion_metrics = ExpansionMetrics()
 
     # ------------------------------------------------------------------ 构建
     @classmethod
@@ -155,8 +158,8 @@ class SearchPipeline:
         await self.cache.close()
 
     def render_metrics(self) -> str:
-        """渲染上游闸门指标（Prometheus 文本格式，供 `/metrics` 使用）。"""
-        return self.gate.render_metrics()
+        """渲染 Prometheus 文本指标（上游闸门 + M6 阶段 1 的扩展埋点）。"""
+        return self.gate.render_metrics() + self.expansion_metrics.render()
 
     # ------------------------------------------------------------------ 搜索
     async def search(self, request: SearchRequest) -> SearchResponse:
@@ -192,6 +195,8 @@ class SearchPipeline:
             merged, pages_read = await self._enrich_with_content(request, merged)
 
         results = merged[: request.max_results]
+        # M6 阶段 1 埋点（零额外上游调用、零行为改变）：记录候选/覆盖率/独立站点/候选不足判定
+        self._record_expansion_sample(request, hits, results)
         # Tavily 兼容（M6）：补结果级 id 与 auto_parameters/usage（只加字段，不改已有字段语义）
         for index, item in enumerate(results):
             item.id = f"{request_id}-{index}"
@@ -296,6 +301,66 @@ class SearchPipeline:
             logger.debug("质量过滤：%s", hygiene)
         return filtered
 
+    def _candidate_target(self, request: SearchRequest) -> int:
+        """本次向主源索取的**候选池目标值**（`want`）。
+
+        与 `_collect_hits` 用的是同一套口径，抽出来是为了让 M6 阶段 1 的埋点能在**不改变行为**的前提下
+        读到「目标候选数」，并据此判断「候选不足」。
+        """
+        pages_cap = self._page_budget(request)
+        want = max(request.max_results, pages_cap)
+        if request.topic == "news":
+            # 新闻主题必须拿候选池：只取 top-N 的话，融合后已无「更接近现在」的结果可挑，
+            # 时效排序与过期过滤就失去意义。
+            want = max(want, self.settings.news_candidate_pool)
+        else:
+            # 通用主题同样要候选池（M5-5.3）。SearXNG 一次就把整批结果返回给本地，
+            # 多留候选不增加任何上游请求；但候选数等于结果数时，质量过滤必然因为
+            # 「不足 max_results」被全部补回 —— 过滤形同虚设（实测 2-9 的聚合页就是这么漏出来的）。
+            want = max(want, self.settings.rank_candidate_pool)
+        return want
+
+    def _record_expansion_sample(
+        self, request: SearchRequest, hits: list[SearchHit], results: list[SearchResult]
+    ) -> None:
+        """M6 阶段 1 埋点：记录候选数 / 覆盖率 / 独立站点数与「候选不足」判定。
+
+        **零额外上游调用、零行为改变**：全部数值都来自本次已经拿到的候选与最终结果。
+        覆盖率分母固定为**用户原始查询词**（`query_coverage(request.query, ...)`），
+        扩展/改写词不参与计算 —— 这是 2026-09-28 拍板的约束。
+        """
+        target = self._candidate_target(request)
+        coverage: float | None = None
+        if results:
+            coverage = sum(query_coverage(request.query, item) for item in results) / len(results)
+        hosts = {registrable_domain(item.url) for item in results}
+        hosts.discard("")
+        reason = expansion_needed(len(hits), target, coverage)
+        # SearXNG 原始返回条数（未截断）：用于判断「候选池上限是不是约束」（M6 阶段 2a）。
+        # 与 unresponsive_engines 同一模式：provider 上的「最近一次请求」状态，单并发下准确。
+        raw_candidates: int | None = None
+        for provider in self.providers:
+            if provider.name == "searxng":
+                raw_candidates = getattr(provider, "raw_result_count", None)
+                break
+        self.expansion_metrics.observe(
+            candidates=len(hits),
+            raw_candidates=raw_candidates,
+            target=target,
+            coverage_mean=coverage,
+            distinct_hosts=len(hosts),
+            reason=reason,
+        )
+        logger.debug(
+            "扩展埋点：候选 %d/%d（原始 %s）（%s） 覆盖率 %s 独立站点 %d",
+            len(hits),
+            target,
+            raw_candidates,
+            reason or "充足",
+            f"{coverage:.2f}" if coverage is not None else "n/a",
+            len(hosts),
+        )
+
     async def _collect_hits(
         self, request: SearchRequest
     ) -> tuple[list[SearchHit], list[str], list[str], str | None]:
@@ -313,17 +378,7 @@ class SearchPipeline:
           * **锦上添花型**（少几条候选无妨）：可跳过并记 `degraded_reason`（当前产品路径没有这种调用，
             因此正常情况下 `degraded` 为 false）。
         """
-        pages_cap = self._page_budget(request)
-        want = max(request.max_results, pages_cap)
-        if request.topic == "news":
-            # 新闻主题必须拿候选池：只取 top-N 的话，融合后已无「更接近现在」的结果可挑，
-            # 时效排序与过期过滤就失去意义。
-            want = max(want, self.settings.news_candidate_pool)
-        else:
-            # 通用主题同样要候选池（M5-5.3）。SearXNG 一次就把整批结果返回给本地，
-            # 多留候选不增加任何上游请求；但候选数等于结果数时，质量过滤必然因为
-            # 「不足 max_results」被全部补回 —— 过滤形同虚设（实测 2-9 的聚合页就是这么漏出来的）。
-            want = max(want, self.settings.rank_candidate_pool)
+        want = self._candidate_target(request)
         query_key = self._query_cache_key(request, want)
 
         cached_hits = await self.cache.get(query_key)
