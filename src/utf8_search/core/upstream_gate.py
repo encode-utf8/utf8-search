@@ -79,6 +79,18 @@ class GateMetrics:
         self.requests_total[result] = self.requests_total.get(result, 0) + 1
 
 
+def render_histogram(metric: str, hist: Histogram) -> list[str]:
+    """把直方图渲染成 Prometheus 的 `_bucket` / `_sum` / `_count` 行（供各模块复用）。"""
+    samples = [
+        f'{metric}_bucket{{le="{upper:g}"}} {hist.counts[index]}'
+        for index, upper in enumerate(hist.buckets)
+    ]
+    samples.append(f'{metric}_bucket{{le="+Inf"}} {hist.count}')
+    samples.append(f"{metric}_sum {hist.total}")
+    samples.append(f"{metric}_count {hist.count}")
+    return samples
+
+
 class UpstreamGate:
     """有界队列 + 等待上限的上游并发闸门。"""
 
@@ -278,13 +290,6 @@ class UpstreamGate:
             ("utf8search_upstream_acquire_seconds", m.acquire_seconds, "在闸门排队等待的时长（秒）"),
             ("utf8search_upstream_request_seconds", m.request_seconds, "上游聚合调用的时长（秒）"),
         ):
-            samples = [
-                f'{metric}_bucket{{le="{upper:g}"}} {hist.counts[index]}'
-                for index, upper in enumerate(hist.buckets)
-            ]
-            samples.append(f'{metric}_bucket{{le="+Inf"}} {hist.count}')
-            samples.append(f"{metric}_sum {hist.total}")
-            samples.append(f"{metric}_count {hist.count}")
-            emit(metric, help_text, "histogram", samples)
+            emit(metric, help_text, "histogram", render_histogram(metric, hist))
 
         return "\n".join(lines) + "\n"
