@@ -14,6 +14,8 @@ from contextlib import asynccontextmanager
 from typing import Annotated, Any, Literal
 
 from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, PlainTextResponse
 from mcp.server.transport_security import TransportSecuritySettings
 from pydantic import BaseModel, ConfigDict, Field
@@ -165,6 +167,28 @@ async def _tavily_compatible_error_handler(request: Request, exc: HTTPException)
         status_code=exc.status_code,
         headers=getattr(exc, "headers", None) or {},
     )
+
+
+@app.exception_handler(RequestValidationError)
+async def _tavily_compatible_validation_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    """请求体/参数校验失败 → **400**（对齐 Tavily；FastAPI 默认是 422）。
+
+    为什么必须改状态码（不是风格差异，而是兼容缺口）：官方 Python SDK 的分支是
+    `400 → BadRequestError`，而 **422 会落到 `raise_for_status()` 通用分支**（抛 `requests.HTTPError`）——
+    按 Tavily 写的客户端会走错异常分支、无法按自己的错误处理逻辑分支（见
+    `docs/reports/tavily-official-search-20260928.md` §3/§4）。
+
+    响应体形态保持不变（`detail` 仍是 FastAPI 风格的错误列表），并按其它错误体的统一约定**追加顶层 `error`**
+    （可读汇总），方便 Tavily 风格与旧客户端都能读到消息。**其它错误码语义一律不动。**
+    """
+    errors = jsonable_encoder(exc.errors())
+    readable = "；".join(
+        f"{'.'.join(str(part) for part in item.get('loc', []))}: {item.get('msg', '')}".strip(": ")
+        for item in errors[:5]
+    ) or "请求参数校验失败"
+    return JSONResponse({"detail": errors, "error": readable}, status_code=400)
 
 
 async def _authorize(request: Request, body_api_key: str | None = None) -> str:

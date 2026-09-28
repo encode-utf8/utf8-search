@@ -233,8 +233,8 @@ def test_rate_limit_429_shape_and_retry_after(monkeypatch) -> None:
     assert body["error"]
 
 
-def test_validation_error_uses_list_detail_like_tavily(monkeypatch) -> None:
-    """请求体校验失败：422 + `detail` 是列表（与 Tavily 官方示例的 422 同形）。"""
+def test_validation_error_is_400_bad_request_like_tavily(monkeypatch) -> None:
+    """请求体校验失败 → **400 + `BadRequestError`**（对齐 Tavily；FastAPI 默认 422 会走错 SDK 分支）。"""
     async def fake_get_pipeline(settings=None):
         return _StubPipeline()
 
@@ -242,8 +242,28 @@ def test_validation_error_uses_list_detail_like_tavily(monkeypatch) -> None:
     client = TestClient(http_api.app)
     response = client.post("/v1/search", json={"query": []})
 
-    assert response.status_code == 422
+    assert response.status_code == 400
+    # body 形态保持既有约定：detail 仍是 FastAPI 风格的错误列表
     assert isinstance(response.json()["detail"], list)
+    # 官方 SDK 的分支必须落到 BadRequestError（而不是 422 的 raise_for_status 通用分支）
+    category, detail = _sdk_error_branch(response.json(), 400)
+    assert category == "BadRequestError"
+    # 我们补的顶层 error 给出可读汇总（Tavily 的 detail.error 取法在列表场景同样取不到，只能靠它）
+    assert response.json()["error"] and isinstance(response.json()["error"], str)
+
+
+def test_validation_error_message_summarises_the_first_errors(monkeypatch) -> None:
+    """`error` 是可读汇总：至少包含出错字段路径与原因，便于按 Tavily 习惯直接展示。"""
+    async def fake_get_pipeline(settings=None):
+        return _StubPipeline()
+
+    monkeypatch.setattr(http_api, "get_pipeline", fake_get_pipeline)
+    client = TestClient(http_api.app)
+    response = client.post("/v1/search", json={"query": "ok", "topic": "sports"})
+
+    assert response.status_code == 400
+    message = response.json()["error"]
+    assert "topic" in message
 
 
 # ---------------------------------------------------------------- 4) 真实 pipeline 会盖章
