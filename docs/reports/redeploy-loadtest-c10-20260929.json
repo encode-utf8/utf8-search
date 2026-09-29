@@ -1,0 +1,253 @@
+{
+  "target": "http://127.0.0.1:8000/v1/search",
+  "concurrency": 10,
+  "n": 20,
+  "mode": "basic",
+  "topic": "general",
+  "wall_seconds": 6.850508124000044,
+  "rss_before": null,
+  "rss_after": null,
+  "summary": {
+    "succeeded": 20,
+    "client_errors": 0,
+    "rate_limited": 0,
+    "server_errors": 0,
+    "timeouts": 0,
+    "transport_errors": 0,
+    "degraded": 0,
+    "empty_results": 0,
+    "degraded_empty": 0,
+    "count": 20,
+    "p50": 2986.3295084978745,
+    "p90": 3775.31530700071,
+    "p95": 3824.0254369957256,
+    "max": 3848.1348130007973,
+    "mean": 2820.7974840497627
+  },
+  "passed": true,
+  "notes": [
+    "20/20 请求成功，无 5xx、无超时"
+  ],
+  "results": [
+    {
+      "query": "2026年 人工智能 政策 #82029-20-0",
+      "mode": "basic",
+      "status": 200,
+      "latency_ms": 903.5279060044559,
+      "error": null,
+      "detail": "",
+      "degraded": false,
+      "degraded_reason": null,
+      "results": 5
+    },
+    {
+      "query": "最近一周 AI 领域重要新闻 #82029-20-1",
+      "mode": "basic",
+      "status": 200,
+      "latency_ms": 1629.887723000138,
+      "error": null,
+      "detail": "",
+      "degraded": false,
+      "degraded_reason": null,
+      "results": 5
+    },
+    {
+      "query": "OpenAI API 定价 #82029-20-2",
+      "mode": "basic",
+      "status": 200,
+      "latency_ms": 1332.4291489989264,
+      "error": null,
+      "detail": "",
+      "degraded": false,
+      "degraded_reason": null,
+      "results": 5
+    },
+    {
+      "query": "Python 3.13 新特性 #82029-20-3",
+      "mode": "basic",
+      "status": 200,
+      "latency_ms": 1811.1609289990156,
+      "error": null,
+      "detail": "",
+      "degraded": false,
+      "degraded_reason": null,
+      "results": 5
+    },
+    {
+      "query": "国产大模型 排行榜 2026 #82029-20-4",
+      "mode": "basic",
+      "status": 200,
+      "latency_ms": 2490.2073240009486,
+      "error": null,
+      "detail": "",
+      "degraded": false,
+      "degraded_reason": null,
+      "results": 5
+    },
+    {
+      "query": "新能源汽车 销量 最新 #82029-20-5",
+      "mode": "basic",
+      "status": 200,
+      "latency_ms": 2652.43151300092,
+      "error": null,
+      "detail": "",
+      "degraded": false,
+      "degraded_reason": null,
+      "results": 5
+    },
+    {
+      "query": "MCP protocol latest specification #82029-20-6",
+      "mode": "basic",
+      "status": 200,
+      "latency_ms": 2937.1189099983894,
+      "error": null,
+      "detail": "",
+      "degraded": false,
+      "degraded_reason": null,
+      "results": 5
+    },
+    {
+      "query": "best noise cancelling headphones 2026 #82029-20-7",
+      "mode": "basic",
+      "status": 200,
+      "latency_ms": 3378.8471779989777,
+      "error": null,
+      "detail": "",
+      "degraded": false,
+      "degraded_reason": null,
+      "results": 5
+    },
+    {
+      "query": "2026年 人工智能 政策 #82029-20-8",
+      "mode": "basic",
+      "status": 200,
+      "latency_ms": 3775.31530700071,
+      "error": null,
+      "detail": "",
+      "degraded": false,
+      "degraded_reason": null,
+      "results": 5
+    },
+    {
+      "query": "最近一周 AI 领域重要新闻 #82029-20-9",
+      "mode": "basic",
+      "status": 200,
+      "latency_ms": 3824.0254369957256,
+      "error": null,
+      "detail": "",
+      "degraded": false,
+      "degraded_reason": null,
+      "results": 5
+    },
+    {
+      "query": "OpenAI API 定价 #82029-20-10",
+      "mode": "basic",
+      "status": 200,
+      "latency_ms": 3208.6271609950927,
+      "error": null,
+      "detail": "",
+      "degraded": false,
+      "degraded_reason": null,
+      "results": 5
+    },
+    {
+      "query": "Python 3.13 新特性 #82029-20-11",
+      "mode": "basic",
+      "status": 200,
+      "latency_ms": 3848.1348130007973,
+      "error": null,
+      "detail": "",
+      "degraded": false,
+      "degraded_reason": null,
+      "results": 5
+    },
+    {
+      "query": "国产大模型 排行榜 2026 #82029-20-12",
+      "mode": "basic",
+      "status": 200,
+      "latency_ms": 3003.144677000819,
+      "error": null,
+      "detail": "",
+      "degraded": false,
+      "degraded_reason": null,
+      "results": 5
+    },
+    {
+      "query": "新能源汽车 销量 最新 #82029-20-13",
+      "mode": "basic",
+      "status": 200,
+      "latency_ms": 3422.8231999950367,
+      "error": null,
+      "detail": "",
+      "degraded": false,
+      "degraded_reason": null,
+      "results": 5
+    },
+    {
+      "query": "MCP protocol latest specification #82029-20-14",
+      "mode": "basic",
+      "status": 200,
+      "latency_ms": 2900.8961860017735,
+      "error": null,
+      "detail": "",
+      "degraded": false,
+      "degraded_reason": null,
+      "results": 5
+    },
+    {
+      "query": "best noise cancelling headphones 2026 #82029-20-15",
+      "mode": "basic",
+      "status": 200,
+      "latency_ms": 3355.192402006651,
+      "error": null,
+      "detail": "",
+      "degraded": false,
+      "degraded_reason": null,
+      "results": 5
+    },
+    {
+      "query": "2026年 人工智能 政策 #82029-20-16",
+      "mode": "basic",
+      "status": 200,
+      "latency_ms": 3106.5169619978406,
+      "error": null,
+      "detail": "",
+      "degraded": false,
+      "degraded_reason": null,
+      "results": 5
+    },
+    {
+      "query": "最近一周 AI 领域重要新闻 #82029-20-17",
+      "mode": "basic",
+      "status": 200,
+      "latency_ms": 2832.065719005186,
+      "error": null,
+      "detail": "",
+      "degraded": false,
+      "degraded_reason": null,
+      "results": 5
+    },
+    {
+      "query": "OpenAI API 定价 #82029-20-18",
+      "mode": "basic",
+      "status": 200,
+      "latency_ms": 3034.0828449989203,
+      "error": null,
+      "detail": "",
+      "degraded": false,
+      "degraded_reason": null,
+      "results": 5
+    },
+    {
+      "query": "Python 3.13 新特性 #82029-20-19",
+      "mode": "basic",
+      "status": 200,
+      "latency_ms": 2969.51433999493,
+      "error": null,
+      "detail": "",
+      "degraded": false,
+      "degraded_reason": null,
+      "results": 5
+    }
+  ]
+}
