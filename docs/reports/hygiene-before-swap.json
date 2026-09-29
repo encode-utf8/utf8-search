@@ -1,0 +1,10 @@
+{
+  "queries": 20.0,
+  "total": 100.0,
+  "same_host_excess": 0.0,
+  "aggregator": 0.0,
+  "script_mismatch": 0.0,
+  "empty_content": 1.0,
+  "coverage_mean": 0.7832447200015852,
+  "distinct_hosts_mean": 4.7
+}

@@ -1,0 +1,270 @@
+{
+  "label": "B1-swapped",
+  "base": "http://127.0.0.1:8888",
+  "mode": "sweep",
+  "query_set": "zh",
+  "engines": "",
+  "rounds": 2,
+  "rows": [
+    {
+      "query": "2026年 新能源汽车 补贴政策",
+      "time_range": "",
+      "status": 200,
+      "results": 54,
+      "with_date": 0,
+      "unresponsive": [
+        "brave",
+        "privacywall",
+        "resulthunter",
+        "yep"
+      ],
+      "engines_of_results": [
+        "fynd",
+        "google",
+        "naver",
+        "yahoo",
+        "yandex"
+      ],
+      "ms": 1506,
+      "engines": ""
+    },
+    {
+      "query": "四川省 数字经济 扶持 政策 申报 条件",
+      "time_range": "",
+      "status": 200,
+      "results": 59,
+      "with_date": 0,
+      "unresponsive": [
+        "brave",
+        "privacywall",
+        "resulthunter",
+        "yep"
+      ],
+      "engines_of_results": [
+        "fynd",
+        "google",
+        "naver",
+        "yahoo",
+        "yandex"
+      ],
+      "ms": 687,
+      "engines": ""
+    },
+    {
+      "query": "深圳 地铁 新线路 开通 最新",
+      "time_range": "",
+      "status": 200,
+      "results": 37,
+      "with_date": 0,
+      "unresponsive": [
+        "brave",
+        "privacywall",
+        "resulthunter",
+        "yep"
+      ],
+      "engines_of_results": [
+        "fynd",
+        "google",
+        "yahoo",
+        "yandex"
+      ],
+      "ms": 745,
+      "engines": ""
+    },
+    {
+      "query": "国产 大模型 产业 动态 2026",
+      "time_range": "",
+      "status": 200,
+      "results": 54,
+      "with_date": 1,
+      "unresponsive": [
+        "brave",
+        "privacywall",
+        "resulthunter",
+        "yep"
+      ],
+      "engines_of_results": [
+        "fynd",
+        "google",
+        "naver",
+        "yahoo",
+        "yandex"
+      ],
+      "ms": 666,
+      "engines": ""
+    },
+    {
+      "query": "扫地机器人 推荐 性价比 2026",
+      "time_range": "",
+      "status": 200,
+      "results": 41,
+      "with_date": 0,
+      "unresponsive": [
+        "brave",
+        "privacywall",
+        "resulthunter",
+        "yep"
+      ],
+      "engines_of_results": [
+        "fynd",
+        "google",
+        "naver",
+        "yandex"
+      ],
+      "ms": 654,
+      "engines": ""
+    },
+    {
+      "query": "折叠屏 手机 参数 对比 2026",
+      "time_range": "",
+      "status": 200,
+      "results": 60,
+      "with_date": 0,
+      "unresponsive": [
+        "brave",
+        "privacywall",
+        "resulthunter",
+        "yep"
+      ],
+      "engines_of_results": [
+        "fynd",
+        "google",
+        "naver",
+        "yahoo",
+        "yandex"
+      ],
+      "ms": 1113,
+      "engines": ""
+    },
+    {
+      "query": "2026年 新能源汽车 补贴政策",
+      "time_range": "",
+      "status": 200,
+      "results": 54,
+      "with_date": 0,
+      "unresponsive": [
+        "brave",
+        "privacywall",
+        "resulthunter",
+        "yep"
+      ],
+      "engines_of_results": [
+        "fynd",
+        "google",
+        "naver",
+        "yahoo",
+        "yandex"
+      ],
+      "ms": 678,
+      "engines": ""
+    },
+    {
+      "query": "四川省 数字经济 扶持 政策 申报 条件",
+      "time_range": "",
+      "status": 200,
+      "results": 49,
+      "with_date": 0,
+      "unresponsive": [
+        "brave",
+        "privacywall",
+        "resulthunter",
+        "yep"
+      ],
+      "engines_of_results": [
+        "fynd",
+        "google",
+        "naver",
+        "yandex"
+      ],
+      "ms": 986,
+      "engines": ""
+    },
+    {
+      "query": "深圳 地铁 新线路 开通 最新",
+      "time_range": "",
+      "status": 200,
+      "results": 37,
+      "with_date": 0,
+      "unresponsive": [
+        "brave",
+        "privacywall",
+        "resulthunter",
+        "yep"
+      ],
+      "engines_of_results": [
+        "fynd",
+        "google",
+        "yahoo",
+        "yandex"
+      ],
+      "ms": 1001,
+      "engines": ""
+    },
+    {
+      "query": "国产 大模型 产业 动态 2026",
+      "time_range": "",
+      "status": 200,
+      "results": 54,
+      "with_date": 1,
+      "unresponsive": [
+        "brave",
+        "privacywall",
+        "resulthunter",
+        "yep"
+      ],
+      "engines_of_results": [
+        "fynd",
+        "google",
+        "naver",
+        "yahoo",
+        "yandex"
+      ],
+      "ms": 984,
+      "engines": ""
+    },
+    {
+      "query": "扫地机器人 推荐 性价比 2026",
+      "time_range": "",
+      "status": 200,
+      "results": 51,
+      "with_date": 0,
+      "unresponsive": [
+        "brave",
+        "privacywall",
+        "resulthunter",
+        "yep"
+      ],
+      "engines_of_results": [
+        "fynd",
+        "google",
+        "naver",
+        "yahoo",
+        "yandex"
+      ],
+      "ms": 969,
+      "engines": ""
+    },
+    {
+      "query": "折叠屏 手机 参数 对比 2026",
+      "time_range": "",
+      "status": 200,
+      "results": 60,
+      "with_date": 0,
+      "unresponsive": [
+        "brave",
+        "privacywall",
+        "resulthunter",
+        "yep"
+      ],
+      "engines_of_results": [
+        "fynd",
+        "google",
+        "naver",
+        "yahoo",
+        "yandex"
+      ],
+      "ms": 723,
+      "engines": ""
+    }
+  ]
+}
