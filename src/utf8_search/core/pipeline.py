@@ -138,6 +138,9 @@ class SearchPipeline:
                 timeout_limit=settings.search_timeout_limit,
                 news_engines=settings.news_engine_list,
                 news_pass_time_range=settings.news_pass_time_range,
+                # 新闻主题下按引擎白名单透传 time_range（见 config.news_time_range_engines）：
+                # sina 靠它给 7 日内结果，duckduckgo news 带它返回 0 条 —— 一个全局开关服务不了两者。
+                news_time_range_engines=settings.news_time_range_engine_set,
                 # 引擎健康度自适应（M5-5.1）：开关关闭时 from_settings 返回 None，
                 # provider 会完全跳过自适应逻辑，等价于旧行为
                 engine_health=EngineHealthTracker.from_settings(settings),
