@@ -86,8 +86,9 @@ $ grep -cE '^[A-Z0-9_]+=' .env.example        # → 70（本方案的分类对�
 | `UTF8SEARCH_HTTP_PROXY` | 空 | 同上；显式置空 |
 | `UTF8SEARCH_BYPASS_PROXY_HOSTS` | `127.0.0.1,localhost,[::1],searxng` | 同上；显式置空 |
 
-（C 类只有 6 键；A 60 + B 1 + C 6 = 67 —— 余下 3 键是 `API_KEYS` / `RATE_LIMIT_RPM` / `MCP_ALLOWED_HOSTS`，
-归类为 **A 类但必须显式注入**，所以合计仍是 70。）
+（计数口径：**A 60 + 服务身份 3 + B 1 + C 6 = 70**。那 3 个身份键——`UTF8SEARCH_API_KEYS` /
+`UTF8SEARCH_RATE_LIMIT_RPM` / `UTF8SEARCH_MCP_ALLOWED_HOSTS`——取值与宿主机相同（属「继承」），
+但必须**显式注入**，因为它们决定「公网鉴权 + 限流 + Host 白名单」，不能依赖 `env_file` 是否被解析。）
 
 ## 3. 接线写法建议（下一轮实施）
 
