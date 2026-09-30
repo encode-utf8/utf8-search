@@ -135,3 +135,38 @@ def spec_level_for_result(tokens: list[str], result) -> str:  # noqa: ANN001 - S
         content=(result.content or "")[:500],
         url=result.url or "",
     ).level
+
+
+# 混杂列表/回收页形态（2026-09-30，治 2-9 的 Q16）：
+# 京东「苹果8x参数」这类**二手回收/型号大全**页，标题里同时列了 17/16/15/14/13/12/11/X 与 pro/max/mini，
+# 于是「17」和「pro」都命中，规格 token 误判为匹配 —— 但它并不是 iPhone 17 Pro 的参数页。
+_MIXED_KEYWORDS = ("回收", "二手", "以旧换新", "翻新", "大全", "全系", "系列", "对比表")
+_MIXED_MIN_NUMBERS = 3
+
+
+def distinct_model_numbers(text: str | None) -> set[str]:
+    """文本里出现的**互不相同**的数字型号（排除年份与日期表达）。"""
+    raw = str(text or "")
+    numbers: set[str] = set()
+    for match in _NUMBER_RE.finditer(raw):
+        start, end = match.span(1)
+        value = match.group(1)
+        if _is_year(value) or _is_date_number(raw, start, end):
+            continue
+        numbers.add(value)
+    return numbers
+
+
+def is_mixed_model_page(title: str | None, content: str | None = None) -> bool:
+    """判定「一页多型号 / 回收列表」形态。
+
+    返回 True 表示：标题（或摘要）里同时出现**多个不同型号数字**，且带列表/回收类关键词；
+    或标题里出现 ≥3 个不同型号数字（即便没有关键词，如「苹果17/16/15/14 系列」）。
+    这类页面**不能**用来证明规格匹配（Q16 的京东回收页就是这样骗过 token 匹配的）。
+    """
+    text = f"{title or ''} {content or ''}"
+    numbers = distinct_model_numbers(title) | distinct_model_numbers(content)
+    has_keyword = any(word in text for word in _MIXED_KEYWORDS)
+    if len(numbers) >= _MIXED_MIN_NUMBERS:
+        return True
+    return bool(has_keyword and len(numbers) >= 2)

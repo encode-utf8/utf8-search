@@ -20,7 +20,7 @@ from urllib.parse import urlsplit
 
 from ..models import SearchResult
 from .fusion import tokenize
-from .spec_tokens import extract_spec_tokens, spec_level_for_result
+from .spec_tokens import extract_spec_tokens, is_mixed_model_page, spec_level_for_result
 
 # ---------------------------------------------------------------- 域名
 # 常见「二级后缀」：可注册域要多吃一段，否则 zj.gov.cn / weather.com.cn 会被误当成两个不同的域
@@ -245,11 +245,17 @@ def apply_rank_filters(
     if spec_tokens:
         # 规格不匹配（如查询 iPhone 17 Pro 却给 iPhone 8、查询 Python 3.13 却给 3.14）：
         # 词面覆盖率看不出这类错误，只有规格 token 能抓到。候选充足时剔除，不足时按缺陷轻重补回。
+        #
+        # 2026-09-30 补充「混杂型号页」：一页列了 17/16/15/14/13… 的二手回收/型号大全页，
+        # 标题里 17 与 pro 都命中 → token 匹配会误判为「匹配」。这种页面**不能**算规格达标，
+        # 与聚合页口径同源处理（形态不对 + 无实质针对性 → 剔除；候选不足时补回并标 degraded）。
         steps.append(
             (
                 "spec_mismatch",
                 lambda items: _split(
-                    items, lambda r: spec_level_for_result(spec_tokens, r) == "none"
+                    items,
+                    lambda r: spec_level_for_result(spec_tokens, r) == "none"
+                    or is_mixed_model_page(r.title, r.content),
                 ),
             )
         )
