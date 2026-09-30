@@ -1,0 +1,11 @@
+searxng_url      = http://searxng:8080
+metrics_enabled  = True
+upstream gate    = 3 12 4.0 1.0
+default_engines  = resulthunter,yandex,naver,privacywall,google,zapmeta,yahoo,fynd,reloado,yep,brave,quark
+news_engines     = duckduckgo news,google news,chinaso news,tiger news
+trust_env        = False | http_proxy= '' | bypass= ''
+cache_path       = data/cache.db
+news_fresh_days  = 7 | date_pages= 16 | date_budget= 4.0
+rank             = 24 2 0.34
+engine_health    = True 6 1800.0
+block_private    = True | log_level= INFO

@@ -1,0 +1,1307 @@
+{
+  "generated_at": "2026-09-30T03:16:52.569904+00:00",
+  "queries": [
+    "2026年9月 国内外重大新闻",
+    "最近一周 AI 行业动态",
+    "台风 最新消息 路径",
+    "美国 关税 最新政策",
+    "2026年 新能源汽车 补贴政策",
+    "扫地机器人 推荐 性价比 2026"
+  ],
+  "rows": [
+    {
+      "engine": "chinaso news",
+      "query": "2026年9月 国内外重大新闻",
+      "time_range": "",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": [
+        [
+          "chinaso news",
+          "server API error"
+        ]
+      ]
+    },
+    {
+      "engine": "chinaso news",
+      "query": "2026年9月 国内外重大新闻",
+      "time_range": "day",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": [
+        [
+          "chinaso news",
+          "server API error"
+        ]
+      ]
+    },
+    {
+      "engine": "chinaso news",
+      "query": "最近一周 AI 行业动态",
+      "time_range": "",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "chinaso news",
+      "query": "最近一周 AI 行业动态",
+      "time_range": "day",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "chinaso news",
+      "query": "台风 最新消息 路径",
+      "time_range": "",
+      "results": 10,
+      "dated": 10,
+      "fresh7": 1,
+      "median_age_days": 34.2,
+      "unresponsive": []
+    },
+    {
+      "engine": "chinaso news",
+      "query": "台风 最新消息 路径",
+      "time_range": "day",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "chinaso news",
+      "query": "美国 关税 最新政策",
+      "time_range": "",
+      "results": 10,
+      "dated": 10,
+      "fresh7": 1,
+      "median_age_days": 50.8,
+      "unresponsive": []
+    },
+    {
+      "engine": "chinaso news",
+      "query": "美国 关税 最新政策",
+      "time_range": "day",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "chinaso news",
+      "query": "2026年 新能源汽车 补贴政策",
+      "time_range": "",
+      "results": 10,
+      "dated": 10,
+      "fresh7": 0,
+      "median_age_days": 94.9,
+      "unresponsive": []
+    },
+    {
+      "engine": "chinaso news",
+      "query": "2026年 新能源汽车 补贴政策",
+      "time_range": "day",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "chinaso news",
+      "query": "扫地机器人 推荐 性价比 2026",
+      "time_range": "",
+      "results": 2,
+      "dated": 2,
+      "fresh7": 0,
+      "median_age_days": 89.2,
+      "unresponsive": []
+    },
+    {
+      "engine": "chinaso news",
+      "query": "扫地机器人 推荐 性价比 2026",
+      "time_range": "day",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "tiger news",
+      "query": "2026年9月 国内外重大新闻",
+      "time_range": "",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "tiger news",
+      "query": "2026年9月 国内外重大新闻",
+      "time_range": "day",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "tiger news",
+      "query": "最近一周 AI 行业动态",
+      "time_range": "",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "tiger news",
+      "query": "最近一周 AI 行业动态",
+      "time_range": "day",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "tiger news",
+      "query": "台风 最新消息 路径",
+      "time_range": "",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "tiger news",
+      "query": "台风 最新消息 路径",
+      "time_range": "day",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "tiger news",
+      "query": "美国 关税 最新政策",
+      "time_range": "",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "tiger news",
+      "query": "美国 关税 最新政策",
+      "time_range": "day",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "tiger news",
+      "query": "2026年 新能源汽车 补贴政策",
+      "time_range": "",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "tiger news",
+      "query": "2026年 新能源汽车 补贴政策",
+      "time_range": "day",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "tiger news",
+      "query": "扫地机器人 推荐 性价比 2026",
+      "time_range": "",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "tiger news",
+      "query": "扫地机器人 推荐 性价比 2026",
+      "time_range": "day",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "sina",
+      "query": "2026年9月 国内外重大新闻",
+      "time_range": "",
+      "results": 51,
+      "dated": 8,
+      "fresh7": 8,
+      "median_age_days": 0.9,
+      "unresponsive": [
+        [
+          "brave",
+          "Suspended: too many requests"
+        ],
+        [
+          "google",
+          "Suspended: CAPTCHA"
+        ],
+        [
+          "privacywall",
+          "Suspended: access denied"
+        ],
+        [
+          "resulthunter",
+          "Suspended: too many requests"
+        ],
+        [
+          "yep",
+          "Suspended: access denied"
+        ]
+      ]
+    },
+    {
+      "engine": "sina",
+      "query": "2026年9月 国内外重大新闻",
+      "time_range": "day",
+      "results": 27,
+      "dated": 15,
+      "fresh7": 15,
+      "median_age_days": 0.7,
+      "unresponsive": [
+        [
+          "brave",
+          "Suspended: too many requests"
+        ],
+        [
+          "google",
+          "Suspended: CAPTCHA"
+        ],
+        [
+          "privacywall",
+          "Suspended: access denied"
+        ],
+        [
+          "resulthunter",
+          "Suspended: too many requests"
+        ],
+        [
+          "yep",
+          "Suspended: access denied"
+        ]
+      ]
+    },
+    {
+      "engine": "sina",
+      "query": "最近一周 AI 行业动态",
+      "time_range": "",
+      "results": 40,
+      "dated": 3,
+      "fresh7": 3,
+      "median_age_days": 1.0,
+      "unresponsive": [
+        [
+          "brave",
+          "Suspended: too many requests"
+        ],
+        [
+          "google",
+          "Suspended: CAPTCHA"
+        ],
+        [
+          "privacywall",
+          "Suspended: access denied"
+        ],
+        [
+          "resulthunter",
+          "Suspended: too many requests"
+        ],
+        [
+          "yep",
+          "Suspended: access denied"
+        ]
+      ]
+    },
+    {
+      "engine": "sina",
+      "query": "最近一周 AI 行业动态",
+      "time_range": "day",
+      "results": 18,
+      "dated": 15,
+      "fresh7": 15,
+      "median_age_days": 0.6,
+      "unresponsive": [
+        [
+          "brave",
+          "Suspended: too many requests"
+        ],
+        [
+          "google",
+          "Suspended: CAPTCHA"
+        ],
+        [
+          "privacywall",
+          "Suspended: access denied"
+        ],
+        [
+          "resulthunter",
+          "Suspended: too many requests"
+        ],
+        [
+          "yep",
+          "Suspended: access denied"
+        ]
+      ]
+    },
+    {
+      "engine": "sina",
+      "query": "台风 最新消息 路径",
+      "time_range": "",
+      "results": 43,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": [
+        [
+          "brave",
+          "Suspended: too many requests"
+        ],
+        [
+          "google",
+          "Suspended: CAPTCHA"
+        ],
+        [
+          "privacywall",
+          "Suspended: access denied"
+        ],
+        [
+          "resulthunter",
+          "Suspended: too many requests"
+        ],
+        [
+          "yep",
+          "Suspended: access denied"
+        ]
+      ]
+    },
+    {
+      "engine": "sina",
+      "query": "台风 最新消息 路径",
+      "time_range": "day",
+      "results": 25,
+      "dated": 15,
+      "fresh7": 15,
+      "median_age_days": 0.8,
+      "unresponsive": [
+        [
+          "brave",
+          "Suspended: too many requests"
+        ],
+        [
+          "google",
+          "Suspended: CAPTCHA"
+        ],
+        [
+          "privacywall",
+          "Suspended: access denied"
+        ],
+        [
+          "resulthunter",
+          "Suspended: too many requests"
+        ],
+        [
+          "yep",
+          "Suspended: access denied"
+        ]
+      ]
+    },
+    {
+      "engine": "sina",
+      "query": "美国 关税 最新政策",
+      "time_range": "",
+      "results": 40,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": [
+        [
+          "brave",
+          "Suspended: too many requests"
+        ],
+        [
+          "google",
+          "Suspended: CAPTCHA"
+        ],
+        [
+          "privacywall",
+          "Suspended: access denied"
+        ],
+        [
+          "resulthunter",
+          "Suspended: too many requests"
+        ],
+        [
+          "yep",
+          "Suspended: access denied"
+        ]
+      ]
+    },
+    {
+      "engine": "sina",
+      "query": "美国 关税 最新政策",
+      "time_range": "day",
+      "results": 18,
+      "dated": 15,
+      "fresh7": 15,
+      "median_age_days": 0.6,
+      "unresponsive": [
+        [
+          "brave",
+          "Suspended: too many requests"
+        ],
+        [
+          "google",
+          "Suspended: CAPTCHA"
+        ],
+        [
+          "privacywall",
+          "Suspended: access denied"
+        ],
+        [
+          "resulthunter",
+          "Suspended: too many requests"
+        ],
+        [
+          "yep",
+          "Suspended: access denied"
+        ]
+      ]
+    },
+    {
+      "engine": "sina",
+      "query": "2026年 新能源汽车 补贴政策",
+      "time_range": "",
+      "results": 45,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": [
+        [
+          "brave",
+          "Suspended: too many requests"
+        ],
+        [
+          "google",
+          "Suspended: CAPTCHA"
+        ],
+        [
+          "privacywall",
+          "Suspended: access denied"
+        ],
+        [
+          "resulthunter",
+          "Suspended: too many requests"
+        ],
+        [
+          "yep",
+          "Suspended: access denied"
+        ]
+      ]
+    },
+    {
+      "engine": "sina",
+      "query": "2026年 新能源汽车 补贴政策",
+      "time_range": "day",
+      "results": 33,
+      "dated": 15,
+      "fresh7": 15,
+      "median_age_days": 0.5,
+      "unresponsive": [
+        [
+          "brave",
+          "Suspended: too many requests"
+        ],
+        [
+          "google",
+          "Suspended: CAPTCHA"
+        ],
+        [
+          "privacywall",
+          "Suspended: access denied"
+        ],
+        [
+          "resulthunter",
+          "Suspended: too many requests"
+        ],
+        [
+          "yep",
+          "Suspended: access denied"
+        ]
+      ]
+    },
+    {
+      "engine": "sina",
+      "query": "扫地机器人 推荐 性价比 2026",
+      "time_range": "",
+      "results": 41,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": [
+        [
+          "brave",
+          "Suspended: too many requests"
+        ],
+        [
+          "google",
+          "Suspended: CAPTCHA"
+        ],
+        [
+          "privacywall",
+          "Suspended: access denied"
+        ],
+        [
+          "resulthunter",
+          "Suspended: too many requests"
+        ],
+        [
+          "yep",
+          "Suspended: access denied"
+        ]
+      ]
+    },
+    {
+      "engine": "sina",
+      "query": "扫地机器人 推荐 性价比 2026",
+      "time_range": "day",
+      "results": 22,
+      "dated": 15,
+      "fresh7": 15,
+      "median_age_days": 0.6,
+      "unresponsive": [
+        [
+          "brave",
+          "Suspended: too many requests"
+        ],
+        [
+          "google",
+          "Suspended: CAPTCHA"
+        ],
+        [
+          "privacywall",
+          "Suspended: access denied"
+        ],
+        [
+          "resulthunter",
+          "Suspended: too many requests"
+        ],
+        [
+          "yep",
+          "Suspended: access denied"
+        ]
+      ]
+    },
+    {
+      "engine": "bilibili",
+      "query": "2026年9月 国内外重大新闻",
+      "time_range": "",
+      "results": 51,
+      "dated": 6,
+      "fresh7": 6,
+      "median_age_days": 0.8,
+      "unresponsive": [
+        [
+          "brave",
+          "Suspended: too many requests"
+        ],
+        [
+          "google",
+          "Suspended: CAPTCHA"
+        ],
+        [
+          "privacywall",
+          "Suspended: access denied"
+        ],
+        [
+          "resulthunter",
+          "Suspended: too many requests"
+        ],
+        [
+          "yep",
+          "Suspended: access denied"
+        ]
+      ]
+    },
+    {
+      "engine": "bilibili",
+      "query": "2026年9月 国内外重大新闻",
+      "time_range": "day",
+      "results": 27,
+      "dated": 15,
+      "fresh7": 15,
+      "median_age_days": 0.7,
+      "unresponsive": [
+        [
+          "brave",
+          "Suspended: too many requests"
+        ],
+        [
+          "google",
+          "Suspended: CAPTCHA"
+        ],
+        [
+          "privacywall",
+          "Suspended: access denied"
+        ],
+        [
+          "resulthunter",
+          "Suspended: too many requests"
+        ],
+        [
+          "yep",
+          "Suspended: access denied"
+        ]
+      ]
+    },
+    {
+      "engine": "bilibili",
+      "query": "最近一周 AI 行业动态",
+      "time_range": "",
+      "results": 50,
+      "dated": 4,
+      "fresh7": 4,
+      "median_age_days": 1.1,
+      "unresponsive": [
+        [
+          "brave",
+          "Suspended: too many requests"
+        ],
+        [
+          "google",
+          "Suspended: CAPTCHA"
+        ],
+        [
+          "privacywall",
+          "Suspended: access denied"
+        ],
+        [
+          "resulthunter",
+          "Suspended: too many requests"
+        ],
+        [
+          "yep",
+          "Suspended: access denied"
+        ]
+      ]
+    },
+    {
+      "engine": "bilibili",
+      "query": "最近一周 AI 行业动态",
+      "time_range": "day",
+      "results": 18,
+      "dated": 15,
+      "fresh7": 15,
+      "median_age_days": 0.6,
+      "unresponsive": [
+        [
+          "brave",
+          "Suspended: too many requests"
+        ],
+        [
+          "google",
+          "Suspended: CAPTCHA"
+        ],
+        [
+          "privacywall",
+          "Suspended: access denied"
+        ],
+        [
+          "resulthunter",
+          "Suspended: too many requests"
+        ],
+        [
+          "yep",
+          "Suspended: access denied"
+        ]
+      ]
+    },
+    {
+      "engine": "bilibili",
+      "query": "台风 最新消息 路径",
+      "time_range": "",
+      "results": 33,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": [
+        [
+          "brave",
+          "Suspended: too many requests"
+        ],
+        [
+          "google",
+          "Suspended: CAPTCHA"
+        ],
+        [
+          "privacywall",
+          "Suspended: access denied"
+        ],
+        [
+          "resulthunter",
+          "Suspended: too many requests"
+        ],
+        [
+          "yep",
+          "Suspended: access denied"
+        ]
+      ]
+    },
+    {
+      "engine": "bilibili",
+      "query": "台风 最新消息 路径",
+      "time_range": "day",
+      "results": 25,
+      "dated": 15,
+      "fresh7": 15,
+      "median_age_days": 0.8,
+      "unresponsive": [
+        [
+          "brave",
+          "Suspended: too many requests"
+        ],
+        [
+          "google",
+          "Suspended: CAPTCHA"
+        ],
+        [
+          "privacywall",
+          "Suspended: access denied"
+        ],
+        [
+          "resulthunter",
+          "Suspended: too many requests"
+        ],
+        [
+          "yep",
+          "Suspended: access denied"
+        ]
+      ]
+    },
+    {
+      "engine": "bilibili",
+      "query": "美国 关税 最新政策",
+      "time_range": "",
+      "results": 40,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": [
+        [
+          "brave",
+          "Suspended: too many requests"
+        ],
+        [
+          "google",
+          "Suspended: CAPTCHA"
+        ],
+        [
+          "privacywall",
+          "Suspended: access denied"
+        ],
+        [
+          "resulthunter",
+          "Suspended: too many requests"
+        ],
+        [
+          "yep",
+          "Suspended: access denied"
+        ]
+      ]
+    },
+    {
+      "engine": "bilibili",
+      "query": "美国 关税 最新政策",
+      "time_range": "day",
+      "results": 28,
+      "dated": 15,
+      "fresh7": 15,
+      "median_age_days": 0.7,
+      "unresponsive": [
+        [
+          "brave",
+          "Suspended: too many requests"
+        ],
+        [
+          "google",
+          "Suspended: CAPTCHA"
+        ],
+        [
+          "privacywall",
+          "Suspended: access denied"
+        ],
+        [
+          "resulthunter",
+          "Suspended: too many requests"
+        ],
+        [
+          "yep",
+          "Suspended: access denied"
+        ]
+      ]
+    },
+    {
+      "engine": "bilibili",
+      "query": "2026年 新能源汽车 补贴政策",
+      "time_range": "",
+      "results": 45,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": [
+        [
+          "brave",
+          "Suspended: too many requests"
+        ],
+        [
+          "google",
+          "Suspended: CAPTCHA"
+        ],
+        [
+          "privacywall",
+          "Suspended: access denied"
+        ],
+        [
+          "resulthunter",
+          "Suspended: too many requests"
+        ],
+        [
+          "yep",
+          "Suspended: access denied"
+        ]
+      ]
+    },
+    {
+      "engine": "bilibili",
+      "query": "2026年 新能源汽车 补贴政策",
+      "time_range": "day",
+      "results": 33,
+      "dated": 15,
+      "fresh7": 15,
+      "median_age_days": 0.5,
+      "unresponsive": [
+        [
+          "brave",
+          "Suspended: too many requests"
+        ],
+        [
+          "google",
+          "Suspended: CAPTCHA"
+        ],
+        [
+          "privacywall",
+          "Suspended: access denied"
+        ],
+        [
+          "resulthunter",
+          "Suspended: too many requests"
+        ],
+        [
+          "yep",
+          "Suspended: access denied"
+        ]
+      ]
+    },
+    {
+      "engine": "bilibili",
+      "query": "扫地机器人 推荐 性价比 2026",
+      "time_range": "",
+      "results": 41,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": [
+        [
+          "brave",
+          "Suspended: too many requests"
+        ],
+        [
+          "google",
+          "Suspended: CAPTCHA"
+        ],
+        [
+          "privacywall",
+          "Suspended: access denied"
+        ],
+        [
+          "resulthunter",
+          "Suspended: too many requests"
+        ],
+        [
+          "yep",
+          "Suspended: access denied"
+        ]
+      ]
+    },
+    {
+      "engine": "bilibili",
+      "query": "扫地机器人 推荐 性价比 2026",
+      "time_range": "day",
+      "results": 15,
+      "dated": 15,
+      "fresh7": 15,
+      "median_age_days": 0.6,
+      "unresponsive": [
+        [
+          "brave",
+          "Suspended: too many requests"
+        ],
+        [
+          "google",
+          "Suspended: CAPTCHA"
+        ],
+        [
+          "privacywall",
+          "Suspended: access denied"
+        ],
+        [
+          "resulthunter",
+          "Suspended: too many requests"
+        ],
+        [
+          "yep",
+          "Suspended: access denied"
+        ]
+      ]
+    },
+    {
+      "engine": "duckduckgo news",
+      "query": "2026年9月 国内外重大新闻",
+      "time_range": "",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "duckduckgo news",
+      "query": "2026年9月 国内外重大新闻",
+      "time_range": "day",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "duckduckgo news",
+      "query": "最近一周 AI 行业动态",
+      "time_range": "",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "duckduckgo news",
+      "query": "最近一周 AI 行业动态",
+      "time_range": "day",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "duckduckgo news",
+      "query": "台风 最新消息 路径",
+      "time_range": "",
+      "results": 27,
+      "dated": 27,
+      "fresh7": 1,
+      "median_age_days": 35.4,
+      "unresponsive": []
+    },
+    {
+      "engine": "duckduckgo news",
+      "query": "台风 最新消息 路径",
+      "time_range": "day",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "duckduckgo news",
+      "query": "美国 关税 最新政策",
+      "time_range": "",
+      "results": 4,
+      "dated": 4,
+      "fresh7": 0,
+      "median_age_days": 307.2,
+      "unresponsive": []
+    },
+    {
+      "engine": "duckduckgo news",
+      "query": "美国 关税 最新政策",
+      "time_range": "day",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "duckduckgo news",
+      "query": "2026年 新能源汽车 补贴政策",
+      "time_range": "",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "duckduckgo news",
+      "query": "2026年 新能源汽车 补贴政策",
+      "time_range": "day",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "duckduckgo news",
+      "query": "扫地机器人 推荐 性价比 2026",
+      "time_range": "",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "duckduckgo news",
+      "query": "扫地机器人 推荐 性价比 2026",
+      "time_range": "day",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": []
+    },
+    {
+      "engine": "google news",
+      "query": "2026年9月 国内外重大新闻",
+      "time_range": "",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": [
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    },
+    {
+      "engine": "google news",
+      "query": "2026年9月 国内外重大新闻",
+      "time_range": "day",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": [
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    },
+    {
+      "engine": "google news",
+      "query": "最近一周 AI 行业动态",
+      "time_range": "",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": [
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    },
+    {
+      "engine": "google news",
+      "query": "最近一周 AI 行业动态",
+      "time_range": "day",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": [
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    },
+    {
+      "engine": "google news",
+      "query": "台风 最新消息 路径",
+      "time_range": "",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": [
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    },
+    {
+      "engine": "google news",
+      "query": "台风 最新消息 路径",
+      "time_range": "day",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": [
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    },
+    {
+      "engine": "google news",
+      "query": "美国 关税 最新政策",
+      "time_range": "",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": [
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    },
+    {
+      "engine": "google news",
+      "query": "美国 关税 最新政策",
+      "time_range": "day",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": [
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    },
+    {
+      "engine": "google news",
+      "query": "2026年 新能源汽车 补贴政策",
+      "time_range": "",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": [
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    },
+    {
+      "engine": "google news",
+      "query": "2026年 新能源汽车 补贴政策",
+      "time_range": "day",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": [
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    },
+    {
+      "engine": "google news",
+      "query": "扫地机器人 推荐 性价比 2026",
+      "time_range": "",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": [
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    },
+    {
+      "engine": "google news",
+      "query": "扫地机器人 推荐 性价比 2026",
+      "time_range": "day",
+      "results": 0,
+      "dated": 0,
+      "fresh7": 0,
+      "median_age_days": null,
+      "unresponsive": [
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    }
+  ]
+}
