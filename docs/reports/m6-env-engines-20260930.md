@@ -229,3 +229,68 @@ docker compose config | grep -A 3 'published'
 | 2-9 明细 / 速览 / 打分 / 判定 | `docs/reports/m2-9-engine-list-env-20260930{,-brief,-scores,-scores-judge}.md/.csv` |
 | 卫生度 JSON | `docs/reports/engine-list-env-hygiene-20260930.json` |
 | `.env` 改前备份（仓库外） | `/root/deploy-backups-20260929/env.20260930-pre-engine-list.bak` |
+
+---
+
+## 附录 B：`google news` 冷却诊断（2026-09-30，已按批准 restart searxng 一次）
+
+**要回答的问题**：`google` / `google news` 长期报 `Suspended: CAPTCHA`，是
+**① SearXNG 进程内的本地冷却盒**（重启即消失，属运维问题）还是
+**② Google 在 IP 层面拒绝本站出口**（重启也没用，属长期不可用）？
+
+### B.1 重启前状态（10:44:14）
+
+```
+searxng 容器：Up 21 hours
+日志里 google / google news 的 CAPTCHA 时间戳（suspended_time=3600）：
+  2026-09-29 13:28:04 google     2026-09-29 14:33:03 google
+  2026-09-29 15:38:03 google     2026-09-29 16:43:03 google
+  2026-09-30 02:31:43 google     2026-09-30 02:34:26 google news
+直问 SearXNG：
+  google news  结果=0  unresponsive=[['google news', 'Suspended: CAPTCHA']]
+  google       结果=0  unresponsive=[['google', 'Suspended: CAPTCHA']]
+应用 /health cooling：privacywall(517s) / yep(517s) / google(1417s)
+```
+
+最后一次上游 CAPTCHA 事件是 **02:31/02:34**，按 `suspended_time=3600` 早该在 03:34 恢复，
+但 10:44 仍被挂起 ⇒ 该处罚状态**不会自然过期**（与 §5 一致）。
+
+### B.2 重启后立刻探针（`docker compose restart searxng`；caddy / app 未动）
+
+```
+10:44:2x  容器 Started（6s 后 /healthz=200）
+第1次: 结果=12 带日期=0 耗时=650ms unresponsive=[]
+第2次: 结果=12 带日期=0 耗时=366ms unresponsive=[]
+第3次: 结果=12 带日期=0 耗时=254ms unresponsive=[]
+重启后 5 分钟内的日志：无任何新的 google CAPTCHA 异常
+对照 google（通用）：结果=10 带日期=0 unresponsive=[]
+```
+
+### B.3 结论
+
+1. **是本地冷却盒，不是 IP 被封** —— 同一出口 IP，重启后**秒级**拿到 12 条 `google news` 结果（3/3 成功，
+   254-650ms，无新 CAPTCHA 异常）⇒ **不需要**按「长期不可用」把它移除/降权，
+   `docs/04` **不新增**「移除或降权 google news」条目；改为记一条运维动作：
+   **引擎长期卡在 `Suspended: CAPTCHA` 时，重启 SearXNG 可立即清除本地处罚盒**。
+2. **`google news` 依然不给发布日期**（12 条里 0 条带日期；通用 `google` 也 0 条）⇒ 它恢复的是**召回/覆盖**，
+   对「7 日内日期比例」这个门槛**没有直接帮助**。
+3. **冷却后补测（同一门槛命令，google news 已恢复）**：**24/40 = 60%**（此前 28%），仍低于 80%。
+   失败形态从「带日期但过期」变成「**无日期**」：
+
+   | 查询 | 结果 | 7 日内 | 过期 | 无日期 | 比例 |
+   | --- | --- | --- | --- | --- | --- |
+   | 2026年9月 国内外重大新闻 | 5 | 3 | 0 | 2 | 60% |
+   | 最近一周 AI 行业动态 | 5 | 3 | 0 | 2 | 60% |
+   | 台风 最新消息 路径 | 5 | 2 | 0 | 3 | 40% |
+   | 美国 关税 最新政策 | 5 | 1 | 0 | 4 | 20% |
+   | latest news semiconductor export controls | 5 | 3 | 0 | 2 | 60% |
+   | OpenAI latest news | 5 | 5 | 0 | 0 | 100% |
+   | 2026年 新能源汽车 补贴政策 | 5 | 2 | 0 | 3 | 40% |
+   | EU AI Act latest developments | 5 | 5 | 0 | 0 | 100% |
+
+   ⇒ 门槛的剩余差距变成**「无日期结果挤占 top5」**（`google news` 本身不给日期 + 日期回补没覆盖到），
+   不再是「中文源全线拿不到结果」。这是**下一轮值得动手的方向**（提高日期回补命中 / 对无日期结果降权），
+   本轮按「不盲调参数」只做记录。
+
+证据：`docs/reports/engine-list-env-news-gate-google-recovery-20260930.md`（补测报告）；
+探针命令与输出见上（B.1/B.2）。
