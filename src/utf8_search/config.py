@@ -300,6 +300,18 @@ class Settings(BaseSettings):
     news_drop_stale: bool = Field(
         default=True, description="新闻主题下丢弃已知过期结果（仅在非过期结果已够 max_results 时生效）"
     )
+    news_trusted_date_engines: str = Field(
+        default="duckduckgo news,chinaso news",
+        description=(
+            "**日期可信**的引擎白名单（用于时效降级信号 `freshness_unverified`）。"
+            "判定依据是 `scripts/engine_probe.py dates` 的抽检（比对上报日期与内容里的年份线索）："
+            "duckduckgo news（14/14 带日期、年份冲突 7%）、chinaso news（10/10、冲突 0%）通过；"
+            "yandex 被判「仅索引日期」——`time_range=day` 时 15/15 带日期但 **13 条同一天**，"
+            "2017 年的《天津2017年新能源汽车地补政策发布》被标成 2026-09-29，故不列入；"
+            "naver / yahoo / fynd / resulthunter 等一律不返回发布日期，同样不列入。"
+            "注意：这只影响「时效能不能被验证」这一个信号，不影响检索本身。"
+        ),
+    )
 
     # ---------- 抽取 ----------
     enable_jina_fallback: bool = Field(default=True, description="抽取失败时是否用 r.jina.ai 兜底")
@@ -345,6 +357,11 @@ class Settings(BaseSettings):
     def news_time_range_engine_set(self) -> set[str]:
         """解析后的「允许透传 time_range」引擎白名单。"""
         return {e.strip() for e in self.news_time_range_engines.split(",") if e.strip()}
+
+    @property
+    def news_trusted_date_engine_set(self) -> set[str]:
+        """解析后的「日期可信」引擎白名单（用于时效降级信号）。"""
+        return {e.strip() for e in self.news_trusted_date_engines.split(",") if e.strip()}
 
     @property
     def news_engine_list(self) -> list[str]:
