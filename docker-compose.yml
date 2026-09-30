@@ -36,18 +36,33 @@ services:
     # 只绑回环：公网只能经由 Caddy 的 443 访问，杜绝裸奔 8000
     ports:
       - "127.0.0.1:8000:8000"
+    # ===== 配置注入（M6 环境接线，方案见 docs/reports/m6-env-wiring-plan-20260930.md）=====
+    # env_file：把宿主机 .env 全量注入容器（A 类 60 项产品参数）。镜像里不含 .env，
+    #            过去只靠下面 4 条 environment，导致其余设置全部回落 config.py 代码默认值
+    #            （曾因此让容器用上已删除的 360search / sogou wechat）。
+    env_file:
+      - .env
+    # environment：显式覆盖/中性化清单。compose 里 environment 优先于 env_file，
+    #              而环境变量又优先于 pydantic 的 .env，所以下面这些值不会被 .env 改写。
     environment:
+      # --- B 类：容器内地址必须与宿主机不同（宿主机是 127.0.0.1:8888，容器内要连 compose 服务名）
       - UTF8SEARCH_SEARXNG_URL=http://searxng:8080
+      # --- A 类中的「服务身份 / 路由契约」：必须显式注入，避免 env_file 缺项时静默回落代码默认值
       - UTF8SEARCH_API_KEYS=${UTF8SEARCH_API_KEYS:-}
       - UTF8SEARCH_RATE_LIMIT_RPM=${UTF8SEARCH_RATE_LIMIT_RPM:-60}
       - UTF8SEARCH_MCP_ALLOWED_HOSTS=${UTF8SEARCH_MCP_ALLOWED_HOSTS:-}
-      # 引擎列表必须显式注入：容器里没有 .env（镜像不打包、compose 也没挂载），
-      # 不注入时 Settings 会落到 config.py 的**代码默认值** —— 曾因此踩坑：
-      # 代码默认的 default_engines 里还留着已从 SearXNG 删除的 360search（每次空转 ~1s），
-      # news_engines 里还留着 sogou wechat（悬空引用，被 SearXNG 静默丢弃）。
-      # 值以 .env 为准；这里的 fallback 只是防止 .env 缺项时注入空列表（空 = 交给 SearXNG 默认集合）。
       - UTF8SEARCH_DEFAULT_ENGINES=${UTF8SEARCH_DEFAULT_ENGINES:-resulthunter,yandex,naver,privacywall,google,zapmeta,yahoo,fynd,reloado,yep,brave,quark}
       - UTF8SEARCH_NEWS_ENGINES=${UTF8SEARCH_NEWS_ENGINES:-duckduckgo news,google news,chinaso news,tiger news}
+      # --- C 类：宿主机专用键，容器内中性化（不继承宿主机值）
+      # 应用不读 SEARXNG_SETTINGS_FILE（Settings 的 extra="ignore"），这里只把它从宿主机路径换成容器路径，避免误导
+      - SEARXNG_SETTINGS_FILE=/etc/searxng/settings.yml
+      # HOST/PORT 只服务 `utf8-search serve` 子命令；容器用 uvicorn --host/--port 固定值，这里显式写成同一组值
+      - UTF8SEARCH_HOST=0.0.0.0
+      - UTF8SEARCH_PORT=8000
+      # 代理三件套：容器一律直连出网，不继承宿主机（含大陆开发机）的代理设置
+      - UTF8SEARCH_TRUST_ENV=false
+      - UTF8SEARCH_HTTP_PROXY=
+      - UTF8SEARCH_BYPASS_PROXY_HOSTS=
     volumes:
       - ./data:/app/data
     healthcheck:
