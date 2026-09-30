@@ -35,6 +35,37 @@ from pathlib import Path
 
 import httpx
 
+
+def missing_engines(requested: list[str], registered: list[str]) -> list[str]:
+    """返回 `requested` 里**未注册**的引擎（纯函数，便于单测）。
+
+    为什么必须校验：SearXNG 对 `engines=` 里未注册的名字是**静默丢弃**的 ——
+    少数名字无效时只跑其余引擎；**全部无效时会回退到默认引擎集合**。
+    2026-09-30 就因此造过一条假结论（`engines=sina` 实际跑的是默认集合，
+    却把 90/90 带日期的结果记到了 sina 头上），所以探针在发查询前必须先把关。
+    """
+    known = {name.strip() for name in registered if name and name.strip()}
+    return [name for name in requested if name and name not in known]
+
+
+async def assert_engines_registered(client: httpx.AsyncClient, base: str, engines: list[str]) -> None:
+    """校验点名的引擎确实注册在目标实例里；未注册直接报错退出（并打印可用引擎列表）。"""
+    response = await client.get(base.rstrip("/") + "/config", timeout=30.0)
+    response.raise_for_status()
+    registered = sorted(
+        item.get("name", "") for item in (response.json().get("engines") or [])
+    )
+    missing = missing_engines(engines, registered)
+    if not missing:
+        return
+    print(
+        "❌ 以下引擎未注册在本实例（SearXNG 会静默丢弃，全部无效时还会回退默认集合，结论会失真）："
+        f"{missing}\n   本实例可用引擎（{len(registered)}）：{', '.join(registered)}",
+        file=sys.stderr,
+    )
+    raise SystemExit(2)
+
+
 # 中文本地化查询：政策 / 地方政策 / 地方新闻 / 产业动态 / 商品评测 ×2
 QUERY_SETS: dict[str, list[str]] = {
     "zh": [
@@ -142,6 +173,9 @@ async def cmd_retest(args: argparse.Namespace) -> int:
     queries = QUERY_SETS[args.query_set]
     rows: list[dict[str, object]] = []
     async with httpx.AsyncClient(trust_env=False) as client:
+        # 先校验引擎确实注册：否则「点名一个没注册的引擎」会被 SearXNG 静默丢弃/回退默认集合，
+        # 把默认集合的结果记到它头上（2026-09-30 踩过这个坑）
+        await assert_engines_registered(client, args.base, args.engines)
         for engine in args.engines:
             for query in queries:
                 rows.append(await query_once(client, args.base, query, engines=engine))
@@ -173,6 +207,8 @@ async def cmd_sweep(args: argparse.Namespace) -> int:
     engines = [e.strip() for e in (args.engines or "").split(",") if e.strip()]
     rows: list[dict[str, object]] = []
     async with httpx.AsyncClient(trust_env=False) as client:
+        if engines:
+            await assert_engines_registered(client, args.base, engines)
         for _ in range(args.rounds):
             for query in queries:
                 row = await query_once(client, args.base, query, engines=args.engines or None)
@@ -194,6 +230,8 @@ async def cmd_compare(args: argparse.Namespace) -> int:
     configs = [("A", args.a), ("B", args.b)]
     rows: list[dict[str, object]] = []
     async with httpx.AsyncClient(trust_env=False) as client:
+        requested = [e.strip() for _label, value in configs for e in value.split(",") if e.strip()]
+        await assert_engines_registered(client, args.base, requested)
         for _ in range(args.rounds):
             for query in queries:
                 for label, engines in configs:

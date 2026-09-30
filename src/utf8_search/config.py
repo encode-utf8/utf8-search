@@ -264,14 +264,14 @@ class Settings(BaseSettings):
         ),
     )
     news_general_engines: str = Field(
-        default="resulthunter,naver,privacywall,google,zapmeta,yahoo,fynd,reloado,brave,quark,sina",
+        default="resulthunter,naver,privacywall,google,zapmeta,yahoo,fynd,reloado,brave,quark",
         description=(
             "新闻主题做「通用引擎新鲜候选补充」时用的引擎列表（逗号分隔）。"
             "默认排除 yandex：实测 yandex 配合 time_range 会返回大量垃圾农场内容"
             "（成人站/盗播站），而这一路只用来补最新候选，用更干净的引擎集更划算。"
-            "2026-09-30 调整：移除已从 SearXNG 删除的 360search，加入 sina —— sina 是当前唯一"
-            "「非视频站 + 支持 time_range + 带发布日期」的中文候选（实测 6 条中文查询、"
-            "time_range=day：143 条结果 / 90 条 7 日内 / 中位 0.65 天）。"
+            "2026-09-30 调整：移除已从 SearXNG 删除的 360search；同日实测 sina 注册后"
+            "**60 条结果里 0 条带发布日期**（此前「90/90 带日期」是引擎未注册触发回退的假象），"
+            "它只会稀释候选，因此**不再加入**，本条恢复为「只含通用引擎」的语义。"
             "留空表示复用 default_engines"
         ),
     )
@@ -285,14 +285,16 @@ class Settings(BaseSettings):
         ),
     )
     news_time_range_engines: str = Field(
-        default="sina",
+        default="",
         description=(
-            "topic=news 时**允许透传 time_range** 的引擎白名单（逗号分隔，默认只有 sina）。"
+            "topic=news 时**允许透传 time_range** 的引擎白名单（逗号分隔，逗号分隔、默认为空）。"
             "为什么要白名单而不是全局开关：同一个 time_range 对不同引擎效果相反 —— "
-            "duckduckgo news 带 time_range=day 直接返回 0 条，而 sina 恰恰靠 time_range=day 给出"
-            "「当天内」的中文结果（2026-09-30 实测：6 条中文查询 143 条结果 / 90 条 7 日内 / 中位 0.65 天）；"
-            "chinaso news、tiger news 同样不支持（day 档返回 0 条），因此不列入。"
-            "实现：白名单引擎与其余新闻引擎拆成两次上游请求（仍在同一个闸门槽位内），结果合并去重。"
+            "duckduckgo news、chinaso news、tiger news 带 time_range=day 都返回 0 条，"
+            "而真正支持它的引擎（如将来验证过的中文源）需要透传；一个全局布尔服务不了两者。"
+            "**默认留空**：2026-09-30 实测唯一被考虑过的候选 sina 注册后 0 条带发布日期，已撤回"
+            "（当初把它写进白名单的依据是一条假测量 —— 引擎未注册时 SearXNG 会回退默认集合）。"
+            "机制保留：白名单非空时，白名单引擎与其余新闻引擎会拆成两次上游请求"
+            "（仍在同一个闸门槽位内），结果合并去重。"
         ),
     )
     news_drop_stale: bool = Field(

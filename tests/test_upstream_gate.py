@@ -10,6 +10,7 @@ Prometheus 指标输出，以及两条**关键回归**——
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime, timedelta, timezone
 
 import httpx
 import pytest
@@ -355,8 +356,23 @@ async def test_fallback_without_capacity_raises_429_instead_of_empty(settings, t
 
 
 async def test_news_general_extra_not_called_when_main_source_sufficient(settings, tmp_path) -> None:
-    """结构优化：主源结果够填满 max_results 时**不再触发**通用补充路（news 每请求上游需求 ~1）。"""
-    provider = _NewsProvider(_hits(6))
+    """结构优化：主源**新鲜候选**够填满 max_results 时**不再触发**通用补充路（news 每请求上游需求 ~1）。
+
+    2026-09-30 更新判据：`_needs_general_extra` 看的是「窗口内带日期的新鲜结果数」，
+    不是「结果条数」。所以这里用**带发布日期的新鲜结果**表示「充足」。
+    """
+    now = datetime.now(timezone.utc)
+    fresh = [
+        SearchHit(
+            title=f"结果{i}",
+            url=f"https://site{i}.com/a",
+            snippet=f"摘要{i}",
+            engine="brave",
+            published_date=(now - timedelta(hours=6)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        )
+        for i in range(1, 7)
+    ]
+    provider = _NewsProvider(fresh)
     scoped = settings.model_copy(update={"news_include_general": True})
     pipeline = await _make_pipeline(tmp_path, scoped, [provider])
 
@@ -365,9 +381,25 @@ async def test_news_general_extra_not_called_when_main_source_sufficient(setting
     )
 
     assert provider.news_calls == 1
-    assert provider.general_calls == 0  # 不足才补 → 充足时不补
+    assert provider.general_calls == 0  # 新鲜候选充足 → 不补
     assert response.degraded is False
     assert response.results
+    await pipeline.close()
+
+
+async def test_news_general_extra_called_when_results_undated(settings, tmp_path) -> None:
+    """条数够但**全无发布日期**时要补一路：这正是 2026-09-30 判据改动的目的。"""
+    provider = _NewsProvider(_hits(6))  # 6 条但都没有 published_date
+    scoped = settings.model_copy(update={"news_include_general": True})
+    pipeline = await _make_pipeline(tmp_path, scoped, [provider])
+
+    with pytest.raises(UpstreamOverloaded):  # 补充路拿不到容量 → 429（兜底型）
+        await pipeline.search(
+            SearchRequest(query="news-无日期", max_results=3, depth="basic", topic="news")
+        )
+
+    assert provider.news_calls == 1
+    assert provider.general_calls == 1
     await pipeline.close()
 
 
