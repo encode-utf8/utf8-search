@@ -45,9 +45,21 @@
 #   已实测剔除（不再注册，避免白白增加延迟与 unresponsive 噪音）：
 #     bing news（8/8 查询 0 条）、reuters（43 条但 7 日内 0 条，且不支持中文）、
 #     brave.news（Suspended: too many requests）、
-#     yahoo news / mojeek news / startpage news / chinaso news（镜像内 inactive 或未注册，
+#     yahoo news / mojeek news / startpage news（镜像内 inactive 或未注册，
 #     用 engines 参数点名会被静默丢弃，反而回落到全部通用引擎）、
 #     wikinews（日期停留在 2024 年）
+#
+# 2026-09-28 引擎集合替换（M6 阶段 2，证据见 docs/reports/m6-engine-swap-20260928.md）：
+#   移除 360search：6 条中文本地化查询 0 结果，且**每次空转 ~1s**（不是快速失败），
+#                   它一个人把「默认集合查询」的 P50 抬到 1s 级；移除后结果数不减、P50 −33%。
+#   移除 sogou wechat：同一批查询 0 结果（150ms 空转）。5.2 定它为首选中文新闻源时是
+#                   2026-09-24 的**美国出口**；现出口（新加坡）它已失效，中文新闻改由下面两个补。
+#   新增 chinaso news：6 条中文查询 24 条结果、**100% 带发布日期**（286ms）。
+#                   5.3 曾因本镜像「The "engine" field is missing」注册失败而排除，
+#                   2026-09-28 在探针实例复核确认可注册（需显式 inactive: false）。
+#   新增 tiger news：同批 60 条结果、**100% 带发布日期**（250ms），中文新闻候选的备选。
+#   本轮不加 sina（无发布日期，对时效无帮助）与 bilibili（视频站，单站会灌满候选池）。
+#   保留 7-18ms 快速失败的引擎（resulthunter/privacywall/yep/brave/quark）：它们成本可忽略。
 #   通用类目不可用：bing（返回 0）、duckduckgo（CAPTCHA）、google cse（unusual traffic）、
 #           qwant（CAPTCHA）、baidu（CAPTCHA）、seznam（timeout）、
 #           mojeek 与 startpage（本镜像标记 inactive，需 Proof-of-Work 验证码）
@@ -67,13 +79,13 @@ use_default_settings:
       - brave
       - quark
       - "duckduckgo news"
-      - "sogou wechat"
       - "google news"
-      # 中文补充源（M5-5.3 实测采用）：每查询 4 条高精度中文结果，查询词覆盖率 0.67-0.93，
-      # 域名均为中关村在线 / 太平洋电脑网 / 汽车之家 / 浙江水利厅台风路径等一手站。
+      # 中文补充源（2026-09-28 实测采用，替换已失效的 360search / sogou wechat）：
+      # 两者均为 news 类目，中文查询带发布日期比例 100%，对 5.2 时效判定有直接帮助。
       # 实测已排除：baidu（CAPTCHA，suspended_time=3600）、bilibili（单站 20 条视频会淹没结果集）、
-      # chinaso（本镜像注册失败：The "engine" field is missing）
-      - 360search
+      #             sina（无发布日期，只增候选宽度不增时效）
+      - "chinaso news"
+      - "tiger news"
 
 general:
   debug: false
@@ -144,9 +156,12 @@ engines:
     disabled: false
   - name: "duckduckgo news"
     disabled: false
-  - name: "sogou wechat"
-    disabled: false
   - name: "google news"
     disabled: false
-  - name: 360search
+  # inactive 引擎必须显式覆盖，否则 keep_only 也不会把它注册进来（5.3 踩过的坑）
+  - name: "chinaso news"
     disabled: false
+    inactive: false
+  - name: "tiger news"
+    disabled: false
+    inactive: false
