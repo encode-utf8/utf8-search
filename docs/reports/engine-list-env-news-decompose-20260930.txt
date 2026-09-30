@@ -1,0 +1,69 @@
+news_engines        = duckduckgo news,chinaso news,tiger news
+news_general_engines= resulthunter,naver,privacywall,google,zapmeta,yahoo,fynd,reloado,brave,quark,360search
+news_include_general= True / pass_time_range=False
+====================================================================================================
+[1] 2026年9月 国内外重大新闻  结果 5 条  新鲜 0/5
+    engines_used=['bing']  failed=['chinaso news']  degraded=False
+    #1 无日期          引擎=bing             日期=-                          https://www.calendardate.com/sg_2026.php
+    #2 无日期          引擎=bing             日期=-                          https://singaporecalendar.net/
+    #3 无日期          引擎=bing             日期=-                          https://www.timeanddate.com/calendar/custom.html?country=63&
+    #4 无日期          引擎=bing             日期=-                          https://www.calendarlabs.com/2026-calendar
+    #5 无日期          引擎=bing             日期=-                          https://en.wikipedia.org/wiki/2026_FIFA_World_Cup
+====================================================================================================
+[2] 最近一周 AI 行业动态  结果 5 条  新鲜 0/5
+    engines_used=['bing']  failed=[]  degraded=False
+    #1 无日期          引擎=bing             日期=-                          https://www.zhihu.com/question/439957365
+    #2 无日期          引擎=bing             日期=-                          https://www.zhihu.com/question/19835774
+    #3 无日期          引擎=bing             日期=-                          https://www.zhihu.com/question/20578250
+    #4 无日期          引擎=bing             日期=-                          https://www.zhihu.com/question/19623452
+    #5 无日期          引擎=bing             日期=-                          https://www.zhihu.com/question/22587769
+====================================================================================================
+[3] 台风 最新消息 路径  结果 5 条  新鲜 0/5
+    engines_used=['searxng']  failed=[]  degraded=False
+    #1 过期(8天)       引擎=chinaso news     日期=2026-09-22T07:32:12        https://www.chinaso.com/link?url=RVQJnCWogMX1bP%2FnXr3DXHTvp
+    #2 过期(37天)      引擎=chinaso news     日期=2026-08-24T01:31:00        https://www.chinaso.com/link?url=hqJ75390IdVXQjfdFRk6S7f1tV9
+    #3 过期(37天)      引擎=duckduckgo news  日期=2026-08-24T09:55:00        https://news.fznews.com.cn/fzyw/20260824/81bhc24H16.shtml
+    #4 过期(371天)     引擎=duckduckgo news  日期=2025-09-24T05:27:00        https://www.msn.com/zh-cn/weather/%E6%B0%94%E8%B1%A1%E5%AD%A
+    #5 过期(80天)      引擎=duckduckgo news  日期=2026-07-12T11:24:00        https://news.qq.com/rain/a/20260712A042R100
+====================================================================================================
+[4] 美国 关税 最新政策  结果 5 条  新鲜 0/5
+    engines_used=['searxng']  failed=[]  degraded=False
+    #1 过期(161天)     引擎=chinaso news     日期=2026-04-22T11:06:00        https://www.chinaso.com/link?url=RVQJnCWogMX1bP%2FnXr3DXLYho
+    #2 过期(526天)     引擎=duckduckgo news  日期=2025-04-22T13:53:00        https://www.cifnews.com/article/173684
+    #3 过期(21天)      引擎=chinaso news     日期=2026-09-09T00:06:00        https://www.chinaso.com/link?url=koWOJ%2Bfw4SmjW47R9tQkLJ6XC
+    #4 过期(18天)      引擎=duckduckgo news  日期=2026-09-11T15:04:00        https://www.sohu.com/a/1074778410_122837153
+    #5 过期(217天)     引擎=duckduckgo news  日期=2026-02-25T03:34:00        https://www.bbc.com/zhongwen/articles/c0mglm381npo/simp
+====================================================================================================
+[5] latest news semiconductor export controls  结果 5 条  新鲜 1/5
+    engines_used=['searxng']  failed=['chinaso news']  degraded=False
+    #1 新鲜(6.6天)     引擎=duckduckgo news  日期=2026-09-23T12:32:00        https://www.reuters.com/legal/legalindustry/whats-latest-wit
+    #2 过期(1452天)    引擎=duckduckgo news  日期=2022-10-09T07:55:00        https://www.asahi.com/ajw/articles/14738636
+    #3 过期(13天)      引擎=duckduckgo news  日期=2026-09-17T01:51:00        https://www.internationalaffairs.org.au/australianoutlook/be
+    #4 过期(9天)       引擎=duckduckgo news  日期=2026-09-21T12:30:00        https://www.csis.org/analysis/rethinking-export-controls-too
+    #5 过期(10天)      引擎=duckduckgo news  日期=2026-09-20T00:00:00        https://www.indrastra.com/2026/09/chinas-cxmt-challenges-lim
+====================================================================================================
+[6] OpenAI latest news  结果 5 条  新鲜 5/5
+    engines_used=['searxng']  failed=[]  degraded=False
+    #1 新鲜(0.5天)     引擎=duckduckgo news  日期=2026-09-29T15:41:00        https://www.baltimoresun.com/2026/09/29/openai-delays-latest
+    #2 新鲜(0.5天)     引擎=duckduckgo news  日期=2026-09-29T15:00:10        https://www.msn.com/en-us/news/other/openai-dev-day-2026-liv
+    #3 新鲜(0.3天)     引擎=duckduckgo news  日期=2026-09-29T20:15:47        https://www.msn.com/en-us/news/other/openai-s-latest-feature
+    #4 新鲜(0.3天)     引擎=duckduckgo news  日期=2026-09-29T18:18:00        https://www.cnet.com/tech/services-and-software/openai-dots-
+    #5 新鲜(0.3天)     引擎=duckduckgo news  日期=2026-09-29T18:16:00        https://www.cnet.com/tech/services-and-software/everything-a
+====================================================================================================
+[7] 2026年 新能源汽车 补贴政策  结果 5 条  新鲜 0/5
+    engines_used=['searxng']  failed=[]  degraded=False
+    #1 过期(98天)      引擎=chinaso news     日期=2026-06-24T00:54:00        https://www.chinaso.com/link?url=PJDe97nXzje7voMF0awr2oTx1k2
+    #2 过期(85天)      引擎=chinaso news     日期=2026-07-07T09:30:35        https://www.chinaso.com/link?url=20YNMSWvCvp3MEMtqEUeXEa7Rps
+    #3 过期(60天)      引擎=chinaso news     日期=2026-08-01T06:03:09        https://www.chinaso.com/link?url=j8FVMmyeLRnWFXkkhc1bNkyWiS6
+    #4 过期(94天)      引擎=chinaso news     日期=2026-06-28T01:01:58        https://www.chinaso.com/link?url=RVQJnCWogMX1bP%2FnXr3DXHTvp
+    #5 过期(104天)     引擎=chinaso news     日期=2026-06-18T07:29:30        https://www.chinaso.com/link?url=EFa8HsFmEYV1YBZv6dhfYBMnN4z
+====================================================================================================
+[8] EU AI Act latest developments  结果 5 条  新鲜 5/5
+    engines_used=['searxng']  failed=['chinaso news']  degraded=False
+    #1 新鲜(6.4天)     引擎=duckduckgo news  日期=2026-09-23T16:02:00        https://iapp.org/news/a/eu-ai-act-literacy-changes-may-compl
+    #2 新鲜(6.5天)     引擎=duckduckgo news  日期=2026-09-23T15:18:00        https://iapp.org/news/a/italys-ai-framework-operationalizing
+    #3 新鲜(6.9天)     引擎=duckduckgo news  日期=2026-09-23T04:00:00        https://www.forbes.com/councils/forbestechcouncil/2026/09/23
+    #4 新鲜(4.8天)     引擎=duckduckgo news  日期=2026-09-25T07:00:00        https://www.msn.com/en-us/news/other/the-eu-is-not-waiting-f
+    #5 新鲜(1.1天)     引擎=duckduckgo news  日期=2026-09-28T23:59:00        https://www.datacenterdynamics.com/en/news/eu-chips-joint-un
+====================================================================================================
+合计：11/40 = 28%（门槛 80%）

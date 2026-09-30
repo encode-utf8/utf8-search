@@ -1,0 +1,194 @@
+{
+  "A": [
+    {
+      "q": "2026年9月 国内外重大新闻",
+      "results": 0,
+      "dated": 0,
+      "unresponsive": [
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    },
+    {
+      "q": "最近一周 AI 行业动态",
+      "results": 0,
+      "dated": 0,
+      "unresponsive": [
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    },
+    {
+      "q": "台风 最新消息 路径",
+      "results": 26,
+      "dated": 26,
+      "unresponsive": [
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    },
+    {
+      "q": "美国 关税 最新政策",
+      "results": 4,
+      "dated": 4,
+      "unresponsive": [
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    },
+    {
+      "q": "latest news semiconductor export controls",
+      "results": 21,
+      "dated": 21,
+      "unresponsive": [
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    },
+    {
+      "q": "OpenAI latest news",
+      "results": 29,
+      "dated": 29,
+      "unresponsive": [
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    },
+    {
+      "q": "2026年 新能源汽车 补贴政策",
+      "results": 0,
+      "dated": 0,
+      "unresponsive": [
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    },
+    {
+      "q": "EU AI Act latest developments",
+      "results": 24,
+      "dated": 24,
+      "unresponsive": [
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    }
+  ],
+  "B": [
+    {
+      "q": "2026年9月 国内外重大新闻",
+      "results": 0,
+      "dated": 0,
+      "unresponsive": [
+        [
+          "chinaso news",
+          "server API error"
+        ],
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    },
+    {
+      "q": "最近一周 AI 行业动态",
+      "results": 0,
+      "dated": 0,
+      "unresponsive": [
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    },
+    {
+      "q": "台风 最新消息 路径",
+      "results": 36,
+      "dated": 36,
+      "unresponsive": [
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    },
+    {
+      "q": "美国 关税 最新政策",
+      "results": 14,
+      "dated": 14,
+      "unresponsive": [
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    },
+    {
+      "q": "latest news semiconductor export controls",
+      "results": 25,
+      "dated": 25,
+      "unresponsive": [
+        [
+          "chinaso news",
+          "server API error"
+        ],
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    },
+    {
+      "q": "OpenAI latest news",
+      "results": 29,
+      "dated": 29,
+      "unresponsive": [
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    },
+    {
+      "q": "2026年 新能源汽车 补贴政策",
+      "results": 10,
+      "dated": 10,
+      "unresponsive": [
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    },
+    {
+      "q": "EU AI Act latest developments",
+      "results": 24,
+      "dated": 24,
+      "unresponsive": [
+        [
+          "chinaso news",
+          "server API error"
+        ],
+        [
+          "google news",
+          "Suspended: CAPTCHA"
+        ]
+      ]
+    }
+  ]
+}
