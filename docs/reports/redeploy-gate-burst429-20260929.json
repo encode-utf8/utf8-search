@@ -1,0 +1,321 @@
+{
+  "total": 36,
+  "concurrency": 18,
+  "kinds": {
+    "ok": 9,
+    "gate": 27
+  },
+  "before": {
+    "utf8search_upstream_active": "0",
+    "utf8search_upstream_waiting": "0",
+    "utf8search_upstream_rejected_total{reason=\"queue_full\"}": "4",
+    "utf8search_upstream_requests_total{result=\"ok\"}": "40",
+    "utf8search_upstream_acquire_seconds_bucket{le=\"0.05\"}": "0",
+    "utf8search_upstream_acquire_seconds_bucket{le=\"0.1\"}": "0",
+    "utf8search_upstream_acquire_seconds_bucket{le=\"0.25\"}": "0",
+    "utf8search_upstream_acquire_seconds_bucket{le=\"0.5\"}": "0",
+    "utf8search_upstream_acquire_seconds_bucket{le=\"1\"}": "4",
+    "utf8search_upstream_acquire_seconds_bucket{le=\"2\"}": "11",
+    "utf8search_upstream_acquire_seconds_bucket{le=\"5\"}": "29",
+    "utf8search_upstream_acquire_seconds_bucket{le=\"10\"}": "29",
+    "utf8search_upstream_acquire_seconds_bucket{le=\"+Inf\"}": "29",
+    "utf8search_upstream_acquire_seconds_sum": "58.377928314010205",
+    "utf8search_upstream_acquire_seconds_count": "29",
+    "utf8search_upstream_request_seconds_bucket{le=\"0.05\"}": "0",
+    "utf8search_upstream_request_seconds_bucket{le=\"0.1\"}": "0",
+    "utf8search_upstream_request_seconds_bucket{le=\"0.25\"}": "0",
+    "utf8search_upstream_request_seconds_bucket{le=\"0.5\"}": "1",
+    "utf8search_upstream_request_seconds_bucket{le=\"1\"}": "25",
+    "utf8search_upstream_request_seconds_bucket{le=\"2\"}": "39",
+    "utf8search_upstream_request_seconds_bucket{le=\"5\"}": "40",
+    "utf8search_upstream_request_seconds_bucket{le=\"10\"}": "40",
+    "utf8search_upstream_request_seconds_bucket{le=\"+Inf\"}": "40",
+    "utf8search_upstream_request_seconds_sum": "38.6252078020043",
+    "utf8search_upstream_request_seconds_count": "40",
+    "_status": "200"
+  },
+  "after": {
+    "utf8search_upstream_active": "0",
+    "utf8search_upstream_waiting": "0",
+    "utf8search_upstream_rejected_total{reason=\"queue_full\"}": "25",
+    "utf8search_upstream_rejected_total{reason=\"timeout\"}": "6",
+    "utf8search_upstream_requests_total{result=\"ok\"}": "49",
+    "utf8search_upstream_acquire_seconds_bucket{le=\"0.05\"}": "0",
+    "utf8search_upstream_acquire_seconds_bucket{le=\"0.1\"}": "0",
+    "utf8search_upstream_acquire_seconds_bucket{le=\"0.25\"}": "0",
+    "utf8search_upstream_acquire_seconds_bucket{le=\"0.5\"}": "0",
+    "utf8search_upstream_acquire_seconds_bucket{le=\"1\"}": "4",
+    "utf8search_upstream_acquire_seconds_bucket{le=\"2\"}": "11",
+    "utf8search_upstream_acquire_seconds_bucket{le=\"5\"}": "35",
+    "utf8search_upstream_acquire_seconds_bucket{le=\"10\"}": "35",
+    "utf8search_upstream_acquire_seconds_bucket{le=\"+Inf\"}": "35",
+    "utf8search_upstream_acquire_seconds_sum": "76.00155217001156",
+    "utf8search_upstream_acquire_seconds_count": "35",
+    "utf8search_upstream_request_seconds_bucket{le=\"0.05\"}": "0",
+    "utf8search_upstream_request_seconds_bucket{le=\"0.1\"}": "0",
+    "utf8search_upstream_request_seconds_bucket{le=\"0.25\"}": "0",
+    "utf8search_upstream_request_seconds_bucket{le=\"0.5\"}": "1",
+    "utf8search_upstream_request_seconds_bucket{le=\"1\"}": "28",
+    "utf8search_upstream_request_seconds_bucket{le=\"2\"}": "45",
+    "utf8search_upstream_request_seconds_bucket{le=\"5\"}": "49",
+    "utf8search_upstream_request_seconds_bucket{le=\"10\"}": "49",
+    "utf8search_upstream_request_seconds_bucket{le=\"+Inf\"}": "49",
+    "utf8search_upstream_request_seconds_sum": "52.09004452201043",
+    "utf8search_upstream_request_seconds_count": "49",
+    "_status": "200"
+  },
+  "results": [
+    {
+      "status": 200,
+      "kind": "ok",
+      "retry_after": null,
+      "ms": 2606,
+      "body": "{\"query\":\"redeploy gate probe 0 ce7932\",\"results\":[{\"title\":\"Spinnaker gate readinessProbe failed - 0.10.0-20180221133510\",\"url\":\"https://github.com/spinnaker/spinnaker/issues/2566\",\"content\":\"23 Mar "
+    },
+    {
+      "status": 200,
+      "kind": "ok",
+      "retry_after": null,
+      "ms": 2833,
+      "body": "{\"query\":\"redeploy gate probe 1 e43c2c\",\"results\":[{\"title\":\"Audit: \\\"inconsistent sibling probe\\\" defect class — 7 bugs this ...\",\"url\":\"https://github.com/DavidObando/gsharp/issues/3705\",\"content\":\""
+    },
+    {
+      "status": 200,
+      "kind": "ok",
+      "retry_after": null,
+      "ms": 2858,
+      "body": "{\"query\":\"redeploy gate probe 2 21cb9d\",\"results\":[{\"title\":\"Spinnaker gate readinessProbe failed - 0.10.0-20180221133510\",\"url\":\"https://github.com/spinnaker/spinnaker/issues/2566\",\"content\":\"23 Mar "
+    },
+    {
+      "status": 200,
+      "kind": "ok",
+      "retry_after": null,
+      "ms": 3279,
+      "body": "{\"query\":\"redeploy gate probe 3 5cd5e1\",\"results\":[{\"title\":\"Spinnaker gate readinessProbe failed - 0.10.0-20180221133510\",\"url\":\"https://github.com/spinnaker/spinnaker/issues/2566\",\"content\":\"23 Mar "
+    },
+    {
+      "status": 200,
+      "kind": "ok",
+      "retry_after": null,
+      "ms": 4012,
+      "body": "{\"query\":\"redeploy gate probe 4 385bde\",\"results\":[{\"title\":\"Readiness probe consistently failing without any sign of trouble\",\"url\":\"https://github.com/open-policy-agent/gatekeeper/issues/1927\",\"cont"
+    },
+    {
+      "status": 200,
+      "kind": "ok",
+      "retry_after": null,
+      "ms": 3619,
+      "body": "{\"query\":\"redeploy gate probe 5 1d8017\",\"results\":[{\"title\":\"Spinnaker gate readinessProbe failed - 0.10.0-20180221133510\",\"url\":\"https://github.com/spinnaker/spinnaker/issues/2566\",\"content\":\"23 Mar "
+    },
+    {
+      "status": 200,
+      "kind": "ok",
+      "retry_after": null,
+      "ms": 4665,
+      "body": "{\"query\":\"redeploy gate probe 6 096deb\",\"results\":[{\"title\":\"Azure Devops: not publishing quality gate task to job results\",\"url\":\"https://community.sonarsource.com/t/azure-devops-not-publishing-quali"
+    },
+    {
+      "status": 200,
+      "kind": "ok",
+      "retry_after": null,
+      "ms": 4809,
+      "body": "{\"query\":\"redeploy gate probe 7 e4f248\",\"results\":[{\"title\":\"Security information - Mirantis Kubernetes Engine\",\"url\":\"https://docs.mirantis.com/mke/3.7/release-notes/3-7-22/security-information.html\""
+    },
+    {
+      "status": 200,
+      "kind": "ok",
+      "retry_after": null,
+      "ms": 4706,
+      "body": "{\"query\":\"redeploy gate probe 8 d8ea2a\",\"results\":[{\"title\":\"M7.8 — Live fleet gate for swarm dispatch · Issue #511 - GitHub\",\"url\":\"https://github.com/octos-org/octos/issues/511\",\"content\":\"22 Apr 20"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 4251,
+      "body": "{\"detail\":\"上游搜索过载（timeout）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（timeout）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 4251,
+      "body": "{\"detail\":\"上游搜索过载（timeout）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（timeout）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 4253,
+      "body": "{\"detail\":\"上游搜索过载（timeout）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（timeout）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 4251,
+      "body": "{\"detail\":\"上游搜索过载（timeout）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（timeout）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 4249,
+      "body": "{\"detail\":\"上游搜索过载（timeout）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（timeout）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 4248,
+      "body": "{\"detail\":\"上游搜索过载（timeout）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（timeout）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 261,
+      "body": "{\"detail\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 248,
+      "body": "{\"detail\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 246,
+      "body": "{\"detail\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 64,
+      "body": "{\"detail\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 77,
+      "body": "{\"detail\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 108,
+      "body": "{\"detail\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 65,
+      "body": "{\"detail\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 61,
+      "body": "{\"detail\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 57,
+      "body": "{\"detail\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 48,
+      "body": "{\"detail\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 47,
+      "body": "{\"detail\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 27,
+      "body": "{\"detail\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 47,
+      "body": "{\"detail\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 34,
+      "body": "{\"detail\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 27,
+      "body": "{\"detail\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 20,
+      "body": "{\"detail\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 36,
+      "body": "{\"detail\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 47,
+      "body": "{\"detail\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 37,
+      "body": "{\"detail\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 30,
+      "body": "{\"detail\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    },
+    {
+      "status": 429,
+      "kind": "gate",
+      "retry_after": "4",
+      "ms": 24,
+      "body": "{\"detail\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\",\"error\":\"上游搜索过载（queue_full）：已返回明确失败而不是挂到超时，请 4 秒后重试。\"}"
+    }
+  ]
+}

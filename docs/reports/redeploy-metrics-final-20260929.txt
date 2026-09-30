@@ -1,0 +1,105 @@
+# HELP utf8search_upstream_active 当前正在执行的上游聚合请求数
+# TYPE utf8search_upstream_active gauge
+utf8search_upstream_active 0
+# HELP utf8search_upstream_waiting 当前在上游闸门排队等待的请求数
+# TYPE utf8search_upstream_waiting gauge
+utf8search_upstream_waiting 0
+# HELP utf8search_upstream_rejected_total 被闸门拒绝的请求数（reason=queue_full / timeout / no_capacity，按原因分标签）
+# TYPE utf8search_upstream_rejected_total counter
+utf8search_upstream_rejected_total{reason="queue_full"} 25
+utf8search_upstream_rejected_total{reason="timeout"} 6
+# HELP utf8search_upstream_requests_total 实际打到上游的聚合请求数（按结果）
+# TYPE utf8search_upstream_requests_total counter
+utf8search_upstream_requests_total{result="ok"} 50
+# HELP utf8search_upstream_acquire_seconds 在闸门排队等待的时长（秒）
+# TYPE utf8search_upstream_acquire_seconds histogram
+utf8search_upstream_acquire_seconds_bucket{le="0.05"} 0
+utf8search_upstream_acquire_seconds_bucket{le="0.1"} 0
+utf8search_upstream_acquire_seconds_bucket{le="0.25"} 0
+utf8search_upstream_acquire_seconds_bucket{le="0.5"} 0
+utf8search_upstream_acquire_seconds_bucket{le="1"} 4
+utf8search_upstream_acquire_seconds_bucket{le="2"} 11
+utf8search_upstream_acquire_seconds_bucket{le="5"} 35
+utf8search_upstream_acquire_seconds_bucket{le="10"} 35
+utf8search_upstream_acquire_seconds_bucket{le="+Inf"} 35
+utf8search_upstream_acquire_seconds_sum 76.00155217001156
+utf8search_upstream_acquire_seconds_count 35
+# HELP utf8search_upstream_request_seconds 上游聚合调用的时长（秒）
+# TYPE utf8search_upstream_request_seconds histogram
+utf8search_upstream_request_seconds_bucket{le="0.05"} 0
+utf8search_upstream_request_seconds_bucket{le="0.1"} 0
+utf8search_upstream_request_seconds_bucket{le="0.25"} 0
+utf8search_upstream_request_seconds_bucket{le="0.5"} 1
+utf8search_upstream_request_seconds_bucket{le="1"} 29
+utf8search_upstream_request_seconds_bucket{le="2"} 46
+utf8search_upstream_request_seconds_bucket{le="5"} 50
+utf8search_upstream_request_seconds_bucket{le="10"} 50
+utf8search_upstream_request_seconds_bucket{le="+Inf"} 50
+utf8search_upstream_request_seconds_sum 52.78737048400944
+utf8search_upstream_request_seconds_count 50
+# HELP utf8search_expansion_samples_total 已测量（未扩展）的查询数
+# TYPE utf8search_expansion_samples_total counter
+utf8search_expansion_samples_total 53
+# HELP utf8search_expansion_candidates 主源返回的候选数（扩展埋点）
+# TYPE utf8search_expansion_candidates histogram
+utf8search_expansion_candidates_bucket{le="0"} 0
+utf8search_expansion_candidates_bucket{le="4"} 0
+utf8search_expansion_candidates_bucket{le="8"} 0
+utf8search_expansion_candidates_bucket{le="12"} 1
+utf8search_expansion_candidates_bucket{le="16"} 1
+utf8search_expansion_candidates_bucket{le="24"} 53
+utf8search_expansion_candidates_bucket{le="32"} 53
+utf8search_expansion_candidates_bucket{le="48"} 53
+utf8search_expansion_candidates_bucket{le="+Inf"} 53
+utf8search_expansion_candidates_sum 1258.0
+utf8search_expansion_candidates_count 53
+# HELP utf8search_expansion_raw_candidates SearXNG 原始返回的结果条数（未截断；用于判断候选池上限是不是约束）
+# TYPE utf8search_expansion_raw_candidates histogram
+utf8search_expansion_raw_candidates_bucket{le="0"} 1
+utf8search_expansion_raw_candidates_bucket{le="12"} 4
+utf8search_expansion_raw_candidates_bucket{le="24"} 4
+utf8search_expansion_raw_candidates_bucket{le="32"} 17
+utf8search_expansion_raw_candidates_bucket{le="48"} 50
+utf8search_expansion_raw_candidates_bucket{le="64"} 53
+utf8search_expansion_raw_candidates_bucket{le="96"} 53
+utf8search_expansion_raw_candidates_bucket{le="+Inf"} 53
+utf8search_expansion_raw_candidates_sum 1941.0
+utf8search_expansion_raw_candidates_count 53
+# HELP utf8search_expansion_target 本次向主源索取的候选池目标值
+# TYPE utf8search_expansion_target histogram
+utf8search_expansion_target_bucket{le="0"} 0
+utf8search_expansion_target_bucket{le="5"} 0
+utf8search_expansion_target_bucket{le="12"} 0
+utf8search_expansion_target_bucket{le="24"} 52
+utf8search_expansion_target_bucket{le="30"} 53
+utf8search_expansion_target_bucket{le="+Inf"} 53
+utf8search_expansion_target_sum 1278.0
+utf8search_expansion_target_count 53
+# HELP utf8search_expansion_coverage 查询词覆盖率（分母=用户原始查询词）
+# TYPE utf8search_expansion_coverage histogram
+utf8search_expansion_coverage_bucket{le="0.2"} 2
+utf8search_expansion_coverage_bucket{le="0.4"} 21
+utf8search_expansion_coverage_bucket{le="0.5"} 28
+utf8search_expansion_coverage_bucket{le="0.6"} 32
+utf8search_expansion_coverage_bucket{le="0.7"} 48
+utf8search_expansion_coverage_bucket{le="0.8"} 50
+utf8search_expansion_coverage_bucket{le="0.9"} 51
+utf8search_expansion_coverage_bucket{le="1"} 53
+utf8search_expansion_coverage_bucket{le="+Inf"} 53
+utf8search_expansion_coverage_sum 26.30785020561167
+utf8search_expansion_coverage_count 53
+# HELP utf8search_expansion_distinct_hosts 最终结果的独立站点数
+# TYPE utf8search_expansion_distinct_hosts histogram
+utf8search_expansion_distinct_hosts_bucket{le="0"} 0
+utf8search_expansion_distinct_hosts_bucket{le="1"} 1
+utf8search_expansion_distinct_hosts_bucket{le="2"} 2
+utf8search_expansion_distinct_hosts_bucket{le="3"} 14
+utf8search_expansion_distinct_hosts_bucket{le="4"} 19
+utf8search_expansion_distinct_hosts_bucket{le="5"} 53
+utf8search_expansion_distinct_hosts_bucket{le="8"} 53
+utf8search_expansion_distinct_hosts_bucket{le="+Inf"} 53
+utf8search_expansion_distinct_hosts_sum 229.0
+utf8search_expansion_distinct_hosts_count 53
+# HELP utf8search_expansion_trigger_total 命中「候选不足」判据的次数（占位判据：候选数 < 目标候选池；按原因分标签）
+# TYPE utf8search_expansion_trigger_total counter
+utf8search_expansion_trigger_total{reason="candidates"} 1
