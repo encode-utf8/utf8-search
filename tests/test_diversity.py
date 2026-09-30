@@ -127,7 +127,12 @@ def test_apply_rank_filters_restores_when_short() -> None:
 
 
 def test_apply_rank_filters_restores_low_coverage_before_aggregator() -> None:
-    """补回顺序按缺陷轻重：先补「只有覆盖弱」的，聚合页留到最后。"""
+    """补回顺序按缺陷轻重：先补「只有覆盖弱」的，聚合页留到最后；补回的一律排在末尾。
+
+    2026-09-30 调整：补回结果不再"插回原始位置"，而是**追加到末尾** ——
+    它们是被判有缺陷的（覆盖度低 / 同源冗余 / 聚合页 / 规格不匹配 / 脚本不匹配），
+    插回原位会让过滤白做（2-9 曾实测：AI 产品落地页排第 1，删了又插回第 1）。
+    """
     results = [
         _r("某站_官网首页", "https://agg.com/"),                 # 聚合页，且排在最前
         _r("无关内容一", "https://a.com/news/detail/1.html"),      # 低覆盖
@@ -140,11 +145,11 @@ def test_apply_rank_filters_restores_low_coverage_before_aggregator() -> None:
     # 两条低覆盖的先把名额占满，聚合页（原本排第 1）仍被挡在外面
     assert [r.title for r in kept] == ["无关内容一", "无关内容二"]
 
-    # 实在凑不齐时才把聚合页放回来，但仍然保持原有的相对顺序
+    # 实在凑不齐时才把聚合页放回来，但它排在末尾（合规结果永远在前）
     kept_all, _ = apply_rank_filters(
         results, query="扫地机器人 推荐", max_results=3, min_query_coverage=0.34
     )
-    assert [r.title for r in kept_all] == ["某站_官网首页", "无关内容一", "无关内容二"]
+    assert [r.title for r in kept_all] == ["无关内容一", "无关内容二", "某站_官网首页"]
 
 
 def test_apply_rank_filters_disabled_is_identity() -> None:

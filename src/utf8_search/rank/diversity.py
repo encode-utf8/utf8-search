@@ -20,6 +20,7 @@ from urllib.parse import urlsplit
 
 from ..models import SearchResult
 from .fusion import tokenize
+from .spec_tokens import extract_spec_tokens, spec_level_for_result
 
 # ---------------------------------------------------------------- 域名
 # 常见「二级后缀」：可注册域要多吃一段，否则 zj.gov.cn / weather.com.cn 会被误当成两个不同的域
@@ -103,8 +104,28 @@ _AGGREGATOR_PATH_HEAD = re.compile(
 _AGGREGATOR_PATH_TAIL = re.compile(r"/(news|list|index|all)/?$", re.IGNORECASE)
 
 
-def is_aggregator_page(result: SearchResult) -> bool:
-    """判断结果是否为「站点首页 / 栏目页」这类聚合页。"""
+def has_substantive_content(result: SearchResult) -> bool:
+    """正文里是否有**实质内容**（而不是一串导航/链接/列表标题）。
+
+    判据刻意保守（宁可不判）：
+    * 长度 ≥200 字 → 实质；
+    * 长度 ≥120 且至少 2 个句末标点 → 实质；
+    * 长度 ≥60 且至少 3 个句末标点 → 实质。
+    注：basic 模式下 `content` 是上游摘要（几十到几百字），deep 模式是正文开头，两者都适用。
+    """
+    text = (result.content or "").strip()
+    if not text:
+        return False
+    if len(text) >= 200:
+        return True
+    sentences = len(re.findall(r"[。！？!?；;]", text))
+    if len(text) >= 120 and sentences >= 2:
+        return True
+    return len(text) >= 60 and sentences >= 3
+
+
+def looks_like_column(result: SearchResult) -> bool:
+    """**形态**上像站点首页 / 栏目页 / 专题页 / 列表汇总页（不看内容）。"""
     try:
         path = urlsplit(result.url or "").path.strip("/")
     except ValueError:
@@ -124,6 +145,22 @@ def is_aggregator_page(result: SearchResult) -> bool:
         # 频道 / 标签 / 专题页（/tags/国产显卡、/topic/7552…、/315440/news）
         return True
     return bool(_AGGREGATOR_TITLE.search(result.title or ""))
+
+
+def is_aggregator_page(result: SearchResult) -> bool:
+    """判断结果是否为「只能当导航用」的聚合页（2026-09-30 与 2-9 判分口径对齐）。
+
+    **口径来源**：2-9 的裁决原话是「聚合形态本身不等于不相关；站点首页/栏目页这类『只是导航』才判 0」。
+    所以这里的判据从「形态像栏目页」改成「**形态像栏目页 且 正文没有实质内容**」：
+
+    * 首页 / 栏目页 / 频道页 / 专题页 + 短短几行导航 → 判聚合页（剔除）；
+    * 标题含「汇总 / 日报 / 周报 / 速览」但**正文有实质内容**（如每日新闻汇总、周报正文）→ **保留**。
+
+    旧实现只看 URL/标题形态，把后者也一并剔除了，与判分口径不一致（Q1 的每日新闻汇总就被误伤）。
+    """
+    if not looks_like_column(result):
+        return False
+    return not has_substantive_content(result)
 
 
 # ---------------------------------------------------------------- 查询词覆盖度
@@ -204,6 +241,18 @@ def apply_rank_filters(
         )
     if drop_aggregator_pages:
         steps.append(("aggregator_page", lambda items: _split(items, is_aggregator_page)))
+    spec_tokens = extract_spec_tokens(query)
+    if spec_tokens:
+        # 规格不匹配（如查询 iPhone 17 Pro 却给 iPhone 8、查询 Python 3.13 却给 3.14）：
+        # 词面覆盖率看不出这类错误，只有规格 token 能抓到。候选充足时剔除，不足时按缺陷轻重补回。
+        steps.append(
+            (
+                "spec_mismatch",
+                lambda items: _split(
+                    items, lambda r: spec_level_for_result(spec_tokens, r) == "none"
+                ),
+            )
+        )
     if min_query_coverage > 0:
         steps.append(
             (
@@ -229,7 +278,7 @@ def apply_rank_filters(
     # 保证质量过滤不会让结果变少（宁可少过滤，也不能掏空结果集）。
     if max_results > 0 and len(kept) < max_results and dropped:
         wanted = max_results - len(kept)
-        keep_ids = {id(result) for result in kept}
+        kept_before_refill = list(kept)
         # 补回**按「缺陷轻重」排序**，而不是一律按原排序：
         # 「覆盖度低」只说明关键词没对上，内容本身还是可读的；
         # 「聚合页 / 脚本不匹配」是结构性缺陷（点进去只有导航，或用户根本读不懂），
@@ -239,16 +288,31 @@ def apply_rank_filters(
             "low_coverage": 0,
             "same_host": 1,
             "aggregator_page": 2,
-            "script_mismatch": 3,
+            "spec_mismatch": 3,
+            "script_mismatch": 4,
         }
         restore: list[SearchResult] = []
+        spec_dropped_ids = {id(result) for name, removed in by_stage if name == "spec_mismatch" for result in removed}
         for name, removed in sorted(by_stage, key=lambda item: stage_priority.get(item[0], 9)):
             restore.extend(sorted(removed, key=lambda item: order[id(item)]))
+        # 补回的结果一律**追加到末尾**（而不是按原始顺序插回原位）：
+        # 它们是被判有缺陷的（覆盖度低 / 同站冗余 / 聚合页 / 规格不匹配 / 脚本不匹配），
+        # 插回原位等于让过滤白做（2-9 #2 实测过这个问题）。原顺序在每一类内部保留。
+        kept = kept_before_refill
         for result in restore:
             if wanted <= 0:
                 break
-            keep_ids.add(id(result))
+            kept.append(result)
             wanted -= 1
-        kept = [result for result in results if id(result) in keep_ids]
+        # 统计「因候选不足而被补回的规格不匹配条数」——上层据此标 degraded（候选不足时只降权，不静默丢）
+        stats["spec_mismatch_refilled"] = sum(1 for r in kept if id(r) in spec_dropped_ids)
+
+    if spec_tokens:
+        # 部分匹配（iPhone 17 对 iPhone 17 Pro）**降权**：不动剔除逻辑，只把它们挪到同组末尾。
+        partial = [r for r in kept if spec_level_for_result(spec_tokens, r) == "partial"]
+        if partial:
+            partial_ids = {id(r) for r in partial}
+            kept = [r for r in kept if id(r) not in partial_ids] + partial
+            stats["spec_partial_downranked"] = len(partial)
 
     return kept, stats
