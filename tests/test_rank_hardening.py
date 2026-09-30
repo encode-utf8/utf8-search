@@ -185,12 +185,33 @@ def test_form_penalty_keeps_daily_roundup_not_over_penalized(settings, tmp_path)
     other = _r("某篇普通文章", "https://example.com/a/1.html", _LONG)
     roundup.score, other.score = 0.80, 0.78
     ordered = apply_form_penalty([roundup, other])
-    # 分数接近时让位（0.80×0.95=0.76 < 0.78）—— 这正是"轻微降权"的预期效果，不是误杀
+    # 分数接近时让位（有效分 0.80×0.95=0.76 < 0.78）—— 这正是"轻微降权"的预期效果，不是误杀
     assert ordered[0] is other
-    assert roundup.score == pytest.approx(0.76, abs=1e-6)
+    # P7：score 不再被原地修改（乘子只用于排序 key），对外字段保持相关性原始分
+    assert roundup.score == pytest.approx(0.80, abs=1e-9)
+    assert other.score == pytest.approx(0.78, abs=1e-9)
     # 反向：汇总页明显更相关时依然排第一
     roundup.score, other.score = 0.80, 0.60
     assert apply_form_penalty([roundup, other])[0] is roundup
+
+
+def test_form_penalty_is_idempotent() -> None:
+    """P7 回归：重复调用 apply_form_penalty 结果不变（不许出现 ×0.9025 的二次降权）。"""
+    from utf8_search.rank.diversity import apply_form_penalty
+
+    column_a = _r("2026年9月26日新闻速览", "https://www.sina.cn/news/", _LONG)
+    column_b = _r("AI 行业发展一周动态", "https://zhuanlan.zhihu.com/", _LONG)
+    article = _r("商务部召开例行新闻发布会", "https://www.mofcom.gov.cn/xwfb/202609/t20260903_1.html", _LONG)
+    column_a.score, column_b.score, article.score = 0.61, 0.60, 0.60
+    original_scores = {id(r): r.score for r in (column_a, column_b, article)}
+
+    once = apply_form_penalty([column_a, column_b, article])
+    twice = apply_form_penalty(list(once))
+    thrice = apply_form_penalty(list(twice))
+
+    assert [r.title for r in once] == [r.title for r in twice] == [r.title for r in thrice]
+    for result in (column_a, column_b, article):
+        assert result.score == pytest.approx(original_scores[id(result)], abs=1e-12)
 
 
 # ---------------------------------------------------------------- C) Bing 兜底相关性闸门
