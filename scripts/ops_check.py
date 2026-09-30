@@ -19,20 +19,25 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import os
 import re
 import shutil
+import ssl
 import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import httpx
 
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_LOG = REPO / "data" / "ops-check.log"
 STATE = REPO / "data" / "ops-check-state.json"
+SNAPSHOT_CSV = REPO / "data" / "ops-metrics-snapshot.csv"
+BACKUP_GLOB = "/root/deploy-backups-*"
 
 
 def _configure_stdout() -> None:
@@ -84,6 +89,67 @@ def check_disk(path: Path, *, max_used_ratio: float, max_data_bytes: int) -> lis
     return problems
 
 
+def cert_days(host: str, port: int = 443, *, timeout: float = 8.0) -> tuple[float, str]:
+    """连接目标端口并读回证书，返回 (剩余天数, notAfter ISO)。仅看日期，不做链校验。"""
+    from cryptography import x509  # 本地依赖，随 pyproject 安装
+
+    context = ssl.create_default_context()
+    context.check_hostname = False
+    context.verify_mode = ssl.CERT_NONE
+    with socket_create(host, port, timeout) as raw:
+        with context.wrap_socket(raw, server_hostname=host) as tls:
+            der = tls.getpeercert(binary_form=True)
+    certificate = x509.load_der_x509_certificate(der)
+    not_after = certificate.not_valid_after_utc
+    return (not_after - datetime.now(timezone.utc)).total_seconds() / 86400, not_after.isoformat()
+
+
+def socket_create(host: str, port: int, timeout: float):
+    import socket
+
+    return socket.create_connection((host, port), timeout=timeout)
+
+
+def check_backup(backup_dir: str, *, max_age_hours: float) -> tuple[list[str], dict[str, object]]:
+    """最近一次 backup.sh 产物（tar.gz + SHA256SUMS）是否在 max_age_hours 内。"""
+    problems: list[str] = []
+    info: dict[str, object] = {}
+    import glob
+
+    dirs = [Path(p) for p in glob.glob(backup_dir)] or ([Path(backup_dir)] if Path(backup_dir).exists() else [])
+    newest: tuple[float, Path] | None = None
+    for directory in dirs:
+        for sums in directory.glob("SHA256SUMS"):
+            archives = list(directory.glob("utf8-search-backup-*.tar.gz"))
+            if not archives:
+                continue
+            stamp = sums.stat().st_mtime
+            if newest is None or stamp > newest[0]:
+                newest = (stamp, directory)
+    if newest is None:
+        problems.append(f"未找到任何备份产物（{backup_dir}：需要 tar.gz + SHA256SUMS）")
+        return problems, info
+    age_hours = (time.time() - newest[0]) / 3600
+    info["backup_dir"] = str(newest[1])
+    info["backup_age_hours"] = round(age_hours, 2)
+    if age_hours > max_age_hours:
+        problems.append(f"最近一次备份已 {age_hours:.1f} 小时（> {max_age_hours:.0f}h）：{newest[1]}")
+    return problems, info
+
+
+def append_snapshot(path: Path, row: dict[str, object]) -> None:
+    """把关键指标快照成一行 CSV（用于积累坏日样本）。"""
+    header = ["ts", "health_status", "upstream_error", "rejected_queue_full", "rejected_timeout",
+              "requests_ok", "probe_results"]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    new_file = not path.exists()
+    with path.open("a", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=header)
+        if new_file:
+            writer.writeheader()
+        writer.writerow({key: row.get(key, "") for key in header})
+
+
 def notify(problems: list[str], payload: dict) -> str:
     """通知通道接口：未配置 webhook 时只返回 'log-only'。"""
     url = os.environ.get("OPS_ALERT_WEBHOOK", "").strip()
@@ -106,12 +172,24 @@ def main() -> int:
     parser.add_argument("--max-rejected-delta", type=int, default=200)
     parser.add_argument("--max-used-ratio", type=float, default=0.85)
     parser.add_argument("--max-data-gib", type=float, default=5.0)
+    parser.add_argument("--cert-host", default=os.environ.get("OPS_CERT_HOST", "43.106.104.49.sslip.io"))
+    parser.add_argument("--cert-port", type=int, default=443)
+    parser.add_argument("--cert-min-days", type=float, default=30.0,
+                        help="证书剩余天数低于该值告警（Let's Encrypt 90 天有效，30 天是续期预警线）")
+    parser.add_argument("--cert-skip", action="store_true", help="跳过证书检查（内网/离线环境）")
+    parser.add_argument("--backup-glob", default=BACKUP_GLOB, help="备份目录 glob（默认 /root/deploy-backups-*）")
+    parser.add_argument("--backup-max-hours", type=float, default=48.0, help="最近备份的最大允许年龄（小时）")
+    parser.add_argument("--snapshot-csv", default=str(SNAPSHOT_CSV), help="指标快照 CSV 路径")
+    parser.add_argument("--no-probe-search", action="store_true",
+                        help="不做探针搜索（默认做一次唯一查询，用于记录结果条数）")
     parser.add_argument("--json", action="store_true", help="把巡检结果以 JSON 打到 stdout")
     args = parser.parse_args()
 
     started = time.perf_counter()
     problems: list[str] = []
     snapshot: dict[str, object] = {"ts": datetime.now(timezone.utc).isoformat(), "base_url": args.base_url}
+    queue_full = 0.0
+    timeout_rejected = 0.0
     key = api_key()
     headers = {"Authorization": f"Bearer {key}"} if key else {}
     with httpx.Client(trust_env=False, timeout=10.0) as client:
@@ -135,6 +213,8 @@ def main() -> int:
                 values = parse_metrics(metrics.text)
                 errors = values.get('utf8search_upstream_requests_total{result="error"}', 0.0)
                 rejected = sum(v for k, v in values.items() if k.startswith("utf8search_upstream_rejected_total"))
+                queue_full = values.get('utf8search_upstream_rejected_total{reason="queue_full"}', 0.0)
+                timeout_rejected = values.get('utf8search_upstream_rejected_total{reason="timeout"}', 0.0)
                 ok_count = values.get('utf8search_upstream_requests_total{result="ok"}', 0.0)
                 snapshot.update({"upstream_error": errors, "rejected_total": rejected, "requests_ok": ok_count})
                 if errors > 0:
@@ -152,8 +232,50 @@ def main() -> int:
                 STATE.write_text(json.dumps(snapshot, ensure_ascii=False), encoding="utf-8")
         except Exception as exc:  # noqa: BLE001
             problems.append(f"/metrics 不可达：{exc}")
+        # 1.5) 探针搜索：记录结果条数（坏日样本的"结果中位数"口径：每 5 分钟一条）
+        if not args.no_probe_search and key:
+            try:
+                probe = client.post(
+                    f"{args.base_url.rstrip('/')}/v1/search",
+                    headers={"Authorization": f"Bearer {key}"},
+                    json={"query": f"ops probe {datetime.now(timezone.utc).strftime('%H%M%S')}",
+                          "max_results": 5, "search_depth": "basic"},
+                    timeout=30.0,
+                )
+                payload = probe.json()
+                snapshot["probe_results"] = len(payload.get("results") or [])
+                snapshot["probe_status"] = probe.status_code
+            except Exception as exc:  # noqa: BLE001
+                problems.append(f"探针搜索失败：{exc}")
+    # 2) 证书剩余天数（遗留 #5：续期依赖 80/443 放行，必须能提前发现）
+    if not args.cert_skip:
+        try:
+            days, not_after = cert_days(args.cert_host, args.cert_port)
+            snapshot["cert_days"] = round(days, 1)
+            snapshot["cert_not_after"] = not_after
+            if days < args.cert_min_days:
+                problems.append(
+                    f"证书剩余 {days:.1f} 天（< {args.cert_min_days:.0f} 天，到期 {not_after}）："
+                    f"{args.cert_host}:{args.cert_port}"
+                )
+        except Exception as exc:  # noqa: BLE001
+            problems.append(f"证书检查失败（{args.cert_host}:{args.cert_port}）：{exc}")
+    # 3) 最近一次备份是否新鲜（backup.sh 产物）
+    backup_problems, backup_info = check_backup(args.backup_glob, max_age_hours=args.backup_max_hours)
+    snapshot.update(backup_info)
+    problems.extend(backup_problems)
     problems.extend(check_disk(REPO, max_used_ratio=args.max_used_ratio,
                                max_data_bytes=int(args.max_data_gib * 2**30)))
+    # 4) 指标快照 CSV（坏日样本）
+    append_snapshot(Path(args.snapshot_csv), {
+        "ts": snapshot["ts"],
+        "health_status": snapshot.get("health_status", ""),
+        "upstream_error": snapshot.get("upstream_error", ""),
+        "rejected_queue_full": queue_full,
+        "rejected_timeout": timeout_rejected,
+        "requests_ok": snapshot.get("requests_ok", ""),
+        "probe_results": snapshot.get("probe_results", ""),
+    })
     snapshot["problems"] = problems
     snapshot["duration_ms"] = round((time.perf_counter() - started) * 1000)
     status = "ALERT" if problems else "OK"
