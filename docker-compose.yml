@@ -41,6 +41,13 @@ services:
       - UTF8SEARCH_API_KEYS=${UTF8SEARCH_API_KEYS:-}
       - UTF8SEARCH_RATE_LIMIT_RPM=${UTF8SEARCH_RATE_LIMIT_RPM:-60}
       - UTF8SEARCH_MCP_ALLOWED_HOSTS=${UTF8SEARCH_MCP_ALLOWED_HOSTS:-}
+      # 引擎列表必须显式注入：容器里没有 .env（镜像不打包、compose 也没挂载），
+      # 不注入时 Settings 会落到 config.py 的**代码默认值** —— 曾因此踩坑：
+      # 代码默认的 default_engines 里还留着已从 SearXNG 删除的 360search（每次空转 ~1s），
+      # news_engines 里还留着 sogou wechat（悬空引用，被 SearXNG 静默丢弃）。
+      # 值以 .env 为准；这里的 fallback 只是防止 .env 缺项时注入空列表（空 = 交给 SearXNG 默认集合）。
+      - UTF8SEARCH_DEFAULT_ENGINES=${UTF8SEARCH_DEFAULT_ENGINES:-resulthunter,yandex,naver,privacywall,google,zapmeta,yahoo,fynd,reloado,yep,brave,quark}
+      - UTF8SEARCH_NEWS_ENGINES=${UTF8SEARCH_NEWS_ENGINES:-duckduckgo news,google news,chinaso news,tiger news}
     volumes:
       - ./data:/app/data
     healthcheck:
