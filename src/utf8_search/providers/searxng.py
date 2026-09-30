@@ -32,6 +32,7 @@ class SearxngProvider(BaseProvider):
         timeout_limit: float | None = None,
         news_engines: list[str] | None = None,
         news_pass_time_range: bool = False,
+        news_time_range_engines: set[str] | None = None,
         engine_health: EngineHealthTracker | None = None,
         gate: UpstreamGate | None = None,
     ) -> None:
@@ -44,6 +45,10 @@ class SearxngProvider(BaseProvider):
         # 新闻主题是否把 time_range 透传上游：免费新闻引擎对该过滤支持很差
         # （实测 duckduckgo news + time_range=day 直接返回 0 条），默认不透传，本地过滤。
         self.news_pass_time_range = news_pass_time_range
+        # 允许透传 time_range 的新闻引擎白名单（见 config.news_time_range_engines）：
+        # 同一个 time_range 对不同引擎效果相反（sina 靠它拿 7 日内结果，duckduckgo news 带它返回 0 条），
+        # 所以不能只用一个全局开关；白名单引擎与其余引擎会拆成两次请求，结果合并。
+        self.news_time_range_engines = set(news_time_range_engines or ())
         # 聚合搜索时间上限（SearXNG 的 timeout_limit 参数）：到点即返回已有结果，
         # 避免个别慢引擎拖垮整体延迟。
         self.timeout_limit = timeout_limit
@@ -113,21 +118,92 @@ class SearxngProvider(BaseProvider):
         engines: list[str] | None = None,
         language: str = "all",
     ) -> list[SearchHit]:
-        """调用 /search?format=json，返回归一化后的结果。"""
+        """调用 /search?format=json，返回归一化后的结果。
+
+        新闻主题下 time_range 对不同引擎效果相反（见 config.news_time_range_engines），
+        因此这里按「是否在白名单里」把引擎拆成最多两组，各发一次请求再合并去重：
+        白名单那组带 time_range（拿到的是被上游按时间过滤过的新鲜候选），其余不带（保持旧行为）。
+        两次请求都在 `search()` 的同一个闸门槽位内，不额外放大并发。
+        """
+        planned = self._planned_engines(engines, topic)
+        groups = self._time_range_groups(topic, time_range, planned)
+        hits: list[SearchHit] = []
+        seen: set[str] = set()
+        unresponsive_seen: dict[str, str] = {}
+        constraint_ignored = False
+        raw_total = 0
+        for range_value, group_engines in groups:
+            group_hits, group_unresponsive, group_ignored, group_raw = await self._search_once(
+                query,
+                max_results=max_results,
+                topic=topic,
+                time_range=range_value,
+                engine_names=group_engines,
+                language=language,
+            )
+            unresponsive_seen.update(group_unresponsive)
+            constraint_ignored = constraint_ignored or group_ignored
+            raw_total += group_raw
+            for hit in group_hits:
+                if hit.url in seen:
+                    continue
+                seen.add(hit.url)
+                hits.append(hit)
+
+        # 「上一次请求」的状态统一在最后写入，避免拆分请求时被后一次覆盖
+        self.unresponsive_engines = list(unresponsive_seen)
+        self.unresponsive_reasons = dict(unresponsive_seen)
+        self.constraint_ignored = constraint_ignored
+        self.raw_result_count = raw_total
+        return hits[:max_results] if len(groups) > 1 else hits
+
+    def _time_range_groups(
+        self, topic: str, time_range: str | None, planned: list[str]
+    ) -> list[tuple[str | None, list[str] | None]]:
+        """把一次查询拆成 `(time_range, 引擎列表)` 分组（最多两组）。
+
+        - 非新闻主题（含 news 的通用补充路）：保持原样，time_range 直接透传；
+        - 新闻主题且旧开关 `news_pass_time_range=true`：全部引擎透传（排障用）；
+        - 新闻主题：只有 `news_time_range_engines` 白名单里的引擎带 time_range，
+          其余引擎不带 —— 这是 2026-09-30 的改动，因为「sina 需要 time_range、
+          duckduckgo news 带它就 0 条」，一个全局布尔无法同时服务两者。
+        """
+        if topic != "news" or not time_range or self.news_pass_time_range:
+            return [(time_range, planned or None)]
+        if not planned:
+            # news_engines 留空 → 交给 SearXNG 自己的 news 集合；旧行为也不透传 time_range
+            return [(None, None)]
+        ranged = [name for name in planned if name in self.news_time_range_engines]
+        plain = [name for name in planned if name not in self.news_time_range_engines]
+        if not ranged:
+            return [(None, planned)]
+        groups: list[tuple[str | None, list[str] | None]] = [(time_range, ranged)]
+        if plain:
+            groups.append((None, plain))
+        return groups
+
+    async def _search_once(
+        self,
+        query: str,
+        *,
+        max_results: int,
+        topic: str,
+        time_range: str | None,
+        engine_names: list[str] | None,
+        language: str,
+    ) -> tuple[list[SearchHit], dict[str, str], bool, int]:
+        """发一次 /search 请求并归一化；返回 (hits, unresponsive, constraint_ignored, raw_count)。"""
         params: dict[str, Any] = {
             "q": query,
             "format": "json",
             "language": language or "all",
             "pageno": 1,
         }
-        # 新闻主题默认不透传 time_range：免费引擎会因此返回空结果（见配置说明），
-        # 时效性改由 pipeline 按 published_date 在本地处理。
-        if time_range and (topic != "news" or self.news_pass_time_range):
+        if time_range:
             params["time_range"] = time_range
         if self.timeout_limit:
             params["timeout_limit"] = self.timeout_limit
 
-        engine_names = self._planned_engines(engines, topic)
         if engine_names:
             params["engines"] = ",".join(engine_names)
         else:
@@ -138,15 +214,12 @@ class SearxngProvider(BaseProvider):
             # 类目全部引擎的结果，导致「按引擎隔离实测」得出的结论全部不可信）。
             params["categories"] = "news" if topic == "news" else "general"
 
-        self.constraint_ignored = False
         payload, used_engines = await self._request(
             params, retry_engines=self._retry_engines(engine_names)
         )
 
         # 记录不可用引擎（含原因），供上层降级判断与健康度统计使用
         unresponsive = self._parse_unresponsive(payload.get("unresponsive_engines"))
-        self.unresponsive_engines = [name for name, _ in unresponsive]
-        self.unresponsive_reasons = dict(unresponsive)
         if unresponsive:
             logger.debug(
                 "SearXNG 不可用引擎: %s",
@@ -161,11 +234,10 @@ class SearxngProvider(BaseProvider):
             for name in (item.get("engines") or [item.get("engine")])
             if name
         }
-        self.constraint_ignored = bool(
+        constraint_ignored = bool(
             used_engines and sources and not (sources & set(used_engines))
         )
-        self.raw_result_count = len(payload.get("results") or [])
-        if self.constraint_ignored:
+        if constraint_ignored:
             logger.warning(
                 "SearXNG 忽略了 engines 约束：请求 %s，实际结果来自 %s"
                 "（点名引擎可能未注册，SearXNG 会退回默认引擎集合）",
@@ -176,7 +248,7 @@ class SearxngProvider(BaseProvider):
         if self.engine_health is not None:
             # 约束被忽略时，被点名的引擎其实**没被查询**，不能记成功
             # （否则一个写错的引擎名会永远显示为「健康」）。
-            self.engine_health.observe([] if self.constraint_ignored else used_engines, unresponsive)
+            self.engine_health.observe([] if constraint_ignored else used_engines, unresponsive)
 
         hits: list[SearchHit] = []
         for item in payload.get("results") or []:
@@ -195,7 +267,7 @@ class SearxngProvider(BaseProvider):
             )
             if len(hits) >= max_results:
                 break
-        return hits
+        return hits, dict(unresponsive), constraint_ignored, len(payload.get("results") or [])
 
     # ------------------------------------------------------------------ 引擎选择
     def _planned_engines(self, explicit: list[str] | None, topic: str) -> list[str]:

@@ -181,9 +181,11 @@ docker tag utf8-search-utf8-search:pre-m5-20260929 utf8-search-utf8-search:lates
 
 ## 8. 遗留（写入 `docs/04` §8）
 
-1. news 时效门槛仍未达标（脚本 28% / 容器 32%）：`google news` 反复进 CAPTCHA 且不给日期；
-   **下一轮 ② 的方向**已备好原始数据（见附录）：`sina`+`time_range=day` 与 `bilibili`+`time_range=day`
-   在 6 条中文查询上都给出**约 90 条带日期、7 日内**的结果（`chinaso news` 只有 2 条、`tiger news` 0 条）。
+1. news 时效门槛仍未达标（脚本 28% / 容器 32%）：`google news` 反复进 CAPTCHA 且不给日期。
+   ~~下一轮 ② 的方向已备好原始数据：sina/bilibili + time_range=day 给出约 90 条带日期且 7 日内~~
+   **👉 更正**：附录的 sina/bilibili 数字是「引擎未注册 → SearXNG 回退默认集合」的假象；
+   在注册了 sina 的探针容器里实测 **sina 0 条带日期**，因此它**不能**用于修时效门槛。
+   真正的瓶颈是**路径触发判据**（见 `docs/reports/m6-news-sina-20260930.md` §5）。
 2. 兜底源（Bing）离题结果仍未修（本轮 2-9 的 Q2 又出现短剧站/动漫/AI 女友站，Q6 出现 Docker/公式页）。
 3. 容器 env 已全量接线；**建议后续把 `METRICS_ENABLED` 与闸门 4 项也显式写进 `.env`**（现在靠代码默认值，值一致但不够显式）。
 
@@ -203,6 +205,12 @@ docker tag utf8-search-utf8-search:pre-m5-20260929 utf8-search-utf8-search:lates
 | 长稳产物（`data/` 不入库） | `data/soak-6h-envwiring.{csv,json,meta.json,out.log}` |
 
 ## 附录：中文新闻源只读探测（为下一轮 ② 备料，未改任何配置）
+
+> ⚠️ **更正（2026-09-30 晚些时候，见 `docs/reports/m6-news-sina-20260930.md`）**：下表里 `sina` / `bilibili` 的数字**不可用** ——
+> 这两个引擎**没有注册在现网 `searxng/settings.yml`**，`engines=sina` 被 SearXNG 静默丢弃后**回退到默认引擎集合**，
+> 那 90/90 其实来自 yandex/yahoo/naver 等通用引擎，不是 sina/bilibili。
+> 在「sina 确实注册」的探针容器里复测：**sina 60 条结果、0 条带日期**（`bilibili` 120 条/120 条带日期，但它是视频站）。
+> 结论随之改变：**sina 无法改善「带日期比例」门槛**。下表仅保留为「踩坑记录」。
 
 6 条中文查询 × 6 个候选源 ×（无 time_range / `time_range=day`）：
 

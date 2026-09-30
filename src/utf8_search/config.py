@@ -264,20 +264,35 @@ class Settings(BaseSettings):
         ),
     )
     news_general_engines: str = Field(
-        default="resulthunter,naver,privacywall,google,zapmeta,yahoo,fynd,reloado,brave,quark,360search",
+        default="resulthunter,naver,privacywall,google,zapmeta,yahoo,fynd,reloado,brave,quark,sina",
         description=(
             "新闻主题做「通用引擎新鲜候选补充」时用的引擎列表（逗号分隔）。"
             "默认排除 yandex：实测 yandex 配合 time_range 会返回大量垃圾农场内容"
             "（成人站/盗播站），而这一路只用来补最新候选，用更干净的引擎集更划算。"
+            "2026-09-30 调整：移除已从 SearXNG 删除的 360search，加入 sina —— sina 是当前唯一"
+            "「非视频站 + 支持 time_range + 带发布日期」的中文候选（实测 6 条中文查询、"
+            "time_range=day：143 条结果 / 90 条 7 日内 / 中位 0.65 天）。"
             "留空表示复用 default_engines"
         ),
     )
     news_pass_time_range: bool = Field(
         default=False,
         description=(
-            "topic=news 时是否把 time_range 透传给 SearXNG。"
-            "实测免费新闻引擎不支持该过滤（duckduckgo news 传 time_range=day 会返回 0 条），"
-            "因此默认关闭，改由本服务按发布日期在本地过滤/排序"
+            "[旧开关，保留兼容] topic=news 时是否把 time_range 透传给**所有**新闻引擎。"
+            "实测大部分免费新闻引擎不支持该过滤（duckduckgo news 传 time_range=day 返回 0 条），"
+            "因此默认关闭；是否透传改由 news_time_range_engines 白名单逐引擎决定。"
+            "置 true 等价于「所有新闻引擎都透传」，仅用于排障对比。"
+        ),
+    )
+    news_time_range_engines: str = Field(
+        default="sina",
+        description=(
+            "topic=news 时**允许透传 time_range** 的引擎白名单（逗号分隔，默认只有 sina）。"
+            "为什么要白名单而不是全局开关：同一个 time_range 对不同引擎效果相反 —— "
+            "duckduckgo news 带 time_range=day 直接返回 0 条，而 sina 恰恰靠 time_range=day 给出"
+            "「当天内」的中文结果（2026-09-30 实测：6 条中文查询 143 条结果 / 90 条 7 日内 / 中位 0.65 天）；"
+            "chinaso news、tiger news 同样不支持（day 档返回 0 条），因此不列入。"
+            "实现：白名单引擎与其余新闻引擎拆成两次上游请求（仍在同一个闸门槽位内），结果合并去重。"
         ),
     )
     news_drop_stale: bool = Field(
@@ -323,6 +338,11 @@ class Settings(BaseSettings):
     def news_general_engine_list(self) -> list[str]:
         """新闻主题「通用引擎新鲜候选补充」用的引擎列表。"""
         return [e.strip() for e in self.news_general_engines.split(",") if e.strip()]
+
+    @property
+    def news_time_range_engine_set(self) -> set[str]:
+        """解析后的「允许透传 time_range」引擎白名单。"""
+        return {e.strip() for e in self.news_time_range_engines.split(",") if e.strip()}
 
     @property
     def news_engine_list(self) -> list[str]:
