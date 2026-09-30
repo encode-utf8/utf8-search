@@ -149,7 +149,9 @@ setsid nohup .venv/bin/python -X utf8 scripts/soak.py --duration-hours 6 --inter
 ```
 
 - 启动 **2026-09-30 11:14:33**，PID **169593**（以 `data/soak-6h-envwiring.meta.json` 的 `pid` 为准），预计 **17:14** 结束。
-- 首个采样（预热）#1 11:14:34 OK 1053ms / 结果 5 / **RSS 104.5MB**（新容器，重新计数）。
+- 启动后状态（11:20:36 读取）：`--status` **存活**，心跳 11:19:34（64s 前，在 3 个周期内）；
+  已写 2 个采样（#1 11:14:34 OK 1053ms / #2 11:19:34 OK 1034ms，间隔 ~300s），
+  结果均 5 条、**RSS 104.5 → 111.3MB**（新容器，内存从零重新计数；前 2 个为预热，不计入统计）。
 - 跑满后用 `scripts/soak.py --summarize --out data/soak-6h-envwiring.csv --json data/soak-6h-envwiring.json`
   出可用率/覆盖率/内存结论（口径同 3-4）。
 
