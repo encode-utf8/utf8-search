@@ -62,9 +62,9 @@ class FakeExtractor:
         return ExtractItem(url=url, raw_content=text[: max_chars or len(text)], chars=len(text))
 
 
-def _hits(count: int, engine: str = "brave") -> list[SearchHit]:
+def _hits(count: int, engine: str = "brave", text: str = "结果") -> list[SearchHit]:
     return [
-        SearchHit(title=f"结果{i}", url=f"https://site{i}.com/a", snippet=f"摘要{i}", engine=engine)
+        SearchHit(title=f"{text}{i}", url=f"https://site{i}.com/a", snippet=f"摘要{i}", engine=engine)
         for i in range(1, count + 1)
     ]
 
@@ -132,7 +132,8 @@ async def test_fetch_budget_cuts_slow_pages(settings, tmp_path) -> None:
 async def test_fallback_provider_used_when_primary_fails(settings, tmp_path) -> None:
     """主源失败时使用兜底源，并记录失败引擎。"""
     failing = FakeProvider("searxng", _hits(5), fail=True)
-    fallback = FakeProvider("bing", _hits(3, engine="bing"))
+    # 兜底结果必须与查询相关（2026-09-30 起兜底源入池前要过覆盖率闸门）
+    fallback = FakeProvider("bing", _hits(3, engine="bing", text="降级测试"))
     pipeline = await _make_pipeline(settings, tmp_path, [failing, fallback], FakeExtractor())
 
     response = await pipeline.search(SearchRequest(query="降级测试", max_results=2, depth="basic"))

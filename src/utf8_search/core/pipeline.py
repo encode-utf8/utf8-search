@@ -192,6 +192,12 @@ class SearchPipeline:
 
         # 2) 融合、去重、重排、过滤、时效分层（不含正文抓取）
         merged = await self._rank_hits(hits, request)
+        # 规格不匹配被"补回"（候选不足，只能降权保留）时，明确告诉调用方：结果里含规格不符项
+        rank_stats = getattr(self, "last_rank_stats", {}) or {}
+        if rank_stats.get("spec_mismatch_refilled"):
+            degraded_reason = ",".join(
+                dict.fromkeys([*(degraded_reason.split(",") if degraded_reason else []), "spec_unverified"])
+            )
 
         # 3) 深度模式：并发抓取正文（受总预算约束）
         pages_read = 0
@@ -303,6 +309,8 @@ class SearchPipeline:
         )
         if any(hygiene.values()):
             logger.debug("质量过滤：%s", hygiene)
+        # 记下本轮过滤统计：`search()` 用它决定是否标 degraded（如规格不匹配被补回）
+        self.last_rank_stats = hygiene
         return filtered
 
     def _candidate_target(self, request: SearchRequest) -> int:
@@ -427,6 +435,13 @@ class SearchPipeline:
             if provider.name == "searxng":
                 unresponsive = getattr(provider, "unresponsive_engines", [])
                 failed_engines.extend(unresponsive)
+            elif provider_hits:
+                # 兜底源入池前先过相关性闸门（不合格的直接不注入）
+                provider_hits, dropped = self._filter_fallback_hits(provider, provider_hits, request)
+                if dropped:
+                    logger.info("兜底源 %s 有 %d 条未过相关性闸门，已丢弃", provider.name, dropped)
+                    if not provider_hits:
+                        degraded_reasons.append("fallback_low_relevance")
 
             if provider_hits:
                 hits.extend(provider_hits)
@@ -472,6 +487,10 @@ class SearchPipeline:
                 if provider_error is not None:
                     failed_engines.append(provider_error)
                     continue
+                if provider_hits:
+                    provider_hits, dropped = self._filter_fallback_hits(provider, provider_hits, request)
+                    if dropped and not provider_hits:
+                        degraded_reasons.append("fallback_low_relevance")
                 if provider_hits:
                     hits.extend(provider_hits)
                     engines_used.append(provider.name)
@@ -537,6 +556,33 @@ class SearchPipeline:
             if optional and acquired_optional:
                 self.gate.release()
         return provider_hits, None, None
+
+    def _filter_fallback_hits(
+        self, provider: BaseProvider, hits: list[SearchHit], request: SearchRequest
+    ) -> tuple[list[SearchHit], int]:
+        """兜底源（Bing）的相关性闸门（2026-09-30）。
+
+        兜底源的问题在 2-9 里出现过两次：查询「最近一周 AI 行业动态」时它返回
+        **沃尔玛滤水器页 / 世界杯日历 / 动漫站**（字面无关、且没有发布日期），
+        一旦入池就会挤掉真正相关的结果（Q2 的 1/5 就是这么来的）。
+
+        判据复用 5.3 的**查询词覆盖率**（阈值 = `rank_min_query_coverage`，默认 0.34）：
+        不达标的兜底结果**不入池**；若全部被挡下，返回空列表 + 由调用方记 degraded
+        （宁可少几条，也不把无关结果当"兜底"给用户）。
+        """
+        if provider.name != "bing" or not hits:
+            return hits, 0
+        threshold = self.settings.rank_min_query_coverage
+        if threshold <= 0:
+            return hits, 0
+        kept: list[SearchHit] = []
+        for hit in hits:
+            result = SearchResult(
+                title=hit.title or "", url=hit.url or "", content=hit.snippet or ""
+            )
+            if query_coverage(request.query, result) >= threshold:
+                kept.append(hit)
+        return kept, len(hits) - len(kept)
 
     def _needs_general_extra(self, hits: list[SearchHit], request: SearchRequest) -> bool:
         """news 主题下是否需要再补一路通用引擎（**兜底型**判据）。

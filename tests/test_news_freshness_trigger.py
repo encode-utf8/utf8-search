@@ -24,9 +24,11 @@ def _iso(days_ago: float) -> str:
     return (datetime.now(timezone.utc) - timedelta(days=days_ago)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _hit(index: int, published: str | None, engine: str = "chinaso news") -> SearchHit:
+def _hit(
+    index: int, published: str | None, engine: str = "chinaso news", title: str | None = None
+) -> SearchHit:
     return SearchHit(
-        title=f"结果{index}",
+        title=title or f"结果{index}",
         url=f"https://site{index}.com/a",
         snippet=f"摘要{index}",
         engine=engine,
@@ -122,7 +124,8 @@ async def test_bing_defers_until_after_date_backfill(settings, tmp_path) -> None
     """新闻 + time_range：主源→日期回补→Bing；Bing 结果仍入池。"""
     stale_news = [_hit(i, _iso(60), engine="chinaso news") for i in range(5)]
     fresh_extra = [_hit(100 + i, _iso(0.4), engine="naver") for i in range(5)]
-    bing_hits = [_hit(200 + i, None, engine="bing") for i in range(5)]
+    # 兜底结果要与查询相关（2026-09-30 起兜底源入池前过覆盖率闸门）
+    bing_hits = [_hit(200 + i, None, engine="bing", title=f"中文新闻 兜底 {i}") for i in range(5)]
     searxng = _ScriptedSearxng(stale_news, fresh_extra)
     bing = _RecordingBing(bing_hits)
     pipeline = await _pipeline(settings, tmp_path, [searxng, bing])
@@ -143,7 +146,8 @@ async def test_bing_defers_until_after_date_backfill(settings, tmp_path) -> None
 async def test_bing_still_fills_when_backfill_not_enough(settings, tmp_path) -> None:
     """主源条数本身不足、日期回补也没补上时，让位后的 Bing 仍然兜住（不返回空/残缺结果）。"""
     stale_news = [_hit(i, _iso(60)) for i in range(2)]  # 只有 2 条 → 数量不足
-    bing_hits = [_hit(200 + i, None, engine="bing") for i in range(5)]
+    # 兜底结果要与查询相关（2026-09-30 起兜底源入池前过覆盖率闸门）
+    bing_hits = [_hit(200 + i, None, engine="bing", title=f"中文新闻 兜底 {i}") for i in range(5)]
     searxng = _ScriptedSearxng(stale_news, general_hits=[])
     bing = _RecordingBing(bing_hits)
     pipeline = await _pipeline(settings, tmp_path, [searxng, bing])
@@ -168,7 +172,7 @@ async def test_bing_not_deferred_without_time_range(settings, tmp_path) -> None:
     """
     news_hits = [_hit(i, None) for i in range(5)]
     searxng = _ScriptedSearxng(news_hits, general_hits=[])
-    bing = _RecordingBing([_hit(200, None, engine="bing")])
+    bing = _RecordingBing([_hit(200, None, engine="bing", title="中文新闻 兜底")])
     pipeline = await _pipeline(settings, tmp_path, [searxng, bing])
 
     await pipeline._collect_hits(SearchRequest(query="中文新闻", topic="news", max_results=5))
