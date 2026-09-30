@@ -110,6 +110,55 @@ def test_date_numbers_do_not_trigger_spec_filter() -> None:
     assert "spec_mismatch" not in stats
 
 
+# ---------------------------------------------------------------- C) 混杂型号/回收列表页
+def test_mixed_model_recycle_page_dropped() -> None:
+    """Q16 的京东「苹果8x参数」二手回收页：标题里 17/16/15/14/13… 与 pro 都命中，
+    但它是型号大全/回收列表，不能算规格匹配 → 与聚合页同源剔除。"""
+    from utf8_search.rank.spec_tokens import is_mixed_model_page
+
+    title = "Apple【95新】苹果17/16/15/14/13/12/11/X系列pro max mini plus 二手手机"
+    assert is_mixed_model_page(title) is True
+    results = [
+        _r(title, "https://www.jd.com/hprm/8.html", "苹果8x参数 二手回收"),
+        _r("Apple iPhone 17 Pro - 参数/价格", "https://zh.kalvo.com/17pro.html", "iPhone 17 Pro 规格"),
+        _r("iPhone 17 Pro 报价 - ZOL", "https://detail.zol.com.cn/17pro.html", "iPhone 17 Pro 报价"),
+    ]
+    kept, stats = apply_rank_filters(
+        results, query="iPhone 17 Pro 价格 参数", max_results=2, min_query_coverage=0.0
+    )
+    assert all("二手" not in r.title for r in kept)
+    assert stats["spec_mismatch"] == 1
+
+
+def test_compare_page_between_two_models_is_kept() -> None:
+    """两型号对比页（17 Pro vs 17 Pro Max）不算混杂列表 → 保留。"""
+    from utf8_search.rank.spec_tokens import is_mixed_model_page
+
+    assert is_mixed_model_page("iPhone 17 Pro vs iPhone 17 Pro Max 对比") is False
+    results = [
+        _r("iPhone 17 Pro vs iPhone 17 Pro Max 对比", "https://example.com/compare", "两机型参数对比"),
+        _r("Apple iPhone 17 Pro 参数", "https://example.com/pro", "规格"),
+    ]
+    kept, stats = apply_rank_filters(
+        results, query="iPhone 17 Pro", max_results=2, min_query_coverage=0.0
+    )
+    assert len(kept) == 2
+    assert stats["spec_mismatch"] == 0
+
+
+def test_mixed_model_rule_not_applied_without_spec_tokens() -> None:
+    """无规格 token 的查询（如「最近一周 AI 行业动态」）完全不受混杂型号判据影响。"""
+    results = [
+        _r("2025/2024/2023 年度盘点合集", "https://example.com/roundup", "历年盘点"),
+        _r("AI 行业周报", "https://example.com/weekly", "本周动态"),
+    ]
+    kept, stats = apply_rank_filters(
+        results, query="最近一周 AI 行业动态", max_results=2, min_query_coverage=0.0
+    )
+    assert kept == results
+    assert "spec_mismatch" not in stats
+
+
 # ---------------------------------------------------------------- C) Bing 兜底相关性闸门
 class _BingProvider:
     name = "bing"
