@@ -163,6 +163,30 @@ def is_aggregator_page(result: SearchResult) -> bool:
     return not has_substantive_content(result)
 
 
+# 形态轻降权（2026-09-30，P1）：含实质内容的首页/栏目页**保留**（过滤层口径已对齐），
+# 但排序层给一点形态偏好，让独立文章更靠前。刻意用**乘子**而不是逐条 if-else 特判：
+#   分数 × 0.95（≈ 5% 降权）——只影响"分数接近"的情况，不会把高相关汇总页压到底部。
+COLUMN_PAGE_SCORE_MULTIPLIER = 0.95
+
+
+def form_score_multiplier(result: SearchResult) -> float:
+    """排序用的**形态乘子**：含实质内容的首页/栏目页 ×0.95，其余 ×1.0。"""
+    return COLUMN_PAGE_SCORE_MULTIPLIER if looks_like_column(result) else 1.0
+
+
+def apply_form_penalty(results: list[SearchResult]) -> list[SearchResult]:
+    """对结果做一次**轻量形态降权**并重排（稳定排序，不删除任何结果）。
+
+    与 `is_aggregator_page` 共用同一个形态判据（`looks_like_column`），因此：
+    * 只当导航的聚合页仍由过滤层剔除；
+    * **日报/汇总类文章**（有实质内容）不会被剔除，只是 ×0.95；
+    * 普通文章结果乘子为 1.0，分数不变、相对顺序不变。
+    """
+    for result in results:
+        result.score = round(result.score * form_score_multiplier(result), 6)
+    return sorted(results, key=lambda r: r.score, reverse=True)
+
+
 # ---------------------------------------------------------------- 查询词覆盖度
 def query_coverage(query: str, result: SearchResult) -> float:
     """查询词在「标题 + 摘要」里的覆盖率（0-1）。
