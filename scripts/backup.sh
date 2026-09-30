@@ -21,6 +21,8 @@
 #   * `data/` 里的 cache.db 体积最大（当前 ~12MB），是**可重建**的；为控制体积可改用
 #     `BACKUP_SKIP_CACHE=1 bash scripts/backup.sh`（跳过 *.db/*.db-wal/*.db-shm）。
 #   * 备份目录权限设为 700（.env 在里面，属机密）；校验和写入 SHA256SUMS。
+#   * 分卷保留：`BACKUP_KEEP_DAYS`（默认 30）——每次运行会**先打印将删除的旧产物清单**，
+#     再删除超过保留期的 `utf8-search-backup-*` 与 `SHA256SUMS`（同一目录内按 mtime 判断）。
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -116,4 +118,25 @@ else
   echo "提示：解密 = openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass env:BACKUP_PASSPHRASE \\"
   echo "                           -in <*.tar.gz.enc> -out <restore.tar.gz> && sha256sum -c SHA256SUMS"
   echo "      口令务必与备份分开保管（口令文件不进备份、不写日志）。"
+fi
+
+# 5) 分卷保留策略：默认保留 30 天（BACKUP_KEEP_DAYS），**先打印再删除**
+KEEP_DAYS="${BACKUP_KEEP_DAYS:-30}"
+if [ "$KEEP_DAYS" -gt 0 ] 2>/dev/null; then
+  echo "== 保留策略：BACKUP_KEEP_DAYS=$KEEP_DAYS（清理 $OUT_DIR 下的旧产物）=="
+  OLD_LIST="$(find "$OUT_DIR" -maxdepth 1 -type f \
+        \( -name 'utf8-search-backup-*' -o -name 'SHA256SUMS' \) \
+        -mtime +"$KEEP_DAYS" -printf '%TY-%Tm-%Td %TH:%TM  %p\n' | sort)"
+  if [ -n "$OLD_LIST" ]; then
+    echo "将删除以下超过 $KEEP_DAYS 天的文件："
+    echo "$OLD_LIST"
+    echo "$OLD_LIST" | awk '{print $3}' | while IFS= read -r victim; do
+      [ -n "$victim" ] && rm -f -- "$victim"
+    done
+    echo "（已删除；如需保留请提高 BACKUP_KEEP_DAYS）"
+  else
+    echo "没有超过 $KEEP_DAYS 天的旧产物，无需清理。"
+  fi
+else
+  echo "== 保留策略：BACKUP_KEEP_DAYS=$KEEP_DAYS（<=0，跳过清理）=="
 fi

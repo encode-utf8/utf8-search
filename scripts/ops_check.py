@@ -38,6 +38,11 @@ DEFAULT_LOG = REPO / "data" / "ops-check.log"
 STATE = REPO / "data" / "ops-check-state.json"
 SNAPSHOT_CSV = REPO / "data" / "ops-metrics-snapshot.csv"
 BACKUP_GLOB = "/root/deploy-backups-*"
+# 备份产物后缀：P3（2026-09-30）之后默认是加密包 `.tar.gz.enc`；旧的明文包是 `.tar.gz`，两种都要认。
+# 曾经的缺陷：这里只 glob 了 `*.tar.gz` ⇒ 加密备份上线后每 5 分钟误报「未找到任何备份产物」。
+BACKUP_ARTIFACT_GLOBS = ("utf8-search-backup-*.tar.gz", "utf8-search-backup-*.tar.gz.enc")
+# SHA256SUMS 与产物必须**同目录**，且 mtime 相差不超过这个窗口（否则可能是"新校验和配旧包"）
+BACKUP_PAIR_TOLERANCE_SEC = 3600
 
 
 def _configure_stdout() -> None:
@@ -111,26 +116,38 @@ def socket_create(host: str, port: int, timeout: float):
 
 
 def check_backup(backup_dir: str, *, max_age_hours: float) -> tuple[list[str], dict[str, object]]:
-    """最近一次 backup.sh 产物（tar.gz + SHA256SUMS）是否在 max_age_hours 内。"""
+    """最近一次 backup.sh 产物是否新鲜。
+
+    判据（2026-09-30 P6 修正）：
+    * 产物后缀认**两种**：`utf8-search-backup-*.tar.gz`（明文）与 `utf8-search-backup-*.tar.gz.enc`（P3 起的默认加密包）；
+    * `SHA256SUMS` 必须与产物**同目录**，且两者 mtime 相差 ≤ `BACKUP_PAIR_TOLERANCE_SEC`（避免"新校验和 + 旧包"被当成新鲜）；
+    * 新鲜度取该 pair 里**较新**的 mtime，超过 `max_age_hours` 即告警。
+    """
     problems: list[str] = []
     info: dict[str, object] = {}
     import glob
 
     dirs = [Path(p) for p in glob.glob(backup_dir)] or ([Path(backup_dir)] if Path(backup_dir).exists() else [])
-    newest: tuple[float, Path] | None = None
+    newest: tuple[float, Path, Path] | None = None
     for directory in dirs:
-        for sums in directory.glob("SHA256SUMS"):
-            archives = list(directory.glob("utf8-search-backup-*.tar.gz"))
-            if not archives:
-                continue
-            stamp = sums.stat().st_mtime
-            if newest is None or stamp > newest[0]:
-                newest = (stamp, directory)
+        sums_files = list(directory.glob("SHA256SUMS"))
+        artifacts = [p for pattern in BACKUP_ARTIFACT_GLOBS for p in directory.glob(pattern)]
+        for artifact in artifacts:
+            for sums in sums_files:
+                if abs(artifact.stat().st_mtime - sums.stat().st_mtime) > BACKUP_PAIR_TOLERANCE_SEC:
+                    continue  # 同目录但不同龄：不认这一对
+                stamp = max(artifact.stat().st_mtime, sums.stat().st_mtime)
+                if newest is None or stamp > newest[0]:
+                    newest = (stamp, directory, artifact)
     if newest is None:
-        problems.append(f"未找到任何备份产物（{backup_dir}：需要 tar.gz + SHA256SUMS）")
+        problems.append(
+            f"未找到任何有效备份产物（{backup_dir}：需要 utf8-search-backup-*.tar.gz[.enc] "
+            f"且与同目录 SHA256SUMS 同龄 ≤ {BACKUP_PAIR_TOLERANCE_SEC // 60} 分钟）"
+        )
         return problems, info
     age_hours = (time.time() - newest[0]) / 3600
     info["backup_dir"] = str(newest[1])
+    info["backup_artifact"] = newest[2].name
     info["backup_age_hours"] = round(age_hours, 2)
     if age_hours > max_age_hours:
         problems.append(f"最近一次备份已 {age_hours:.1f} 小时（> {max_age_hours:.0f}h）：{newest[1]}")
