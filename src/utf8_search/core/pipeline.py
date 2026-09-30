@@ -43,6 +43,7 @@ from ..rank.recency import (
     date_from_url,
     has_recency_intent,
     mark_stale_by_title_year,
+    parse_published,
 )
 from ..verify.expansion import ExpansionMetrics, expansion_needed
 from .upstream_gate import UpstreamGate, UpstreamOverloaded
@@ -396,43 +397,32 @@ class SearchPipeline:
 
         # 主源：SearXNG；仅在「结果拿不满用户需要的条数」或主源失败时才启用兜底源，
         # 避免深度模式下为了凑够抓取页数而白白多打一次外部请求。
+        #
+        # 2026-09-30（Bing 让位）：新闻 + time_range 场景下，兜底源**不能抢在日期回补路前面** ——
+        # Bing 结果通常没有发布日期，一旦它先把 max_results 填满，`_needs_general_extra` 就永远不会触发，
+        # 「按 time_range 拿新鲜候选」的整条路等于被旁路（实测中文组 0/25 就是这个原因）。
+        # 因此这里把兜底源**延后**到日期回补之后：主源 → 日期回补 → Bing（Bing 仍可入池，只是让位）。
+        defer_fallback = request.topic == "news" and bool(request.time_range)
+        deferred_providers: list[BaseProvider] = []
         for index, provider in enumerate(self.providers):
             if index > 0 and len(hits) >= request.max_results:
                 break
+            if index > 0 and defer_fallback:
+                deferred_providers.append(provider)
+                continue
             # 兜底源（index>0）属于**兜底型**调用：它只在「主源凑不满 max_results」时才会走到这里，
             # 跳过它就可能让用户拿到空/残缺结果，所以**不许静默跳过**——按 `upstream_optional_wait`
             # 有限等待取容量，等不到直接抛 `UpstreamOverloaded`（→ 429），绝不返回空结果。
-            optional = index > 0
-            acquired_optional = False
-            if optional:
-                acquired_optional = await self.gate.try_acquire(
-                    timeout=self.settings.upstream_optional_wait
-                )
-                if not acquired_optional:
-                    self.gate.metrics.record_rejected("fallback_no_capacity")
-                    raise UpstreamOverloaded(
-                        reason="fallback_no_capacity", retry_after=self.gate.retry_after
-                    )
-            try:
-                provider_hits = await provider.search(
-                    request.query,
-                    max_results=want,
-                    topic=request.topic,
-                    time_range=request.time_range,
-                    engines=request.engines,
-                    language=self.settings.language,
-                )
-            except UpstreamOverloaded as exc:
-                # 过载是全局保护：不降级到兜底源、也不吞成空结果，直接中止本轮上游收集。
-                overloaded = exc
-                break
-            except Exception as exc:
-                logger.warning("Provider %s 搜索失败: %s", provider.name, exc)
-                failed_engines.append(provider.name)
+            provider_hits, provider_error, provider_overloaded = await self._call_provider(
+                provider, request, want, optional=index > 0
+            )
+            if provider_error is not None:
+                failed_engines.append(provider_error)
                 continue
-            finally:
-                if optional and acquired_optional:
-                    self.gate.release()
+            if provider_overloaded is not None:
+                # 过载是全局保护：不降级到兜底源、也不吞成空结果，直接中止本轮上游收集。
+                overloaded = provider_overloaded
+                break
 
             if provider.name == "searxng":
                 unresponsive = getattr(provider, "unresponsive_engines", [])
@@ -451,10 +441,9 @@ class SearchPipeline:
         if overloaded is not None and not hits:
             raise overloaded
 
-        # 新闻主题：**主源结果不足时才补**（复用 5.2 的判据：不够填满 max_results 才去补）。
-        # 这条补充路存在的唯一理由就是补中文长尾的 0 结果（实测新闻引擎 8 条查询里 3 条直接 0 条），
-        # 所以它同样是**兜底型**：拿不到容量就直接 429，不允许静默跳过并把空结果交给用户。
-        # 改成「不足才补 + 串行」后，news 每请求的上游需求从 ~2 降到 ~1（多数请求只打主源）。
+        # 新闻主题：**新鲜候选不足时才补**（2026-09-30 起判据是「窗口内带日期条数 < max_results」，
+        # 不再是「主源结果数 < max_results」—— 见 _needs_general_extra 的说明）。
+        # 这条补充路是**兜底型**：拿不到容量就直接 429，不允许静默跳过并把空/过期结果交给用户。
         if self._needs_general_extra(hits, request):
             try:
                 extras, extra_engines, extra_failed = await self._collect_general_extra(request, want)
@@ -469,6 +458,24 @@ class SearchPipeline:
                 engines_used.extend(extra_engines)
                 failed_engines.extend(extra_failed)
 
+        # 让位的兜底源：日期回补之后仍不够 max_results 才启用（仍是兜底型：拿不到容量直接 429）
+        if overloaded is None:
+            for provider in deferred_providers:
+                if len(hits) >= request.max_results:
+                    break
+                provider_hits, provider_error, provider_overloaded = await self._call_provider(
+                    provider, request, want, optional=True
+                )
+                if provider_overloaded is not None:
+                    overloaded = provider_overloaded
+                    break
+                if provider_error is not None:
+                    failed_engines.append(provider_error)
+                    continue
+                if provider_hits:
+                    hits.extend(provider_hits)
+                    engines_used.append(provider.name)
+
         if overloaded is not None and hits:
             # 主源过载但仍有结果 → 降级返回（保留可用结果）
             degraded_reasons.append("upstream_overloaded")
@@ -479,17 +486,80 @@ class SearchPipeline:
             await self.cache.set(query_key, [h.to_dict() for h in hits], self.settings.cache_query_ttl)
         return hits, engines_used, failed_engines, (",".join(dict.fromkeys(degraded_reasons)) or None)
 
+    async def _call_provider(
+        self,
+        provider: BaseProvider,
+        request: SearchRequest,
+        want: int,
+        *,
+        optional: bool,
+    ) -> tuple[list[SearchHit] | None, str | None, UpstreamOverloaded | None]:
+        """调用一个 provider；返回 `(hits, 失败的 provider 名, 过载异常)`。
+
+        `optional=True`（兜底源）走「有限等待取闸门容量」：拿不到就返回
+        `UpstreamOverloaded(reason="fallback_no_capacity")`，由调用方决定是上抛 429 还是记降级。
+        抽成方法是为了让「主源循环」与「让位后的兜底源」共用同一套闸门与异常语义。
+        """
+        acquired_optional = False
+        if optional:
+            acquired_optional = await self.gate.try_acquire(
+                timeout=self.settings.upstream_optional_wait
+            )
+            if not acquired_optional:
+                self.gate.metrics.record_rejected("fallback_no_capacity")
+                return None, None, UpstreamOverloaded(
+                    reason="fallback_no_capacity", retry_after=self.gate.retry_after
+                )
+        try:
+            provider_hits = await provider.search(
+                request.query,
+                max_results=want,
+                topic=request.topic,
+                time_range=request.time_range,
+                engines=request.engines,
+                language=self.settings.language,
+            )
+        except UpstreamOverloaded as exc:
+            return None, None, exc
+        except Exception as exc:  # noqa: BLE001 - 单个 provider 失败不应中断整轮
+            logger.warning("Provider %s 搜索失败: %s", provider.name, exc)
+            return None, provider.name, None
+        finally:
+            if optional and acquired_optional:
+                self.gate.release()
+        return provider_hits, None, None
+
     def _needs_general_extra(self, hits: list[SearchHit], request: SearchRequest) -> bool:
         """news 主题下是否需要再补一路通用引擎（**兜底型**判据）。
 
-        判据复用 5.2 那条：**主源结果不够填满用户要的条数**（`len(hits) < max_results`）才去补。
-        这与「跳过这次调用是否会导致返回空结果」一致：新闻引擎对中文长尾会直接返回 0 条
-        （实测 8 条查询里 3 条 0 条），不补就等于把空/残缺结果交给用户 —— 所以补充路属于兜底型，
-        拿不到容量要直接 429，不许静默跳过。
+        2026-09-30 改动：判据从「**主源结果数** < max_results」改成
+        「**窗口内带发布日期的新鲜结果数** < max_results」。
+
+        旧判据的漏洞（实测证据）：主源返回 5-10 条「过期但字面匹配」的结果时，数量够了就不再补充，
+        而本地时效排序只能在这堆过期结果里排 —— 中文组 5/5 查询因此拿到 0 条 7 日内结果，
+        而真正带日期的候选（若在补充路上）根本没被调用。
+
+        口径细节：
+        * **无日期的结果不计入分子**（无法证明它新鲜），但**不会被丢弃** —— 它们照常进候选池，
+          只是在时效排序里靠后（见 `rank.recency`）；
+        * 判据仍属**兜底型**：拿不到容量直接 429，不静默跳过。
         """
         if request.topic != "news" or not self.settings.news_include_general:
             return False
-        return len(hits) < request.max_results
+        return self._fresh_count(hits, request) < request.max_results
+
+    def _fresh_count(self, hits: list[SearchHit], request: SearchRequest) -> int:
+        """候选里「窗口内且带发布日期」的条数（补充路判据的分子，也用于诊断）。"""
+        window = self._fresh_days(request)
+        now = datetime.now(timezone.utc)
+        count = 0
+        for hit in hits:
+            published = parse_published(hit.published_date)
+            if published is None:
+                continue
+            if (now - published).total_seconds() <= window * 86400:
+                count += 1
+        return count
 
     async def _collect_general_extra(
         self, request: SearchRequest, want: int

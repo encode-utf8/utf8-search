@@ -100,14 +100,14 @@ async def test_general_topic_still_passes_time_range_to_all() -> None:
 
 
 def test_settings_whitelist_default_and_parsing() -> None:
-    """默认白名单只有 sina；逗号列表可解析为集合。"""
-    assert Settings().news_time_range_engine_set == {"sina"}
+    """默认白名单**为空**（sina 因 0 条带日期被撤回）；机制仍在，逗号列表可解析为集合。"""
+    assert Settings().news_time_range_engine_set == set()
     custom = Settings(news_time_range_engines="sina, tiger news ,")
     assert custom.news_time_range_engine_set == {"sina", "tiger news"}
 
 
-def test_settings_news_general_engines_includes_sina_without_360search() -> None:
-    """日期回补补充路（透传 time_range）默认包含 sina，且不再引用已删除的 360search。"""
+def test_settings_news_general_engines_has_no_sina_and_no_360search() -> None:
+    """日期回补补充路：撤出 sina（实测 0 条带日期，只会稀释候选），且不引用已删除的 360search。"""
     engines = Settings().news_general_engine_list
-    assert "sina" in engines
+    assert "sina" not in engines
     assert "360search" not in engines

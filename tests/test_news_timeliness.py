@@ -332,13 +332,21 @@ class _SequentialProbeProvider(BaseProvider):
 async def test_news_general_extra_is_sequential_and_skipped_when_source_sufficient(
     settings, tmp_path
 ) -> None:
-    """news 的上游需求降到 ~1：主源够填满 max_results 时不补；不足时**串行**补第二路。
+    """news 的上游需求降到 ~1：**新鲜候选**够填满 max_results 时不补；不足时**串行**补第二路。
 
     背景（M5 并发闸门）：补充路是**兜底型**（跳过会返回空结果），改成「不足才补」后
     典型请求只打一路上游，闸门下的等效并发从 limit/2 回到接近 limit；代价是需要补的请求
     变成串行两跳（不再并发双打来省延迟）。
+
+    2026-09-30 更新判据：`_needs_general_extra` 不再看「结果**条数**」而是看
+    「**窗口内带日期的新鲜结果数**」—— 所以「5 条无日期结果」现在会触发补充路（而这正是本次改动的目的），
+    只有「5 条新鲜且带日期」才算充足。
     """
-    provider = _SequentialProbeProvider([_hit(i, None) for i in range(1, 6)])  # 够 max_results=5
+    fresh = [
+        _hit(i, (datetime.now(timezone.utc) - timedelta(hours=6)).strftime("%Y-%m-%dT%H:%M:%SZ"))
+        for i in range(1, 6)
+    ]
+    provider = _SequentialProbeProvider(fresh)  # 5 条都新鲜 → 充足
     cache = CacheStore(str(tmp_path / "concurrent.db"))
     await cache.open()
     pipeline = SearchPipeline(
@@ -351,9 +359,9 @@ async def test_news_general_extra_is_sequential_and_skipped_when_source_sufficie
     await pipeline.search(
         SearchRequest(query="新闻充足", max_results=5, depth="basic", topic="news", time_range="day")
     )
-    assert provider.order == ["news"]  # 充足 → 不补
+    assert provider.order == ["news"]  # 新鲜候选充足 → 不补
 
-    provider._news_hits = [_hit(1, None)]  # 主源只给 1 条 → 触发补充路
+    provider._news_hits = [_hit(1, None)]  # 主源只给 1 条且无日期 → 触发补充路
     await pipeline.search(
         SearchRequest(query="新闻不足", max_results=5, depth="basic", topic="news", time_range="day")
     )
