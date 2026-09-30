@@ -482,6 +482,15 @@ class SearchPipeline:
         if overloaded is not None and not hits:
             # 一条结果都没有、且原因是上游过载 —— 必须让调用方看到明确信号，不能返回空列表。
             raise overloaded
+
+        # 时效降级信号（2026-09-30）：调用方指定了 time_range，但我们**数不出足够的「可信日期」结果**时，
+        # 必须明说「时效无法验证」，而不是让它以为这 5 条就是「最近一天/一周」的结果。
+        # 「可信」= 结果来自 news_trusted_date_engines 白名单里的引擎（抽检过：上报日期与内容时间线索一致）。
+        # 典型场景：中文新闻查询受限于上游（chinaso 索引旧 / 其它源不给日期），命中该信号；
+        # 英文查询由 duckduckgo news 稳定提供可信日期，一般不触发。
+        if request.time_range and self._trusted_fresh_count(hits, request) < request.max_results:
+            degraded_reasons.append("freshness_unverified")
+
         if hits:
             await self.cache.set(query_key, [h.to_dict() for h in hits], self.settings.cache_query_ttl)
         return hits, engines_used, failed_engines, (",".join(dict.fromkeys(degraded_reasons)) or None)
@@ -554,6 +563,22 @@ class SearchPipeline:
         now = datetime.now(timezone.utc)
         count = 0
         for hit in hits:
+            published = parse_published(hit.published_date)
+            if published is None:
+                continue
+            if (now - published).total_seconds() <= window * 86400:
+                count += 1
+        return count
+
+    def _trusted_fresh_count(self, hits: list[SearchHit], request: SearchRequest) -> int:
+        """窗口内、且来源引擎属于「日期可信白名单」的条数（时效降级信号的判据）。"""
+        window = self._fresh_days(request)
+        now = datetime.now(timezone.utc)
+        trusted = self.settings.news_trusted_date_engine_set
+        count = 0
+        for hit in hits:
+            if trusted and hit.engine not in trusted:
+                continue
             published = parse_published(hit.published_date)
             if published is None:
                 continue

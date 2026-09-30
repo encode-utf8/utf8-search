@@ -191,3 +191,17 @@ docker rm -f searx-probe
 2. 引擎可用性受出口 IP 与时间影响（本次 `google` 系、`baidu`、`startpage` 都在 CAPTCHA 状态）；
 3. 探针容器与现网容器**出口一致**（同宿主机），所以「可用/不可用」结论可以互相参照，
    但探针容器是**全新实例**（没有历史处罚盒），现网实例的冷却状态可能不同。
+## 日期可信度分组（2026-09-30 补充，工具 `scripts/engine_probe.py dates`）
+
+> 判定判据：比对「上报日期」与「内容里的年份线索」（标题/摘要/URL），并检查是否**同日扎堆**。
+> 纯函数在 `scripts/searxng_dates.py`，规则与单测见 `tests/test_searxng_dates.py`。
+
+| 分组 | 引擎 | 证据（现网出口，2026-09-30） |
+| --- | --- | --- |
+| **可信**（真实发布时间） | `duckduckgo news`、`chinaso news` | duckduckgo news 14/14 带日期、年份冲突 7%、同日最多 2；chinaso news 10/10、冲突 0% |
+| **仅索引日期** ⚠️ | `yandex` | `time_range=day` 时 15/15 带日期，但 **13 条同一天**；《天津2017年新能源汽车地补政策发布》被标成 2026-09-29（内容年份 2017） |
+| **无日期** | `naver`(0/75)、`yahoo`(0/41)、`fynd`(0/35)、`resulthunter`(0/117)、`google news`、`tiger news`(本轮 0 条)、`google`/`zapmeta`/`reloado`/`quark`/`brave`/`yep`/`privacywall`（本轮 0 结果或 CAPTCHA） | 一律不返回发布日期；Bing HTML 兜底同样没有日期 |
+
+**用法约定**：只有「可信」组才能用来**验证时效**（这也是 pipeline 里
+`news_trusted_date_engines` 白名单的来源）；`yandex` 这类「仅索引日期」的源即使让"7 日内比例"变好看，
+也必须按**假绿**处理 —— 它已经被实测抓到把 2017 年旧文标成当天。

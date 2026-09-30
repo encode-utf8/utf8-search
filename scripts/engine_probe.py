@@ -28,12 +28,24 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import re
 import statistics
 import sys
 import time
+from collections import Counter
+from datetime import datetime, timezone
 from pathlib import Path
 
 import httpx
+
+from searxng_dates import (  # noqa: E402 - 同目录小工具，见 scripts/searxng_dates.py
+    DATE_TRUST_INDEX_ONLY,
+    DATE_TRUST_NO_DATE,
+    DATE_TRUST_TRUSTED,
+    DATE_TRUST_UNKNOWN,
+    classify_date_trust,
+    year_clues,
+)
 
 
 def missing_engines(requested: list[str], registered: list[str]) -> list[str]:
@@ -141,6 +153,18 @@ async def query_once(
         "with_date": sum(1 for item in results if item.get("publishedDate") or item.get("published_date")),
         "unresponsive": unresponsive,
         "engines_of_results": sorted({e for item in results for e in (item.get("engines") or [])}),
+        # 逐条明细（供「日期可信度抽检」比对上报日期与内容年份线索）
+        "items": [
+            {
+                "url": item.get("url") or "",
+                "title": item.get("title") or "",
+                "date": item.get("publishedDate") or item.get("published_date"),
+                "text": " ".join(
+                    str(part) for part in (item.get("title"), item.get("content"), item.get("url")) if part
+                ),
+            }
+            for item in results[:20]
+        ],
         "ms": round(ms),
     }
 
@@ -248,6 +272,41 @@ async def cmd_compare(args: argparse.Namespace) -> int:
     return 0
 
 
+async def cmd_dates(args: argparse.Namespace) -> int:
+    """日期可信度抽检：每引擎抽 ≥N 条，比对「上报日期」与「内容里的年份线索」。
+
+    这是 2026-09-30「假绿」事故的加固项：`yandex` 会把索引日期当发布日期上报
+    （2017 年的旧政策被标成当天），只看"7 日内比例"会被骗过去。判定逻辑在
+    `scripts/searxng_dates.py`（纯函数，另有单测）。
+    """
+    queries = QUERY_SETS[args.query_set]
+    rows: list[dict[str, object]] = []
+    async with httpx.AsyncClient(trust_env=False) as client:
+        await assert_engines_registered(client, args.base, args.engines)
+        for engine in args.engines:
+            items: list[dict[str, object]] = []
+            for query in queries:
+                if len([i for i in items if i.get("date")]) >= args.min_samples:
+                    break
+                row = await query_once(client, args.base, query, engines=engine, time_range=args.time_range or None)
+                items.extend(row.get("items") or [])
+            verdict, stats = classify_date_trust(items)
+            rows.append({"engine": engine, "verdict": verdict, **stats.to_dict()})
+            flag = "  ⚠️ 索引日期污染" if stats.year_conflict else ""
+            print(
+                f"{engine:<18} 判定={verdict:<14} 样本={stats.total:<3} 带日期={stats.dated:<3} "
+                f"年份冲突={stats.year_conflict}（{stats.conflict_ratio:.0%}）"
+                f" 同日最多={stats.same_day_max}{flag}"
+            )
+            for detail in (stats.detail or []):
+                if detail.get("year_conflict"):
+                    print(f"    ↳ 污染样例：上报 {detail['reported_date']}，内容年份 {detail['content_years']}"
+                          f" {str(detail['title'])[:46]}")
+    _write(args.out, {"mode": "dates", "base": args.base, "query_set": args.query_set,
+                      "time_range": args.time_range or "", "rows": rows})
+    return 0
+
+
 def _write(path: str, payload: dict[str, object]) -> None:
     if not path:
         return
@@ -287,6 +346,13 @@ def parse_args() -> argparse.Namespace:
     compare.add_argument("--b", required=True, help="B 组引擎列表（逗号分隔）")
     compare.add_argument("--rounds", type=int, default=2, help="每个查询跑几轮（默认 2）")
     compare.set_defaults(func=cmd_compare)
+
+    dates = sub.add_parser("dates", help="日期可信度抽检（上报日期 vs 内容年份线索）")
+    common(dates)
+    dates.add_argument("--engines", nargs="+", required=True, help="被测引擎名（空格分隔）")
+    dates.add_argument("--min-samples", type=int, default=5, help="每条引擎至少要凑到几条带日期样本")
+    dates.add_argument("--time-range", default="", help="可选：传给 SearXNG 的 time_range（day/week/…）")
+    dates.set_defaults(func=cmd_dates)
     return parser.parse_args()
 
 
