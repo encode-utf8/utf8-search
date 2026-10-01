@@ -137,6 +137,44 @@ def spec_level_for_result(tokens: list[str], result) -> str:  # noqa: ANN001 - S
     ).level
 
 
+# 修饰词精确匹配（2026-10-01 T5，治 Q16）：
+# 查询 iPhone 17 **Pro** 时，结果 "Apple iPhone 17 Pro Max" 里的「pro」也命中了 —— 但那是**另一个机型**。
+# 旧实现把修饰词当普通 token 做「出现即命中」（Pro Max 只算 partial → 仅降权），于是 Q16 线上 3 轮
+# 恒有 1 条 Pro Max 混进 top5。新口径：**修饰词必须精确匹配** ——
+#   * 「缺」（结果只有 iPhone 17，没有 Pro）→ 不匹配；
+#   * 「多」（结果只有 Pro Max / Pro Plus 这类被其它修饰词延长的写法）→ 不匹配；
+#   * 页面同时提到 17 Pro 与 17 Pro Max（如 Apple 发布会报道）→ 存在**独立出现**的 Pro → 匹配。
+_MODIFIER_FOLLOW_RE = re.compile(r"[\s\-–—/]*([a-z]+)")
+
+
+def modifier_exact_match(tokens: list[str], *, title: str = "", url: str = "") -> bool:
+    """查询里的修饰词（pro/max/plus/mini/ultra/air/se）是否**精确出现**在结果里。
+
+    只对「查询本身含修饰词」的情况生效；查询没有修饰词时恒为 True（行为完全不变）。
+    判定方式：逐个修饰词扫描出现位置，只要存在一次「后面不紧跟其它修饰词」的出现即算命中；
+    全部出现都被更长的型号写法延长（如 `17 Pro Max`）→ 判不匹配。
+
+    **只看标题与 URL**（页面身份），不看正文：实测 Spigen 的
+    「iPhone 17 Pro Max Case Collection」正文/页脚里偶然出现「iPhone 17 Pro」链接，
+    若把正文算进 haystack 就会把 Pro Max 页面放进来（2026-10-01 T5 实测）。
+    """
+    modifiers = [token for token in tokens if _MODIFIER_RE.fullmatch(token)]
+    if not modifiers:
+        return True
+    haystack = " ".join(part for part in (title, url) if part).lower()
+    for token in modifiers:
+        exact = False
+        for match in re.finditer(rf"(?<![a-z0-9]){re.escape(token)}(?![a-z0-9])", haystack):
+            following = haystack[match.end() : match.end() + 16]
+            nxt = _MODIFIER_FOLLOW_RE.match(following)
+            if not (nxt and _MODIFIER_RE.fullmatch(nxt.group(1))):
+                exact = True
+                break
+        if not exact:
+            return False
+    return True
+
+
 # 混杂列表/回收页形态（2026-09-30，治 2-9 的 Q16）：
 # 京东「苹果8x参数」这类**二手回收/型号大全**页，标题里同时列了 17/16/15/14/13/12/11/X 与 pro/max/mini，
 # 于是「17」和「pro」都命中，规格 token 误判为匹配 —— 但它并不是 iPhone 17 Pro 的参数页。

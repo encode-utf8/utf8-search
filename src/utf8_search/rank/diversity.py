@@ -20,7 +20,12 @@ from urllib.parse import urlsplit
 
 from ..models import SearchResult
 from .fusion import tokenize
-from .spec_tokens import extract_spec_tokens, is_mixed_model_page, spec_level_for_result
+from .spec_tokens import (
+    extract_spec_tokens,
+    is_mixed_model_page,
+    modifier_exact_match,
+    spec_level_for_result,
+)
 
 # ---------------------------------------------------------------- 域名
 # 常见「二级后缀」：可注册域要多吃一段，否则 zj.gov.cn / weather.com.cn 会被误当成两个不同的域
@@ -163,6 +168,52 @@ def is_aggregator_page(result: SearchResult) -> bool:
     return not has_substantive_content(result)
 
 
+# ------------------------------------------------------------------ 非主题页（2026-10-01 T5，治 Q6）
+# 2-9 的 Q6（Python 3.13 新特性）线上 3 轮恒 3/5：坏结果是**关键词命中但页面本身不回答查询**的
+# 「非主题页」—— 社区**个人主页**（v2ex.com/member/<id> 这类只列最近发帖的页）与**包索引页**
+# （formulae.brew.sh/formula/python@3.13 只有一行 Formula JSON API 元数据）。
+# 判据与 `is_aggregator_page` **同源**：形态像非主题页 **且** 正文没有实质内容 → 剔除；
+# 带实质内容的页面（社区长文、注册表上的完整说明）一律保留，因此不误伤正常站点。
+_OFFTOPIC_PROFILE_PATH = re.compile(r"^/(member|members|user|users|people|u|profile|profiles|accounts?)(/|$)", re.IGNORECASE)
+_REGISTRY_HOSTS = {
+    "formulae.brew.sh", "pypi.org", "npmjs.com", "crates.io", "rubygems.org",
+    "packagist.org", "hub.docker.com", "anaconda.org", "conda.anaconda.org",
+}
+_REGISTRY_PATH = re.compile(r"^/(project|projects|package|packages|formula|formulae|crates|gems|r)(/|$)", re.IGNORECASE)
+_IMAGE_BOARD_HOSTS = {
+    "pinterest.com", "pinterest.co.uk", "pinterest.de", "pinterest.fr", "pinterest.jp", "pinterest.ru",
+}
+_IMAGE_BOARD_PATH = re.compile(r"^/(ideas|pin|search|board|boards)(/|$)", re.IGNORECASE)
+
+
+def looks_like_offtopic_index_page(result: SearchResult) -> bool:
+    """**形态**上像「非主题页」：社区个人主页 / 包索引页 / 图片素材板（只看 URL 形态）。"""
+    try:
+        parts = urlsplit(result.url or "")
+    except ValueError:
+        return False
+    path = "/" + parts.path.strip("/")
+    host = (parts.hostname or "").lower()
+    if _OFFTOPIC_PROFILE_PATH.search(path):
+        return True
+    if host in _REGISTRY_HOSTS or any(host.endswith("." + item) for item in _REGISTRY_HOSTS):
+        return _REGISTRY_PATH.search(path) is not None
+    if host in _IMAGE_BOARD_HOSTS or any(host.endswith("." + item) for item in _IMAGE_BOARD_HOSTS):
+        return _IMAGE_BOARD_PATH.search(path) is not None
+    return False
+
+
+def is_offtopic_index_page(result: SearchResult) -> bool:
+    """与 `is_aggregator_page` 同源的「非主题页」判据：形态像 + 正文无实质内容 → 剔除。
+
+    只依赖两个客观信号（URL 形态 + 正文实质度），不维护站点黑名单；
+    形态命中但正文有实质内容的页面**保留**（保守取向，避免误伤社区里的正常长文）。
+    """
+    if not looks_like_offtopic_index_page(result):
+        return False
+    return not has_substantive_content(result)
+
+
 # 形态轻降权（2026-09-30，P1）：含实质内容的首页/栏目页**保留**（过滤层口径已对齐），
 # 但排序层给一点形态偏好，让独立文章更靠前。刻意用**乘子**而不是逐条 if-else 特判：
 #   分数 × 0.95（≈ 5% 降权）——只影响"分数接近"的情况，不会把高相关汇总页压到底部。
@@ -269,6 +320,10 @@ def apply_rank_filters(
         )
     if drop_aggregator_pages:
         steps.append(("aggregator_page", lambda items: _split(items, is_aggregator_page)))
+    if drop_aggregator_pages:
+        # 「非主题页」与聚合页同源（形态 + 无实质内容），共用同一个开关：
+        # 新闻路径（structural_only）维持原样，不受本轮改动影响。
+        steps.append(("offtopic_page", lambda items: _split(items, is_offtopic_index_page)))
     spec_tokens = extract_spec_tokens(query)
     if spec_tokens:
         # 规格不匹配（如查询 iPhone 17 Pro 却给 iPhone 8、查询 Python 3.13 却给 3.14）：
@@ -277,13 +332,24 @@ def apply_rank_filters(
         # 2026-09-30 补充「混杂型号页」：一页列了 17/16/15/14/13… 的二手回收/型号大全页，
         # 标题里 17 与 pro 都命中 → token 匹配会误判为「匹配」。这种页面**不能**算规格达标，
         # 与聚合页口径同源处理（形态不对 + 无实质针对性 → 剔除；候选不足时补回并标 degraded）。
+        #
+        # 2026-10-01 补充「修饰词精确匹配」（T5，治 Q16）：查询 iPhone 17 **Pro** 时，
+        # "iPhone 17 Pro Max" 里的 pro 也命中、且只算 partial 被降权 → 线上 3 轮恒有 1 条混进 top5。
+        # 现在「缺 Pro」与「只有 Pro Max」都判不匹配（剔除；候选不足才补回），见 spec_tokens.modifier_exact_match。
         steps.append(
             (
                 "spec_mismatch",
                 lambda items: _split(
                     items,
-                    lambda r: spec_level_for_result(spec_tokens, r) == "none"
-                    or is_mixed_model_page(r.title, r.content),
+                    lambda r: (
+                        spec_level_for_result(spec_tokens, r) == "none"
+                        or is_mixed_model_page(r.title, r.content)
+                        or not modifier_exact_match(
+                            spec_tokens,
+                            title=r.title or "",
+                            url=r.url or "",
+                        )
+                    ),
                 ),
             )
         )
@@ -322,6 +388,7 @@ def apply_rank_filters(
             "low_coverage": 0,
             "same_host": 1,
             "aggregator_page": 2,
+            "offtopic_page": 2,
             "spec_mismatch": 3,
             "script_mismatch": 4,
         }
