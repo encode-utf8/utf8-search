@@ -112,8 +112,9 @@
 | 启动 | **2026-09-30 17:17:26**，`setsid nohup` 后台；PID **227695**（以 `data/soak-24h-closeout.meta.json` 的 `pid` 为准），预计 **2026-10-01 17:17** 结束 |
 | 口径 | `--interval 300 --unique --http-url http://127.0.0.1:8000`（打已部署服务、每轮唯一查询避开缓存；RSS 采样新容器 PID） |
 | 首个采样 | 17:17:27 OK，1152ms，结果 5 条，**RSS 110.7MB** |
-| 结果 | ⏳ 跑满后 `scripts/soak.py --summarize --out data/soak-24h-closeout.csv --json data/soak-24h-closeout.json` 回填本行 |
-| 证据 | `data/soak-24h-closeout.{csv,json,meta.json,out.log}`（`data/` 不入库，结项时复制 CSV/JSON 到 `docs/reports/`） |
+| 结果 | ✅ **已跑满（2026-09-30 17:17:27 → 2026-10-01 17:17:27，24.00h）**：`--summarize` = 289 行 = 2 预热 + **287 计入**、覆盖 **100.0%**、**可用率 100%**、0 空结果/异常/跳过；延迟 **P50 1331ms / P95 2569ms / max 2619ms / mean 1612ms**；**内存平稳**（最低 99.2MB、末次 99.2MB、峰值 113.6MB；中位数 111.7 → 103.9MB，**-7.0%**）；期间**无 429**：app 容器自 09-30 17:16 起累计 `/metrics` = `requests_total{result="ok"} 329`、**无 `result="error"`、无 `rejected_total` 序列、`upstream_acquire_seconds` 无排队**（重建前快照，覆盖整个 24h 窗口） |
+| 说明 | 该 24h 跑在 **P1/P7 上线前的镜像 `fe0252b06803`** 上；2026-10-01 的部署已换新镜像，新镜像另有 1h 回看（见 T4 报告） |
+| 证据 | `data/soak-24h-closeout.{csv,json,meta.json,out.log}`；**已随代码留痕**：`docs/reports/soak-24h-closeout.{csv,json}`（另两个 6h 的 CSV/JSON 同目录） |
 
 ## 3. 证据索引（本表引用的报告）
 

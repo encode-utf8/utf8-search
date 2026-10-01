@@ -1,0 +1,74 @@
+index,timestamp,elapsed_s,warmup,ok,latency_ms,results,pages_read,cached,rss_bytes,query,error,suspect,skipped
+1,2026-09-30 11:14:34,1.053,True,True,1052.749562993995,5,0,False,109551616,最近一周 AI 领域重要新闻 #38073-1,,False,False
+2,2026-09-30 11:19:34,301.133,True,True,1033.700792992022,5,0,False,116682752,Python 3.13 新特性 #38073-2,,False,False
+3,2026-09-30 11:24:35,602.6,False,True,2499.8893960000714,5,0,False,116682752,MCP protocol latest specification #38073-3,,False,False
+4,2026-09-30 11:29:35,902.693,False,True,2594.382426002994,5,0,False,116682752,国产大模型 排行榜 2026 #38073-4,,False,False
+5,2026-09-30 11:34:36,1202.785,False,True,2685.166097988258,5,0,False,116678656,新能源汽车 销量 最新 #38073-5,,False,False
+6,2026-09-30 11:39:35,1502.608,False,True,2507.5885740079684,5,0,False,116375552,OpenAI API 定价 #38073-6,,False,False
+7,2026-09-30 11:44:35,1802.642,False,True,2543.3819480094826,5,0,False,116400128,best noise cancelling headphones 2026 #38073-7,,False,False
+8,2026-09-30 11:49:35,2102.678,False,True,2579.28426899889,5,0,False,116400128,2026年 人工智能 政策 #38073-8,,False,False
+9,2026-09-30 11:54:35,2402.646,False,True,2547.3886749969097,5,0,False,116400128,最近一周 AI 领域重要新闻 #38073-9,,False,False
+10,2026-09-30 11:59:35,2701.781,False,True,1679.9535019963514,5,0,False,,Python 3.13 新特性 #38073-10,,False,False
+11,2026-09-30 12:04:35,3001.846,False,True,1746.5359779889695,5,0,False,,MCP protocol latest specification #38073-11,,False,False
+12,2026-09-30 12:09:35,3302.652,False,True,2553.1571329920553,5,0,False,,国产大模型 排行榜 2026 #38073-12,,False,False
+13,2026-09-30 12:14:34,3601.562,False,True,1463.5120599996299,5,0,False,,新能源汽车 销量 最新 #38073-13,,False,False
+14,2026-09-30 12:19:34,3901.34,False,True,1239.1844630037667,5,0,False,,OpenAI API 定价 #38073-14,,False,False
+15,2026-09-30 12:24:34,4201.653,False,True,1552.2809120011516,5,0,False,,best noise cancelling headphones 2026 #38073-15,,False,False
+16,2026-09-30 12:29:34,4501.136,False,True,1037.5663379963953,5,0,False,,2026年 人工智能 政策 #38073-16,,False,False
+17,2026-09-30 12:34:34,4801.433,False,True,1334.1120770055568,5,0,False,,最近一周 AI 领域重要新闻 #38073-17,,False,False
+18,2026-09-30 12:39:34,5101.108,False,True,1008.6753310024505,5,0,False,,Python 3.13 新特性 #38073-18,,False,False
+19,2026-09-30 12:44:36,5402.839,False,True,2740.1602220052155,5,0,False,,MCP protocol latest specification #38073-19,,False,False
+20,2026-09-30 12:49:35,5702.637,False,True,2537.5217339897063,5,0,False,,国产大模型 排行榜 2026 #38073-20,,False,False
+21,2026-09-30 12:54:35,6002.668,False,True,2566.535075005959,5,0,False,,新能源汽车 销量 最新 #38073-21,,False,False
+22,2026-09-30 12:59:34,6301.454,False,True,1353.9580530050443,5,0,False,,OpenAI API 定价 #38073-22,,False,False
+23,2026-09-30 13:04:35,6602.335,False,True,2234.2128360032802,5,0,False,,best noise cancelling headphones 2026 #38073-23,,False,False
+24,2026-09-30 13:09:35,6902.676,False,True,2574.0973049978493,5,0,False,,2026年 人工智能 政策 #38073-24,,False,False
+25,2026-09-30 13:14:35,7202.653,False,True,2550.824834004743,5,0,False,,最近一周 AI 领域重要新闻 #38073-25,,False,False
+26,2026-09-30 13:19:34,7501.509,False,True,1408.0621120083379,5,0,False,,Python 3.13 新特性 #38073-26,,False,False
+27,2026-09-30 13:24:35,7802.653,False,True,2553.1470349960728,5,0,False,,MCP protocol latest specification #38073-27,,False,False
+28,2026-09-30 13:29:34,8101.254,False,True,1155.2062240079977,5,0,False,,国产大模型 排行榜 2026 #38073-28,,False,False
+29,2026-09-30 13:34:34,8401.441,False,True,1340.6673620047513,5,0,False,,新能源汽车 销量 最新 #38073-29,,False,False
+30,2026-09-30 13:39:35,8702.654,False,True,2555.03779600258,5,0,False,,OpenAI API 定价 #38073-30,,False,False
+31,2026-09-30 13:44:34,9001.177,False,True,1078.3435039920732,5,0,False,,best noise cancelling headphones 2026 #38073-31,,False,False
+32,2026-09-30 13:49:35,9302.02,False,True,1920.671397994738,5,0,False,,2026年 人工智能 政策 #38073-32,,False,False
+33,2026-09-30 13:54:34,9601.309,False,True,1209.0134970057989,5,0,False,,最近一周 AI 领域重要新闻 #38073-33,,False,False
+34,2026-09-30 13:59:35,9901.805,False,True,1704.5717739965767,5,0,False,,Python 3.13 新特性 #38073-34,,False,False
+35,2026-09-30 14:04:35,10202.261,False,True,2161.9289520021994,5,0,False,,MCP protocol latest specification #38073-35,,False,False
+36,2026-09-30 14:09:35,10502.658,False,True,2559.0696500003105,5,0,False,,国产大模型 排行榜 2026 #38073-36,,False,False
+37,2026-09-30 14:14:35,10802.644,False,True,2544.3038569937926,5,0,False,,新能源汽车 销量 最新 #38073-37,,False,False
+38,2026-09-30 14:19:34,11101.157,False,True,1057.5400220113806,5,0,False,,OpenAI API 定价 #38073-38,,False,False
+39,2026-09-30 14:24:35,11402.648,False,True,2545.0638010079274,5,0,False,,best noise cancelling headphones 2026 #38073-39,,False,False
+40,2026-09-30 14:29:34,11701.232,False,True,1132.0863639994059,5,0,False,,2026年 人工智能 政策 #38073-40,,False,False
+41,2026-09-30 14:34:34,12001.208,False,True,1108.9870879950467,5,0,False,,最近一周 AI 领域重要新闻 #38073-41,,False,False
+42,2026-09-30 14:39:35,12302.646,False,True,2545.192445992143,5,0,False,,Python 3.13 新特性 #38073-42,,False,False
+43,2026-09-30 14:44:34,12601.114,False,True,1015.3614730079425,5,0,False,,MCP protocol latest specification #38073-43,,False,False
+44,2026-09-30 14:49:34,12901.318,False,True,1217.9294759989716,5,0,False,,国产大模型 排行榜 2026 #38073-44,,False,False
+45,2026-09-30 14:54:34,13201.457,False,True,1358.2735849922756,5,0,False,,新能源汽车 销量 最新 #38073-45,,False,False
+46,2026-09-30 14:59:34,13501.439,False,True,1339.9565349973273,5,0,False,,OpenAI API 定价 #38073-46,,False,False
+47,2026-09-30 15:04:35,13802.63,False,True,2530.858687008731,5,0,False,,best noise cancelling headphones 2026 #38073-47,,False,False
+48,2026-09-30 15:09:34,14101.377,False,True,1278.314176001004,5,0,False,,2026年 人工智能 政策 #38073-48,,False,False
+49,2026-09-30 15:14:34,14401.404,False,True,1304.0903179935412,5,0,False,,最近一周 AI 领域重要新闻 #38073-49,,False,False
+50,2026-09-30 15:19:34,14701.285,False,True,1185.776291997172,5,0,False,,Python 3.13 新特性 #38073-50,,False,False
+51,2026-09-30 15:24:35,15002.492,False,True,2393.5515159973875,5,0,False,,MCP protocol latest specification #38073-51,,False,False
+52,2026-09-30 15:29:35,15302.461,False,True,2362.472027001786,5,0,False,,国产大模型 排行榜 2026 #38073-52,,False,False
+53,2026-09-30 15:34:35,15602.646,False,True,2546.886208001524,5,0,False,,新能源汽车 销量 最新 #38073-53,,False,False
+54,2026-09-30 15:39:35,15902.661,False,True,2560.7302610005718,5,0,False,,OpenAI API 定价 #38073-54,,False,False
+55,2026-09-30 15:44:35,16201.759,False,True,1660.280056996271,5,0,False,,best noise cancelling headphones 2026 #38073-55,,False,False
+56,2026-09-30 15:49:35,16502.393,False,True,2293.5139939945657,5,0,False,,2026年 人工智能 政策 #38073-56,,False,False
+57,2026-09-30 15:54:35,16802.643,False,True,2543.685448006727,5,0,False,,最近一周 AI 领域重要新闻 #38073-57,,False,False
+58,2026-09-30 15:59:35,17102.672,False,True,2574.0529419999802,5,0,False,,Python 3.13 新特性 #38073-58,,False,False
+59,2026-09-30 16:04:35,17402.473,False,True,2373.870044000796,5,0,False,,MCP protocol latest specification #38073-59,,False,False
+60,2026-09-30 16:09:35,17702.633,False,True,2534.5504920114763,5,0,False,,国产大模型 排行榜 2026 #38073-60,,False,False
+61,2026-09-30 16:14:35,18002.667,False,True,2566.332714006421,5,0,False,,新能源汽车 销量 最新 #38073-61,,False,False
+62,2026-09-30 16:19:35,18302.639,False,True,2540.049703005934,5,0,False,,OpenAI API 定价 #38073-62,,False,False
+63,2026-09-30 16:24:35,18602.072,False,True,1973.3013549994212,5,0,False,,best noise cancelling headphones 2026 #38073-63,,False,False
+64,2026-09-30 16:29:35,18902.641,False,True,2541.8458110070787,5,0,False,,2026年 人工智能 政策 #38073-64,,False,False
+65,2026-09-30 16:34:34,19201.379,False,True,1279.886897013057,5,0,False,,最近一周 AI 领域重要新闻 #38073-65,,False,False
+66,2026-09-30 16:39:34,19501.264,False,True,1162.8828230022918,5,0,False,,Python 3.13 新特性 #38073-66,,False,False
+67,2026-09-30 16:44:35,19802.661,False,True,2560.1417610014323,5,0,False,,MCP protocol latest specification #38073-67,,False,False
+68,2026-09-30 16:49:35,20102.671,False,True,2574.212829989847,5,0,False,,国产大模型 排行榜 2026 #38073-68,,False,False
+69,2026-09-30 16:54:35,20402.21,False,True,2111.018598006922,5,0,False,,新能源汽车 销量 最新 #38073-69,,False,False
+70,2026-09-30 16:59:35,20702.645,False,True,2545.4518379992805,5,0,False,,OpenAI API 定价 #38073-70,,False,False
+71,2026-09-30 17:04:35,21002.683,False,True,2583.7968709965935,5,0,False,,best noise cancelling headphones 2026 #38073-71,,False,False
+72,2026-09-30 17:09:35,21302.657,False,True,2557.6515709981322,5,0,False,,2026年 人工智能 政策 #38073-72,,False,False
+73,2026-09-30 17:14:34,21601.386,False,True,1286.871087999316,5,0,False,,最近一周 AI 领域重要新闻 #38073-73,,False,False

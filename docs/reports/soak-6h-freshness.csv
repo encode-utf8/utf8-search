@@ -1,0 +1,74 @@
+index,timestamp,elapsed_s,warmup,ok,latency_ms,results,pages_read,cached,rss_bytes,query,error,suspect,skipped
+1,2026-09-30 12:05:14,1.085,True,True,1084.608738994575,5,0,False,132235264,最近一周 AI 领域重要新闻 #41113-1,,False,False
+2,2026-09-30 12:10:14,301.28,True,True,1179.9928480031667,5,0,False,132505600,Python 3.13 新特性 #41113-2,,False,False
+3,2026-09-30 12:15:14,601.286,False,True,1185.188368006493,5,0,False,132513792,MCP protocol latest specification #41113-3,,False,False
+4,2026-09-30 12:20:14,901.065,False,True,964.6010349970311,5,0,False,132513792,国产大模型 排行榜 2026 #41113-4,,False,False
+5,2026-09-30 12:25:15,1201.433,False,True,1332.5943330128212,5,0,False,132497408,新能源汽车 销量 最新 #41113-5,,False,False
+6,2026-09-30 12:30:15,1501.351,False,True,1251.0194039932685,5,0,False,132497408,OpenAI API 定价 #41113-6,,False,False
+7,2026-09-30 12:35:15,1801.467,False,True,1370.1037110004108,5,0,False,132767744,best noise cancelling headphones 2026 #41113-7,,False,False
+8,2026-09-30 12:40:15,2101.321,False,True,1221.220628998708,5,0,False,132767744,2026年 人工智能 政策 #41113-8,,False,False
+9,2026-09-30 12:45:15,2401.405,False,True,1276.6833579953527,5,0,False,133894144,最近一周 AI 领域重要新闻 #41113-9,,False,False
+10,2026-09-30 12:50:15,2701.455,False,True,1353.7035930057755,5,0,False,,Python 3.13 新特性 #41113-10,,False,False
+11,2026-09-30 12:55:14,3001.129,False,True,1028.2619880017592,5,0,False,,MCP protocol latest specification #41113-11,,False,False
+12,2026-09-30 13:00:14,3301.093,False,True,992.4763309973059,5,0,False,,国产大模型 排行榜 2026 #41113-12,,False,False
+13,2026-09-30 13:05:16,3602.646,False,True,2545.7633979967795,5,0,False,,新能源汽车 销量 最新 #41113-13,,False,False
+14,2026-09-30 13:10:15,3901.478,False,True,1377.5666299916338,5,0,False,,OpenAI API 定价 #41113-14,,False,False
+15,2026-09-30 13:15:15,4201.572,False,True,1471.3293980021263,5,0,False,,best noise cancelling headphones 2026 #41113-15,,False,False
+16,2026-09-30 13:20:15,4501.409,False,True,1308.8975709979422,5,0,False,,2026年 人工智能 政策 #41113-16,,False,False
+17,2026-09-30 13:25:15,4801.577,False,True,1475.802296990878,5,0,False,,最近一周 AI 领域重要新闻 #41113-17,,False,False
+18,2026-09-30 13:30:15,5101.617,False,True,1517.251176002901,5,0,False,,Python 3.13 新特性 #41113-18,,False,False
+19,2026-09-30 13:35:14,5401.257,False,True,1157.4265090021072,5,0,False,,MCP protocol latest specification #41113-19,,False,False
+20,2026-09-30 13:40:14,5701.251,False,True,1150.904852009262,5,0,False,,国产大模型 排行榜 2026 #41113-20,,False,False
+21,2026-09-30 13:45:15,6001.561,False,True,1461.1367559991777,5,0,False,,新能源汽车 销量 最新 #41113-21,,False,False
+22,2026-09-30 13:50:14,6301.133,False,True,1032.382299992605,5,0,False,,OpenAI API 定价 #41113-22,,False,False
+23,2026-09-30 13:55:15,6601.797,False,True,1696.4517099986551,5,0,False,,best noise cancelling headphones 2026 #41113-23,,False,False
+24,2026-09-30 14:00:14,6901.212,False,True,1112.0736390003003,5,0,False,,2026年 人工智能 政策 #41113-24,,False,False
+25,2026-09-30 14:05:16,7202.644,False,True,2544.177863004734,5,0,False,,最近一周 AI 领域重要新闻 #41113-25,,False,False
+26,2026-09-30 14:10:14,7501.195,False,True,1094.7994999878574,5,0,False,,Python 3.13 新特性 #41113-26,,False,False
+27,2026-09-30 14:15:14,7801.287,False,True,1186.9561500061536,5,0,False,,MCP protocol latest specification #41113-27,,False,False
+28,2026-09-30 14:20:14,8101.176,False,True,1075.8062069944572,5,0,False,,国产大模型 排行榜 2026 #41113-28,,False,False
+29,2026-09-30 14:25:14,8401.264,False,True,1163.4657250106102,5,0,False,,新能源汽车 销量 最新 #41113-29,,False,False
+30,2026-09-30 14:30:15,8701.456,False,True,1356.2422300019534,5,0,False,,OpenAI API 定价 #41113-30,,False,False
+31,2026-09-30 14:35:15,9001.314,False,True,1214.151206004317,5,0,False,,best noise cancelling headphones 2026 #41113-31,,False,False
+32,2026-09-30 14:40:14,9301.203,False,True,1101.5147299913224,5,0,False,,2026年 人工智能 政策 #41113-32,,False,False
+33,2026-09-30 14:45:15,9601.294,False,True,1194.0854840067914,5,0,False,,最近一周 AI 领域重要新闻 #41113-33,,False,False
+34,2026-09-30 14:50:14,9901.188,False,True,1088.2019709970336,5,0,False,,Python 3.13 新特性 #41113-34,,False,False
+35,2026-09-30 14:55:15,10201.342,False,True,1241.1107090010773,5,0,False,,MCP protocol latest specification #41113-35,,False,False
+36,2026-09-30 15:00:14,10501.175,False,True,1075.4215229972033,5,0,False,,国产大模型 排行榜 2026 #41113-36,,False,False
+37,2026-09-30 15:05:15,10801.515,False,True,1414.9390999955358,5,0,False,,新能源汽车 销量 最新 #41113-37,,False,False
+38,2026-09-30 15:10:14,11101.199,False,True,1117.905334001989,5,0,False,,OpenAI API 定价 #41113-38,,False,False
+39,2026-09-30 15:15:15,11401.663,False,True,1563.2447239913745,5,0,False,,best noise cancelling headphones 2026 #41113-39,,False,False
+40,2026-09-30 15:20:15,11701.429,False,True,1328.404963001958,5,0,False,,2026年 人工智能 政策 #41113-40,,False,False
+41,2026-09-30 15:25:15,12001.432,False,True,1331.4317699987441,5,0,False,,最近一周 AI 领域重要新闻 #41113-41,,False,False
+42,2026-09-30 15:30:16,12302.674,False,True,2573.9731729991036,5,0,False,,Python 3.13 新特性 #41113-42,,False,False
+43,2026-09-30 15:35:14,12601.215,False,True,1114.2620759928832,5,0,False,,MCP protocol latest specification #41113-43,,False,False
+44,2026-09-30 15:40:14,12901.213,False,True,1112.5429350067861,5,0,False,,国产大模型 排行榜 2026 #41113-44,,False,False
+45,2026-09-30 15:45:15,13201.331,False,True,1229.3357550079236,5,0,False,,新能源汽车 销量 最新 #41113-45,,False,False
+46,2026-09-30 15:50:16,13502.617,False,True,2516.876991998288,5,0,False,,OpenAI API 定价 #41113-46,,False,False
+47,2026-09-30 15:55:15,13801.372,False,True,1271.7143350018887,5,0,False,,best noise cancelling headphones 2026 #41113-47,,False,False
+48,2026-09-30 16:00:15,14101.361,False,True,1261.0418329859385,5,0,False,,2026年 人工智能 政策 #41113-48,,False,False
+49,2026-09-30 16:05:16,14402.686,False,True,2585.90588599327,5,0,False,,最近一周 AI 领域重要新闻 #41113-49,,False,False
+50,2026-09-30 16:10:14,14701.285,False,True,1184.7158809978282,5,0,False,,Python 3.13 新特性 #41113-50,,False,False
+51,2026-09-30 16:15:15,15001.357,False,True,1256.6862779931398,5,0,False,,MCP protocol latest specification #41113-51,,False,False
+52,2026-09-30 16:20:15,15301.446,False,True,1345.6540329934796,5,0,False,,国产大模型 排行榜 2026 #41113-52,,False,False
+53,2026-09-30 16:25:15,15601.507,False,True,1406.9429239898454,5,0,False,,新能源汽车 销量 最新 #41113-53,,False,False
+54,2026-09-30 16:30:14,15901.194,False,True,1093.8544849923346,5,0,False,,OpenAI API 定价 #41113-54,,False,False
+55,2026-09-30 16:35:15,16201.394,False,True,1293.5581720084883,5,0,False,,best noise cancelling headphones 2026 #41113-55,,False,False
+56,2026-09-30 16:40:14,16501.134,False,True,1034.4279330020072,5,0,False,,2026年 人工智能 政策 #41113-56,,False,False
+57,2026-09-30 16:45:16,16802.651,False,True,2550.593661988387,5,0,False,,最近一周 AI 领域重要新闻 #41113-57,,False,False
+58,2026-09-30 16:50:14,17101.113,False,True,1012.482796999393,5,0,False,,Python 3.13 新特性 #41113-58,,False,False
+59,2026-09-30 16:55:15,17402.117,False,True,2016.9114109885413,5,0,False,,MCP protocol latest specification #41113-59,,False,False
+60,2026-09-30 17:00:14,17701.229,False,True,1128.5748020018218,5,0,False,,国产大模型 排行榜 2026 #41113-60,,False,False
+61,2026-09-30 17:05:15,18001.393,False,True,1292.9204349929933,5,0,False,,新能源汽车 销量 最新 #41113-61,,False,False
+62,2026-09-30 17:10:15,18301.356,False,True,1255.6179480015999,5,0,False,,OpenAI API 定价 #41113-62,,False,False
+63,2026-09-30 17:15:14,18601.087,False,True,987.2867700032657,5,0,False,,best noise cancelling headphones 2026 #41113-63,,False,False
+64,2026-09-30 17:20:16,18902.39,False,True,2289.849035005318,5,0,False,,2026年 人工智能 政策 #41113-64,,False,False
+65,2026-09-30 17:25:16,19202.474,False,True,2373.3604829903925,5,0,False,,最近一周 AI 领域重要新闻 #41113-65,,False,False
+66,2026-09-30 17:30:16,19502.651,False,True,2550.4832250007894,5,0,False,,Python 3.13 新特性 #41113-66,,False,False
+67,2026-09-30 17:35:16,19802.362,False,True,2261.879163008416,5,0,False,,MCP protocol latest specification #41113-67,,False,False
+68,2026-09-30 17:40:15,20102.054,False,True,1953.7618049944285,5,0,False,,国产大模型 排行榜 2026 #41113-68,,False,False
+69,2026-09-30 17:45:14,20400.897,False,True,796.0277349920943,5,0,False,,新能源汽车 销量 最新 #41113-69,,False,False
+70,2026-09-30 17:50:14,20700.835,False,True,735.3817060065921,5,0,False,,OpenAI API 定价 #41113-70,,False,False
+71,2026-09-30 17:55:14,21000.905,False,True,804.8547560028965,5,0,False,,best noise cancelling headphones 2026 #41113-71,,False,False
+72,2026-09-30 18:00:14,21301.23,False,True,1127.735551999649,5,0,False,,2026年 人工智能 政策 #41113-72,,False,False
+73,2026-09-30 18:05:14,21600.822,False,True,721.7456470098114,5,0,False,,最近一周 AI 领域重要新闻 #41113-73,,False,False
