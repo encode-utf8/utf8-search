@@ -1,0 +1,14 @@
+index,timestamp,elapsed_s,warmup,ok,latency_ms,results,pages_read,cached,rss_bytes,query,error,suspect,skipped
+1,2026-10-01 21:05:05,1.189,True,True,1188.3456640061922,5,0,False,135221248,最近一周 AI 领域重要新闻 #59904-1,,False,False
+2,2026-10-01 21:10:07,302.441,True,True,2340.4365470050834,5,0,False,135221248,Python 3.13 新特性 #59904-2,,False,False
+3,2026-10-01 21:15:05,600.874,False,True,773.5731360153295,5,0,False,135221248,MCP protocol latest specification #59904-3,,False,False
+4,2026-10-01 21:20:05,900.887,False,True,785.8529539953452,5,0,False,135221248,国产大模型 排行榜 2026 #59904-4,,False,False
+5,2026-10-01 21:25:05,1200.979,False,True,879.307640978368,5,0,False,135516160,新能源汽车 销量 最新 #59904-5,,False,False
+6,2026-10-01 21:30:06,1501.342,False,True,1240.8610960119404,5,0,False,135516160,OpenAI API 定价 #59904-6,,False,False
+7,2026-10-01 21:35:05,1801.009,False,True,908.6586239864118,5,0,False,135516160,best noise cancelling headphones 2026 #59904-7,,False,False
+8,2026-10-01 21:40:06,2101.26,False,True,1159.3104219937231,5,0,False,135516160,2026年 人工智能 政策 #59904-8,,False,False
+9,2026-10-01 21:45:05,2400.919,False,True,819.4469029840548,5,0,False,135516160,最近一周 AI 领域重要新闻 #59904-9,,False,False
+10,2026-10-01 21:50:05,2700.837,False,True,735.9865149774123,5,0,False,135516160,Python 3.13 新特性 #59904-10,,False,False
+11,2026-10-01 21:55:05,3000.95,False,True,850.2955550211482,5,0,False,135516160,MCP protocol latest specification #59904-11,,False,False
+12,2026-10-01 22:00:05,3300.84,False,True,740.3641800046898,5,0,False,135475200,国产大模型 排行榜 2026 #59904-12,,False,False
+13,2026-10-01 22:05:05,3600.826,False,True,726.4769289758988,5,0,False,135745536,新能源汽车 销量 最新 #59904-13,,False,False
