@@ -7,7 +7,9 @@ import pytest
 from utf8_search.models import ExtractItem, SearchRequest, SearchResult
 from utf8_search.rank.diversity import (
     apply_rank_filters,
+    count_on_topic_candidates,
     has_item_like_content,
+    has_no_relevant_results,
     has_substantive_content,
     is_aggregator_page,
     is_content_farm,
@@ -594,4 +596,104 @@ async def test_bing_fallback_relevant_result_still_injected(settings, tmp_path) 
         SearchRequest(query="最近一周 AI 行业动态", max_results=3, topic="general")
     )
     assert len(hits) == 1 and engines_used == ["bing"]
+    await pipeline.close()
+
+
+# ---------------------------------------------------------------- H) 主题相关性闸门（2026-10-01 T10）
+def test_dated_daily_brief_not_aggregator() -> None:
+    """T10①正例：短摘要但带条目时间线索的日报（AIHOT：'4 weeks ago — …8:00…'，53 字）不再被判聚合页。"""
+    page = _r(
+        "AI 日报 · AIHOT",
+        "https://aihot.virxact.com/daily",
+        "4 weeks ago — AIHOT 每日 8:00 自动生成的过去 24 小时一手 AI 动态精选报。",
+    )
+    assert has_substantive_content(page) is True
+    assert is_aggregator_page(page) is False
+
+
+def test_navigation_page_with_single_date_still_aggregator() -> None:
+    """T10①反例：纯导航页即使带一枚日期（只一类时间线索）→ 仍判聚合页。"""
+    page = _r("财经首页", "https://finance.example.com/", "财经 股票 基金 期货 银行 · 2026-10-01 · 更多")
+    assert has_substantive_content(page) is False
+    assert is_aggregator_page(page) is True
+
+
+def test_topic_gate_pure_function() -> None:
+    """T10②：判据是纯函数 —— 池内覆盖率达标候选 <2 判「无切题候选」。"""
+    junk = [
+        _r("nocache - npm", "https://www.npmjs.com/package/nocache", "Middleware to destroy caching."),
+        _r("DuckDuckGo - Wikipedia", "https://en.wikipedia.org/wiki/DuckDuckGo", "DuckDuckGo is a search engine."),
+    ]
+    assert count_on_topic_candidates("最近一周 AI 行业动态", junk) == 0
+    assert has_no_relevant_results("最近一周 AI 行业动态", junk) is True
+    good = [
+        _r("AI行业发展一周动态 - 知乎", "https://zhuanlan.zhihu.com/p/1", "最近一周 AI 行业动态与融资事件汇总"),
+        _r("每日AI资讯、热点、动态", "https://ai-bot.cn/daily", "AI 行业动态：最近一周的模型发布与融资"),
+    ]
+    assert count_on_topic_candidates("最近一周 AI 行业动态", good) == 2
+    assert has_no_relevant_results("最近一周 AI 行业动态", good) is False
+    assert has_no_relevant_results("最近一周 AI 行业动态", []) is True  # 空池也算无切题候选
+
+
+def test_topic_gate_stats_conservative() -> None:
+    """保守性：池里只要有 **1 条**切题候选，就不置 no_relevant_results（即便它排名靠后）。"""
+    pool = [
+        _r("nocache - npm", "https://www.npmjs.com/package/nocache", "Middleware to destroy caching."),
+        _r("DuckDuckGo - Wikipedia", "https://en.wikipedia.org/wiki/DuckDuckGo", "A search engine."),
+        _r("AI行业发展一周动态 - 知乎", "https://zhuanlan.zhihu.com/p/1", "最近一周 AI 行业动态与融资事件汇总"),
+    ]
+    _kept, stats = apply_rank_filters(
+        pool, query="最近一周 AI 行业动态", max_results=5, min_query_coverage=0.0
+    )
+    assert stats["on_topic_candidates"] == 1
+    assert stats["no_relevant_results"] == 0
+
+
+def test_topic_gate_off_when_aggregator_filter_disabled() -> None:
+    """新闻路径（drop_aggregator_pages=False）不参与主题闸门统计（与聚合页过滤共用开关）。"""
+    junk = [_r("nocache - npm", "https://www.npmjs.com/package/nocache", "Middleware to destroy caching.")]
+    _kept, stats = apply_rank_filters(
+        junk,
+        query="最近一周 AI 行业动态",
+        max_results=5,
+        min_query_coverage=0.0,
+        drop_aggregator_pages=False,
+    )
+    assert "no_relevant_results" not in stats
+
+
+class _JunkSearxng:
+    name = "searxng"
+    unresponsive_engines: list[str] = []
+
+    def __init__(self, hits) -> None:
+        self._hits = list(hits)
+
+    async def search(self, query, **kwargs):  # noqa: ANN003
+        return list(self._hits)
+
+
+async def test_response_marks_no_relevant_results(settings, tmp_path) -> None:
+    """响应层：池内无切题候选 → degraded=true + degraded_reason 含 no_relevant_results。"""
+    from utf8_search.providers.base import SearchHit
+
+    junk = [
+        SearchHit(title="nocache - npm", url="https://www.npmjs.com/package/nocache", engine="brave"),
+        SearchHit(title="DuckDuckGo - Wikipedia", url="https://en.wikipedia.org/wiki/DuckDuckGo", engine="brave"),
+    ]
+    pipeline = await _pipeline(settings, tmp_path, [_JunkSearxng(junk)])
+    response = await pipeline.search(SearchRequest(query="最近一周 AI 行业动态", max_results=5, depth="basic"))
+    assert response.degraded is True
+    assert response.degraded_reason is not None and "no_relevant_results" in response.degraded_reason.split(",")
+    await pipeline.close()
+
+
+async def test_response_merges_multiple_degraded_reasons(settings, tmp_path) -> None:
+    """响应层：多原因允许同时出现（逗号分隔、去重保序）—— fallback_low_relevance + no_relevant_results。"""
+    from utf8_search.providers.base import SearchHit
+
+    junk = [SearchHit(title="Walmart Water Filters", url="https://www.walmart.com/browse/water-filters", engine="bing")]
+    pipeline = await _pipeline(settings, tmp_path, [_EmptySearxng(), _BingProvider(junk)])
+    response = await pipeline.search(SearchRequest(query="最近一周 AI 行业动态", max_results=5, depth="basic"))
+    assert response.degraded_reason == "fallback_low_relevance,no_relevant_results"
     await pipeline.close()

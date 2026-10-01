@@ -117,6 +117,11 @@ def has_substantive_content(result: SearchResult) -> bool:
     * 长度 ≥120 且至少 2 个句末标点 → 实质；
     * 长度 ≥60 且至少 3 个句末标点 → 实质。
     注：basic 模式下 `content` 是上游摘要（几十到几百字），deep 模式是正文开头，两者都适用。
+
+    2026-10-01（T10）补**条目式分支**：短摘要里带 ≥2 类时间线索（日期 / 时刻 / 相对时间）的
+    —— 典型是「日报」类页面（AIHOT：「4 weeks ago — AIHOT 每日 8:00 自动生成的过去 24 小时…」，53 字）
+    —— 也算实质内容，否则会被 `is_aggregator_page` 误判成「无实质内容的聚合页」剔除。
+    纯导航页通常只有 0-1 类时间线索（例如只有一枚日期），仍按聚合页剔除。
     """
     text = (result.content or "").strip()
     if not text:
@@ -126,7 +131,26 @@ def has_substantive_content(result: SearchResult) -> bool:
     sentences = len(re.findall(r"[。！？!?；;]", text))
     if len(text) >= 120 and sentences >= 2:
         return True
-    return len(text) >= 60 and sentences >= 3
+    if len(text) >= 60 and sentences >= 3:
+        return True
+    return len(text) >= 30 and _distinct_time_signal_kinds(text) >= 2
+
+
+# 「条目式」时间线索（T10）：三类信号各自独立，至少要**两类同时出现**才算条目式，
+# 避免「首页导航里带一枚日期」这种页面被误判成实质内容。
+_ITEM_TIME_PATTERNS = {
+    "date": re.compile(r"(?:19|20)\d{2}\s*[-/年]\s*\d{1,2}(?:\s*[-/月]\s*\d{1,2})?"),
+    "clock": re.compile(r"(?<!\d)\d{1,2}:\d{2}(?!\d)"),
+    "relative": re.compile(
+        r"\d+\s*(?:分钟|小时|天|周|个月)前|\b\d+\s*(?:minutes?|hours?|days?|weeks?|months?)\s+ago\b|\bago\b"
+        r"|published|posted\b|updated\b|更新于",
+        re.IGNORECASE,
+    ),
+}
+
+
+def _distinct_time_signal_kinds(text: str) -> int:
+    return sum(1 for pattern in _ITEM_TIME_PATTERNS.values() if pattern.search(text))
 
 
 # 「条目感」判据（2026-10-01 T6，治 Q3 的 newsfilter.io）：
@@ -209,6 +233,31 @@ def is_content_farm(result: SearchResult, query: str) -> bool:
     return any(marker in text for marker in _FARM_MARKERS) and any(tail in text for tail in _FARM_VIDEO_TAILS)
 
 
+# ---------------------------------------------------------------- 主题相关性闸门（2026-10-01 T10）
+# 目标（治 Q2「最近一周 AI 行业动态」）：**池内没有切题候选时如实降级**，
+# 而不是用「候选不足就补回」的机制把无关结果硬凑成 5 条。
+# 判据是**纯词面覆盖率代理**（`query_coverage` 已有实现）：
+#   * 覆盖率 ≥ `TOPIC_COVERAGE_FLOOR` 的候选数为 **0** ⇒ 判「池内无切题候选」。
+# 刻意保守（宁漏报、不误报）：只要池子里有 1 条覆盖率达标的候选，就不打降级标记。
+# 阈值来源（2026-10-01 固定池实测）：Q2 的**无料抽样**里全池最高覆盖率 0.31（即梦 AI 产品页）
+# ⇒ 判 0 条达标；有料抽样里切题候选覆盖率 0.50-0.63。其它 19 条查询的池内达标数 ≥2
+# （最紧的是 Q16 = 2-3，见 T10 报告受控回放表），因此 count==0 的口径不会误报。
+TOPIC_COVERAGE_FLOOR = 0.35
+# 达标候选数的下限：< 1 即「一条都没有」才降级（保守口径）。
+MIN_ON_TOPIC_CANDIDATES = 1
+
+
+def count_on_topic_candidates(query: str, results: list[SearchResult]) -> int:
+    """池内覆盖率达标（≥ `TOPIC_COVERAGE_FLOOR`）的候选条数。"""
+    return sum(1 for item in results if query_coverage(query, item) >= TOPIC_COVERAGE_FLOOR)
+
+
+def has_no_relevant_results(query: str, results: list[SearchResult]) -> bool:
+    """池内没有足够的切题候选（< `MIN_ON_TOPIC_CANDIDATES` 条）→ 应对外降级 `no_relevant_results`。"""
+    return count_on_topic_candidates(query, results) < MIN_ON_TOPIC_CANDIDATES
+
+
+# ------------------------------------------------------------------ 三类「无关形态」（2026-10-01 T7，治 Q1）
 # ------------------------------------------------------------------ 三类「无关形态」（2026-10-01 T7，治 Q1）
 # Q1（2026年9月 国内外重大新闻）三轮恒有 3 条形态明确但主题无关的结果：
 #   ① 电视/节目单页：央视《生活圈》20260929（标题是「《节目名》+ 播出日期」，正文只有导航）；
@@ -389,6 +438,9 @@ def apply_rank_filters(
     stats: dict[str, int] = {}
 
     if drop_aggregator_pages:
+        # 主题相关性闸门（T10）：只看**池子**里有没有足够的切题候选（纯覆盖率代理）。
+        stats["on_topic_candidates"] = count_on_topic_candidates(query, results)
+        stats["no_relevant_results"] = int(has_no_relevant_results(query, results))
         # 内容农场/成人视频站：**硬剔除**，不参与后面的"候选不足补回"（垃圾站不因池子空而被放回）。
         farmed = [item for item in kept if is_content_farm(item, query)]
         if farmed:
