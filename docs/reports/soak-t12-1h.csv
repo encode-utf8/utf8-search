@@ -1,0 +1,14 @@
+index,timestamp,elapsed_s,warmup,ok,latency_ms,results,pages_read,cached,rss_bytes,query,error,suspect,skipped
+1,2026-10-02 00:58:24,1.181,True,True,1180.2778379933443,5,0,False,124919808,最近一周 AI 领域重要新闻 #73903-1,,False,False
+2,2026-10-02 01:03:26,302.645,True,True,2545.5259029986337,5,0,False,124919808,Python 3.13 新特性 #73903-2,,False,False
+3,2026-10-02 01:08:24,601.508,False,True,1406.9721680134535,5,0,False,124919808,MCP protocol latest specification #73903-3,,False,False
+4,2026-10-02 01:13:24,901.3,False,True,1199.262297974201,5,0,False,125296640,国产大模型 排行榜 2026 #73903-4,,False,False
+5,2026-10-02 01:18:24,1201.459,False,True,1359.5356169971637,5,0,False,125566976,新能源汽车 销量 最新 #73903-5,,False,False
+6,2026-10-02 01:23:26,1502.652,False,True,2550.0193999905605,5,0,False,125657088,OpenAI API 定价 #73903-6,,False,False
+7,2026-10-02 01:28:24,1801.525,False,True,1424.1141249949578,5,0,False,125657088,best noise cancelling headphones 2026 #73903-7,,False,False
+8,2026-10-02 01:33:24,2101.232,False,True,1131.1923149914946,5,0,False,125657088,2026年 人工智能 政策 #73903-8,,False,False
+9,2026-10-02 01:38:25,2401.618,False,True,1516.3583170215134,5,0,False,125689856,最近一周 AI 领域重要新闻 #73903-9,,False,False
+10,2026-10-02 01:43:24,2701.101,False,True,1000.5556349933613,5,0,False,125689856,Python 3.13 新特性 #73903-10,,False,False
+11,2026-10-02 01:48:26,3002.609,False,True,2508.3797719853465,5,0,False,125689856,MCP protocol latest specification #73903-11,,False,False
+12,2026-10-02 01:53:26,3302.701,False,True,2599.8569389921613,5,0,False,125743104,国产大模型 排行榜 2026 #73903-12,,False,False
+13,2026-10-02 01:58:26,3602.657,False,True,2555.840069981059,5,0,False,126013440,新能源汽车 销量 最新 #73903-13,,False,False
