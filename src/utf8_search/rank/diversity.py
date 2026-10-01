@@ -209,6 +209,40 @@ def is_content_farm(result: SearchResult, query: str) -> bool:
     return any(marker in text for marker in _FARM_MARKERS) and any(tail in text for tail in _FARM_VIDEO_TAILS)
 
 
+# ------------------------------------------------------------------ 三类「无关形态」（2026-10-01 T7，治 Q1）
+# Q1（2026年9月 国内外重大新闻）三轮恒有 3 条形态明确但主题无关的结果：
+#   ① 电视/节目单页：央视《生活圈》20260929（标题是「《节目名》+ 播出日期」，正文只有导航）；
+#   ② 院校迎新/开学页：仁川机场院校「2026年9月学期新生迎新」（正文为空）；
+#   ③ 开运日历/黄历页：日本「2026年9月の開運日カレンダー」（占卜/吉日主题）。
+# 统一判据 = **形态命中 + 主题针对性**（与 is_aggregator_page / is_offtopic_index_page 同源）：
+#   形态由标题/内容特征判定（不维护站点黑名单）；「主题针对性」用**查询侧闸门**实现 ——
+#   查询本身就是在找这类内容（如「开运」「节目」「开学」）时规则整体不生效。
+# 电视/院校两类还要求**正文无实质内容**（避免误伤长篇节目文稿、校园新闻稿）。
+# 注意：不要把「第N期 / 完整版」这类**系列文章**常用写法算进来（会把「周报（第3期）」误伤成电视节目页）。
+_TV_PROGRAM_TITLE_RE = re.compile(r"《[^》]{1,24}》[\s\-–—]*\d{4,8}|(?:节目单|节目预告|片花|第\s*\d{1,3}\s*集)")
+_TV_QUERY_TERMS = ("节目", "电视", "综艺", "视频", "直播", "电视剧", "晚会", "体育赛事")
+_CAMPUS_TITLE_RE = re.compile(r"(迎新|开学|新生|入学|招生|报到|军训|开学典礼|校历)")
+_CAMPUS_QUERY_TERMS = ("学校", "大学", "学院", "开学", "迎新", "招生", "入学", "教育", "考试", "校园")
+_ALMANAC_RE = re.compile(r"(开运|開運|黄历|吉日|宜忌|黄道|占卜|运势|风水|算命|星座|生辰|一粒万倍日)")
+_ALMANAC_QUERY_TERMS = ("开运", "開運", "黄历", "吉日", "运势", "星座", "风水", "占卜", "算命", "宜忌")
+
+
+def off_topic_form(result: SearchResult, query: str) -> str | None:
+    """形态命中且与查询主题无关时返回形态名（`tv_program` / `campus_page` / `almanac_page`），否则 None。"""
+    q = (query or "").lower()
+    title = result.title or ""
+    if not any(term in q for term in _TV_QUERY_TERMS):
+        if _TV_PROGRAM_TITLE_RE.search(title) and not has_substantive_content(result):
+            return "tv_program"
+    if not any(term in q for term in _CAMPUS_QUERY_TERMS):
+        if _CAMPUS_TITLE_RE.search(title) and not has_substantive_content(result):
+            return "campus_page"
+    if not any(term in q for term in _ALMANAC_QUERY_TERMS):
+        if _ALMANAC_RE.search(f"{title} {result.content or ''}"):
+            return "almanac_page"
+    return None
+
+
 # ------------------------------------------------------------------ 非主题页（2026-10-01 T5，治 Q6）
 # 2-9 的 Q6（Python 3.13 新特性）线上 3 轮恒 3/5：坏结果是**关键词命中但页面本身不回答查询**的
 # 「非主题页」—— 社区**个人主页**（v2ex.com/member/<id> 这类只列最近发帖的页）与**包索引页**
@@ -372,6 +406,9 @@ def apply_rank_filters(
         # 「非主题页」与聚合页同源（形态 + 无实质内容），共用同一个开关：
         # 新闻路径（structural_only）维持原样，不受本轮改动影响。
         steps.append(("offtopic_page", lambda items: _split(items, is_offtopic_index_page)))
+    if drop_aggregator_pages:
+        # 三类「无关形态」（T7）：电视节目单 / 院校迎新 / 开运日历 —— 形态命中且查询不是找这类内容。
+        steps.append(("offtopic_form", lambda items: _split(items, lambda r: off_topic_form(r, query) is not None)))
     spec_tokens = extract_spec_tokens(query)
     if spec_tokens:
         # 规格不匹配（如查询 iPhone 17 Pro 却给 iPhone 8、查询 Python 3.13 却给 3.14）：
@@ -437,6 +474,7 @@ def apply_rank_filters(
             "same_host": 1,
             "aggregator_page": 2,
             "offtopic_page": 2,
+            "offtopic_form": 2,
             "spec_mismatch": 3,
             "script_mismatch": 4,
         }

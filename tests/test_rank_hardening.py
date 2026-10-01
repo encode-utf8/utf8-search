@@ -13,6 +13,7 @@ from utf8_search.rank.diversity import (
     is_content_farm,
     is_offtopic_index_page,
     looks_like_offtopic_index_page,
+    off_topic_form,
 )
 from utf8_search.rank.spec_tokens import extract_spec_tokens, modifier_exact_match
 
@@ -109,6 +110,62 @@ def test_content_farm_kept_when_query_is_about_it() -> None:
     """查询本身就在找短剧时，这类站点不受该规则影响。"""
     farm = _r("高三爱情故事 - 短剧视频在线观看", "https://c4cab.kmexvuoz.cc/video/117/", "短剧")
     assert is_content_farm(farm, "短剧 推荐 在线观看") is False
+
+
+# ---------------------------------------------------------------- G) 三类无关形态（2026-10-01 T7，治 Q1）
+def test_tv_program_page_dropped() -> None:
+    """央视《生活圈》这类「《节目名》+ 播出日期」的节目页（正文只有导航）→ 剔除。"""
+    page = _r(
+        "《生活圈》 20260929",
+        "https://tv.cctv.cn/2026/09/29/VIDESfISMBwPEqekFNwu0TEc260929.shtml",
+        "新闻 国内 国际 评论 经济 军事 科技 法治 文娱 人物 公益 图片.高墙内外.",
+    )
+    assert off_topic_form(page, "2026年9月 国内外重大新闻") == "tv_program"
+    results = [
+        page,
+        _r("从台海到日本，习近平试图“撬动”特朗普的亚太立场", "https://cn.nytimes.com/china/20260928/summit/", _LONG),
+        _r("扩大军事足迹 中老两军班根机场联合保障和训练中心挂牌运行", "https://www.rfi.fr/cn/亚洲/20260929-x/", _LONG),
+        _r("商务部召开例行新闻发布会", "https://www.mofcom.gov.cn/xwfb/202609/t20260903_1.html", _LONG),
+    ]
+    kept, stats = apply_rank_filters(
+        results, query="2026年9月 国内外重大新闻", max_results=3, min_query_coverage=0.0
+    )
+    assert "《生活圈》 20260929" not in [r.title for r in kept]
+    assert stats["offtopic_form"] == 1
+
+
+def test_tv_program_kept_when_query_is_about_programs() -> None:
+    """查询本身在找节目时，节目页不受影响。"""
+    page = _r("《生活圈》 20260929", "https://tv.cctv.cn/2026/09/29/x.shtml", "节目单")
+    assert off_topic_form(page, "央视 生活圈 节目 视频") is None
+
+
+def test_campus_page_dropped() -> None:
+    """院校迎新/开学页（正文为空）→ 剔除。"""
+    page = _r(
+        "2026年9月学期新生迎新 – 仁川国际机场",
+        "https://www.jbsc.ac.kr/portal/liuxue_chn/bbs/view.do?boardSeq=81432",
+        "",
+    )
+    assert off_topic_form(page, "2026年9月 国内外重大新闻") == "campus_page"
+
+
+def test_campus_article_with_content_kept() -> None:
+    """负例：标题含「开学」但正文是长文的新闻稿 → 不误伤。"""
+    page = _r("多地中小学开学第一课聚焦安全教育", "https://www.example.com/news/20260901/school.html", _LONG)
+    assert off_topic_form(page, "2026年9月 国内外重大新闻") is None
+    assert off_topic_form(page, "开学 第一课 中小学") is None
+
+
+def test_almanac_page_dropped() -> None:
+    """开运日历/黄历/占卜页 → 剔除（查询不涉及该类主题时）。"""
+    page = _r(
+        "【2026年9月の開運日カレンダー】一粒万倍日・吉日一覧｜開運待ち受け",
+        "https://www.hana-pla.com/wallpaper/luckyday-calendar202609/",
+        "2026年9月の開運日カレンダーと、開運待ち受けを取り入れるタイミングをまとめました。一粒万倍日や寅の日…",
+    )
+    assert off_topic_form(page, "2026年9月 国内外重大新闻") == "almanac_page"
+    assert off_topic_form(page, "2026年9月 开运 吉日") is None
 
 
 # ---------------------------------------------------------------- B) 规格 token 过滤
