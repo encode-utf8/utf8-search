@@ -20,7 +20,12 @@ from urllib.parse import urlsplit
 
 from ..models import SearchResult
 from .fusion import tokenize
-from .spec_tokens import extract_spec_tokens, is_mixed_model_page, spec_level_for_result
+from .spec_tokens import (
+    extract_spec_tokens,
+    is_mixed_model_page,
+    modifier_exact_match,
+    spec_level_for_result,
+)
 
 # ---------------------------------------------------------------- 域名
 # 常见「二级后缀」：可注册域要多吃一段，否则 zj.gov.cn / weather.com.cn 会被误当成两个不同的域
@@ -124,6 +129,25 @@ def has_substantive_content(result: SearchResult) -> bool:
     return len(text) >= 60 and sentences >= 3
 
 
+# 「条目感」判据（2026-10-01 T6，治 Q3 的 newsfilter.io）：
+# newsfilter.io 是**站点首页**，正文是站点自我介绍（"We deliver real-time business and markets news to the world…"），
+# 因为「有实质内容」被 `is_aggregator_page` 放行 —— 但首页/栏目页的实质内容应当是**条目**（带日期的标题、
+# 多条快讯），而不是站点自述。收紧后：有实质内容 **且** 内容像条目，才豁免聚合页判据。
+# 已按既有裁决核对：发改委首页（"2026年9月11日…"）、美国之音首页（"5 days ago —"）、外交部栏目页（"（2026-09-26）"）
+# 都带日期 → 保持豁免；只有纯自我介绍式的首页会被判聚合页。
+_ITEM_DATE_RE = re.compile(r"(?:19|20)\d{2}\s*[-/年]\s*\d{1,2}(?:\s*[-/月]\s*\d{1,2})?")
+_ITEM_AGE_RE = re.compile(r"\b\d+\s*(?:分钟|小时|天|周|个月)前|ago\b|published|posted\b|updated\b|更新于", re.IGNORECASE)
+
+
+def has_item_like_content(result: SearchResult) -> bool:
+    """首页/栏目页的「实质内容」是否像**条目**（带日期/时间线的快讯列表）。"""
+    text = result.content or ""
+    if _ITEM_DATE_RE.search(text) or _ITEM_AGE_RE.search(text):
+        return True
+    # 多条快讯常用 `·` / `|` 分隔（≥3 个分隔符 ≈ 至少 4 段）
+    return (text.count("·") + text.count("|")) >= 3
+
+
 def looks_like_column(result: SearchResult) -> bool:
     """**形态**上像站点首页 / 栏目页 / 专题页 / 列表汇总页（不看内容）。"""
     try:
@@ -156,9 +180,111 @@ def is_aggregator_page(result: SearchResult) -> bool:
     * 首页 / 栏目页 / 频道页 / 专题页 + 短短几行导航 → 判聚合页（剔除）；
     * 标题含「汇总 / 日报 / 周报 / 速览」但**正文有实质内容**（如每日新闻汇总、周报正文）→ **保留**。
 
+    2026-10-01（T6）再收紧一格：实质内容还必须**像条目**（带日期/时间线，见 `has_item_like_content`）——
+    站点首页的纯自我介绍（newsfilter.io 这类「We deliver …」的使命陈述）不再豁免（Q3 三轮都栽在它上面）。
+    正文是文章的情况本来就不走这条分支（`looks_like_column` 为假）。
+
     旧实现只看 URL/标题形态，把后者也一并剔除了，与判分口径不一致（Q1 的每日新闻汇总就被误伤）。
     """
     if not looks_like_column(result):
+        return False
+    return not (has_substantive_content(result) and has_item_like_content(result))
+
+
+# ------------------------------------------------------------------ 内容农场/成人视频站（2026-10-01 T6，治 Q2）
+# 2-9 的 Q2（最近一周 AI 行业动态）反复被「短剧/漫剧免费在线观看」这类内容农场站占据 top5
+# （随机子域 + .cc 域名 + 标题带站点名，如「高三爱情故事 - 短剧视频在线观看 | 黄果短剧」）。
+# 它们属于**站点形态**问题（不是主题匹配）：页面本身是盗版/成人视频聚合站，正文是色情文案，
+# 对任何非该类查询都不该出现。判据 = 「站点标记 + 视频站尾部」双命中，且**查询本身不是这类内容**；
+# 命中即**硬剔除**（不参与"候选不足补回"——垃圾站不该因为池子空就被放回来）。
+_FARM_MARKERS = ("短剧", "漫剧", "擦边", "成人视频", "色情", "艳情", "福利视频")
+_FARM_VIDEO_TAILS = ("在线观看", "免费观看", "在线播放", "免费在线", "全集")
+
+
+def is_content_farm(result: SearchResult, query: str) -> bool:
+    """内容农场/成人视频站形态（查询本身不是这类内容时生效）。"""
+    if any(marker in (query or "") for marker in _FARM_MARKERS):
+        return False
+    text = f"{result.title or ''} {result.url or ''}"
+    return any(marker in text for marker in _FARM_MARKERS) and any(tail in text for tail in _FARM_VIDEO_TAILS)
+
+
+# ------------------------------------------------------------------ 三类「无关形态」（2026-10-01 T7，治 Q1）
+# Q1（2026年9月 国内外重大新闻）三轮恒有 3 条形态明确但主题无关的结果：
+#   ① 电视/节目单页：央视《生活圈》20260929（标题是「《节目名》+ 播出日期」，正文只有导航）；
+#   ② 院校迎新/开学页：仁川机场院校「2026年9月学期新生迎新」（正文为空）；
+#   ③ 开运日历/黄历页：日本「2026年9月の開運日カレンダー」（占卜/吉日主题）。
+# 统一判据 = **形态命中 + 主题针对性**（与 is_aggregator_page / is_offtopic_index_page 同源）：
+#   形态由标题/内容特征判定（不维护站点黑名单）；「主题针对性」用**查询侧闸门**实现 ——
+#   查询本身就是在找这类内容（如「开运」「节目」「开学」）时规则整体不生效。
+# 电视/院校两类还要求**正文无实质内容**（避免误伤长篇节目文稿、校园新闻稿）。
+# 注意：不要把「第N期 / 完整版」这类**系列文章**常用写法算进来（会把「周报（第3期）」误伤成电视节目页）。
+_TV_PROGRAM_TITLE_RE = re.compile(r"《[^》]{1,24}》[\s\-–—]*\d{4,8}|(?:节目单|节目预告|片花|第\s*\d{1,3}\s*集)")
+_TV_QUERY_TERMS = ("节目", "电视", "综艺", "视频", "直播", "电视剧", "晚会", "体育赛事")
+_CAMPUS_TITLE_RE = re.compile(r"(迎新|开学|新生|入学|招生|报到|军训|开学典礼|校历)")
+_CAMPUS_QUERY_TERMS = ("学校", "大学", "学院", "开学", "迎新", "招生", "入学", "教育", "考试", "校园")
+_ALMANAC_RE = re.compile(r"(开运|開運|黄历|吉日|宜忌|黄道|占卜|运势|风水|算命|星座|生辰|一粒万倍日)")
+_ALMANAC_QUERY_TERMS = ("开运", "開運", "黄历", "吉日", "运势", "星座", "风水", "占卜", "算命", "宜忌")
+
+
+def off_topic_form(result: SearchResult, query: str) -> str | None:
+    """形态命中且与查询主题无关时返回形态名（`tv_program` / `campus_page` / `almanac_page`），否则 None。"""
+    q = (query or "").lower()
+    title = result.title or ""
+    if not any(term in q for term in _TV_QUERY_TERMS):
+        if _TV_PROGRAM_TITLE_RE.search(title) and not has_substantive_content(result):
+            return "tv_program"
+    if not any(term in q for term in _CAMPUS_QUERY_TERMS):
+        if _CAMPUS_TITLE_RE.search(title) and not has_substantive_content(result):
+            return "campus_page"
+    if not any(term in q for term in _ALMANAC_QUERY_TERMS):
+        if _ALMANAC_RE.search(f"{title} {result.content or ''}"):
+            return "almanac_page"
+    return None
+
+
+# ------------------------------------------------------------------ 非主题页（2026-10-01 T5，治 Q6）
+# 2-9 的 Q6（Python 3.13 新特性）线上 3 轮恒 3/5：坏结果是**关键词命中但页面本身不回答查询**的
+# 「非主题页」—— 社区**个人主页**（v2ex.com/member/<id> 这类只列最近发帖的页）与**包索引页**
+# （formulae.brew.sh/formula/python@3.13 只有一行 Formula JSON API 元数据）。
+# 判据与 `is_aggregator_page` **同源**：形态像非主题页 **且** 正文没有实质内容 → 剔除；
+# 带实质内容的页面（社区长文、注册表上的完整说明）一律保留，因此不误伤正常站点。
+_OFFTOPIC_PROFILE_PATH = re.compile(r"^/(member|members|user|users|people|u|profile|profiles|accounts?)(/|$)", re.IGNORECASE)
+_REGISTRY_HOSTS = {
+    "formulae.brew.sh", "pypi.org", "npmjs.com", "crates.io", "rubygems.org",
+    "packagist.org", "hub.docker.com", "anaconda.org", "conda.anaconda.org",
+}
+_REGISTRY_PATH = re.compile(r"^/(project|projects|package|packages|formula|formulae|crates|gems|r)(/|$)", re.IGNORECASE)
+_IMAGE_BOARD_HOSTS = {
+    "pinterest.com", "pinterest.co.uk", "pinterest.de", "pinterest.fr", "pinterest.jp", "pinterest.ru",
+}
+_IMAGE_BOARD_PATH = re.compile(r"^/(ideas|pin|search|board|boards)(/|$)", re.IGNORECASE)
+
+
+def looks_like_offtopic_index_page(result: SearchResult) -> bool:
+    """**形态**上像「非主题页」：社区个人主页 / 包索引页 / 图片素材板（只看 URL 形态）。"""
+    try:
+        parts = urlsplit(result.url or "")
+    except ValueError:
+        return False
+    path = "/" + parts.path.strip("/")
+    host = (parts.hostname or "").lower()
+    if _OFFTOPIC_PROFILE_PATH.search(path):
+        return True
+    if host in _REGISTRY_HOSTS or any(host.endswith("." + item) for item in _REGISTRY_HOSTS):
+        return _REGISTRY_PATH.search(path) is not None
+    if host in _IMAGE_BOARD_HOSTS or any(host.endswith("." + item) for item in _IMAGE_BOARD_HOSTS):
+        return _IMAGE_BOARD_PATH.search(path) is not None
+    return False
+
+
+def is_offtopic_index_page(result: SearchResult) -> bool:
+    """与 `is_aggregator_page` 同源的「非主题页」判据：形态像 + 正文无实质内容 → 剔除。
+
+    只依赖两个客观信号（URL 形态 + 正文实质度），不维护站点黑名单；
+    形态命中但正文有实质内容的页面**保留**（保守取向，避免误伤社区里的正常长文）。
+    """
+    if not looks_like_offtopic_index_page(result):
         return False
     return not has_substantive_content(result)
 
@@ -262,6 +388,13 @@ def apply_rank_filters(
     dropped: list[SearchResult] = []
     stats: dict[str, int] = {}
 
+    if drop_aggregator_pages:
+        # 内容农场/成人视频站：**硬剔除**，不参与后面的"候选不足补回"（垃圾站不因池子空而被放回）。
+        farmed = [item for item in kept if is_content_farm(item, query)]
+        if farmed:
+            stats["content_farm"] = len(farmed)
+            kept = [item for item in kept if not is_content_farm(item, query)]
+
     steps: list[tuple[str, Callable[[list[SearchResult]], tuple[list, list]]]] = []
     if drop_script_mismatch:
         steps.append(
@@ -269,6 +402,13 @@ def apply_rank_filters(
         )
     if drop_aggregator_pages:
         steps.append(("aggregator_page", lambda items: _split(items, is_aggregator_page)))
+    if drop_aggregator_pages:
+        # 「非主题页」与聚合页同源（形态 + 无实质内容），共用同一个开关：
+        # 新闻路径（structural_only）维持原样，不受本轮改动影响。
+        steps.append(("offtopic_page", lambda items: _split(items, is_offtopic_index_page)))
+    if drop_aggregator_pages:
+        # 三类「无关形态」（T7）：电视节目单 / 院校迎新 / 开运日历 —— 形态命中且查询不是找这类内容。
+        steps.append(("offtopic_form", lambda items: _split(items, lambda r: off_topic_form(r, query) is not None)))
     spec_tokens = extract_spec_tokens(query)
     if spec_tokens:
         # 规格不匹配（如查询 iPhone 17 Pro 却给 iPhone 8、查询 Python 3.13 却给 3.14）：
@@ -277,13 +417,24 @@ def apply_rank_filters(
         # 2026-09-30 补充「混杂型号页」：一页列了 17/16/15/14/13… 的二手回收/型号大全页，
         # 标题里 17 与 pro 都命中 → token 匹配会误判为「匹配」。这种页面**不能**算规格达标，
         # 与聚合页口径同源处理（形态不对 + 无实质针对性 → 剔除；候选不足时补回并标 degraded）。
+        #
+        # 2026-10-01 补充「修饰词精确匹配」（T5，治 Q16）：查询 iPhone 17 **Pro** 时，
+        # "iPhone 17 Pro Max" 里的 pro 也命中、且只算 partial 被降权 → 线上 3 轮恒有 1 条混进 top5。
+        # 现在「缺 Pro」与「只有 Pro Max」都判不匹配（剔除；候选不足才补回），见 spec_tokens.modifier_exact_match。
         steps.append(
             (
                 "spec_mismatch",
                 lambda items: _split(
                     items,
-                    lambda r: spec_level_for_result(spec_tokens, r) == "none"
-                    or is_mixed_model_page(r.title, r.content),
+                    lambda r: (
+                        spec_level_for_result(spec_tokens, r) == "none"
+                        or is_mixed_model_page(r.title, r.content)
+                        or not modifier_exact_match(
+                            spec_tokens,
+                            title=r.title or "",
+                            url=r.url or "",
+                        )
+                    ),
                 ),
             )
         )
@@ -322,6 +473,8 @@ def apply_rank_filters(
             "low_coverage": 0,
             "same_host": 1,
             "aggregator_page": 2,
+            "offtopic_page": 2,
+            "offtopic_form": 2,
             "spec_mismatch": 3,
             "script_mismatch": 4,
         }
