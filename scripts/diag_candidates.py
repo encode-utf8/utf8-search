@@ -38,7 +38,7 @@ from utf8_search.rank.diversity import (  # noqa: E402
 
 
 def modifier_exact_check(query: str, *, title: str, content: str, url: str) -> dict:
-    """诊断用：修饰词在结果里是否有「未被其它修饰词延长」的精确出现。"""
+    """诊断用：修饰词在结果里是否有「未被其它修饰词延长」的精确出现（与产品同口径：只看标题+URL）。"""
     tokens = [t for t in spec_mod.extract_spec_tokens(query) if spec_mod._MODIFIER_RE.fullmatch(t)]
     haystack = " ".join(part for part in (title, url) if part).lower()
     out: dict[str, dict] = {}
@@ -48,7 +48,7 @@ def modifier_exact_check(query: str, *, title: str, content: str, url: str) -> d
         extended_by: list[str] = []
         for pos in occurrences:
             following = haystack[pos + len(token) : pos + len(token) + 16]
-            nxt = re.match(r"[\s\-–—/]*([a-z]+)", following)
+            nxt = spec_mod._MODIFIER_FOLLOW_RE.match(following)
             if nxt and spec_mod._MODIFIER_RE.fullmatch(nxt.group(1)):
                 extended_by.append(nxt.group(1))
             else:

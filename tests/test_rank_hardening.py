@@ -205,6 +205,22 @@ def test_modifier_ignores_nav_mentions_in_content() -> None:
     assert stats["spec_mismatch"] == 1
 
 
+def test_modifier_handles_url_encoded_variant() -> None:
+    """URL 里用 +/%20 编码的机型也算「被延长」：Spigen 的 `…device=iPhone+17+Pro+Max` ≠ Pro。"""
+    tokens = extract_spec_tokens("iPhone 17 Pro 价格 参数")
+    assert (
+        modifier_exact_match(
+            tokens,
+            title="iPhone 17 Pro Max Case Collection - Spigen.com Official Site",
+            url=(
+                "https://www.spigen.com/collections/iphone-17-pro-max-case-collection"
+                "?sort_by=manual&filter.v.option.device=iPhone+17+Pro+Max&current.device.choice=iPhone+17+Pro+Max"
+            ),
+        )
+        is False
+    )
+
+
 # ---------------------------------------------------------------- F) 非主题页（2026-10-01 T5，治 Q6）
 _SHORT = "求推荐油管频道，国内后端就业现在什么行情？Python的类型提示越来越复杂了：Python3.13又引入了类型注解新特性"
 

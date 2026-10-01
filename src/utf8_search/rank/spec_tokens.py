@@ -144,7 +144,10 @@ def spec_level_for_result(tokens: list[str], result) -> str:  # noqa: ANN001 - S
 #   * 「缺」（结果只有 iPhone 17，没有 Pro）→ 不匹配；
 #   * 「多」（结果只有 Pro Max / Pro Plus 这类被其它修饰词延长的写法）→ 不匹配；
 #   * 页面同时提到 17 Pro 与 17 Pro Max（如 Apple 发布会报道）→ 存在**独立出现**的 Pro → 匹配。
-_MODIFIER_FOLLOW_RE = re.compile(r"[\s\-–—/]*([a-z]+)")
+# 修饰词后面紧跟的字母串（跳过少量非字母分隔符，含空格/连字符/斜杠，以及 URL 里的 `+`、`%20`）：
+# 实测 Spigen 的 Pro Max 页面 URL 写成 `…?filter.v.option.device=iPhone+17+Pro+Max`，
+# 只认 `[\s\-–—/]` 会把 `+Max` 漏掉、误判为「独立出现的 Pro」。
+_MODIFIER_FOLLOW_RE = re.compile(r"[^a-z]{0,4}([a-z]+)")
 
 
 def modifier_exact_match(tokens: list[str], *, title: str = "", url: str = "") -> bool:
