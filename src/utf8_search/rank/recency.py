@@ -151,7 +151,8 @@ def age_days(published: str | None, *, now: datetime | None = None) -> float | N
 # 列表刻意保持克制（不包含「2026」这类年份：它更像限定词而不是时效诉求）。
 _RECENCY_WORDS = (
     "最新", "最近", "今日", "今天", "本周", "这周", "近期", "实时", "进展", "动态", "新闻", "消息",
-    "latest", "recent", "recently", "today", "this week", "breaking", "update", "updates", "news",
+    "latest", "recent", "recently", "today", "this week", "last week", "past week",
+    "breaking", "update", "updates", "news",
 )
 
 

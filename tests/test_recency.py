@@ -230,3 +230,18 @@ def test_apply_recency_default_keeps_stale_before_undated() -> None:
 
     ordered = apply_recency([stale, undated, fresh], fresh_days=7, now=NOW, drop_stale=False)
     assert [r.title for r in ordered] == ["fresh", "stale", "undated"]
+def test_recency_intent_covers_english_time_words() -> None:
+    """P5（2026-09-30）：英文侧时新意图与中文对齐（latest / update / recent / last week…）。"""
+    from utf8_search.rank.recency import has_recency_intent
+
+    for query in (
+        "children privacy law COPPA update",
+        "latest news semiconductor export controls",
+        "recent AI regulation changes",
+        "OpenAI latest news",
+        "what happened last week in tech",
+    ):
+        assert has_recency_intent(query) is True, query
+    # 反例：不含时间意图的查询不应被误判（避免把普通查询也硬过滤旧结果）
+    for query in ("how does HTTP/3 QUIC work", "Rust async runtime tokio 原理", "iPhone 17 Pro 价格 参数"):
+        assert has_recency_intent(query) is False, query

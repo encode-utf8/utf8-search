@@ -35,7 +35,12 @@ from ..providers.bing_html import BingHtmlProvider
 from ..providers.jina_reader import JinaReader
 from ..providers.engine_health import EngineHealthTracker
 from ..providers.searxng import SearxngProvider
-from ..rank.diversity import apply_rank_filters, query_coverage, registrable_domain
+from ..rank.diversity import (
+    apply_form_penalty,
+    apply_rank_filters,
+    query_coverage,
+    registrable_domain,
+)
 from ..rank.fusion import filter_domains, filter_low_quality, fuse, rerank
 from ..rank.recency import (
     age_days,
@@ -274,9 +279,17 @@ class SearchPipeline:
             merged = apply_recency(
                 merged,
                 fresh_days=self.settings.news_fresh_days,
-                drop_stale=False,
+                # 2026-09-30（P5）：命中时间意图时**硬过滤已知陈旧**结果（够新鲜/无日期的仍保留）。
+                # 依据：docs/04 §8 遗留 3-①（英文 latest/update 类查询没有硬过滤，Q3#4/Q15#4 的旧文照排）。
+                # `drop_stale=True` 只在"剩余结果仍够 max_results"时生效，不会掏空结果集。
+                drop_stale=True,
                 stale_last=True,
+                max_results=request.max_results,
             )
+
+        # 2.7) 形态轻降权（2026-09-30，P1）：含实质内容的首页/栏目页 ×0.95，让独立文章略靠前。
+        # 与过滤层共用 `looks_like_column` 判据；日报/汇总类文章只降权、不剔除。
+        merged = apply_form_penalty(merged)
         return merged
 
     def _apply_quality_filters(

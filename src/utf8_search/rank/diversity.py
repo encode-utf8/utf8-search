@@ -163,6 +163,34 @@ def is_aggregator_page(result: SearchResult) -> bool:
     return not has_substantive_content(result)
 
 
+# 形态轻降权（2026-09-30，P1）：含实质内容的首页/栏目页**保留**（过滤层口径已对齐），
+# 但排序层给一点形态偏好，让独立文章更靠前。刻意用**乘子**而不是逐条 if-else 特判：
+#   分数 × 0.95（≈ 5% 降权）——只影响"分数接近"的情况，不会把高相关汇总页压到底部。
+COLUMN_PAGE_SCORE_MULTIPLIER = 0.95
+
+
+def form_score_multiplier(result: SearchResult) -> float:
+    """排序用的**形态乘子**：含实质内容的首页/栏目页 ×0.95，其余 ×1.0。"""
+    return COLUMN_PAGE_SCORE_MULTIPLIER if looks_like_column(result) else 1.0
+
+
+def apply_form_penalty(results: list[SearchResult]) -> list[SearchResult]:
+    """对结果做**轻量形态偏好**排序（稳定排序，不删除任何结果，**不改 score**）。
+
+    与 `is_aggregator_page` 共用同一个形态判据（`looks_like_column`），因此：
+    * 只当导航的聚合页仍由过滤层剔除；
+    * **日报/汇总类文章**（有实质内容）不会被剔除，只在排序时按 ×0.95 的**有效分**让位；
+    * 普通文章结果乘子为 1.0，相对顺序不变。
+
+    **幂等（2026-09-30 P7 修）**：早期实现 `result.score *= 0.95` 是原地修改，
+    **被调两次就是 ×0.9025**（重复处理会持续压低分数）。现在改成「**乘子只用于排序 key**」：
+    `score` 始终是相关性原始分（对外字段语义不变），顺序按 `score × form_score_multiplier` 排
+    ⇒ **对同一批结果重复调用，顺序与 score 都不变**（幂等）。
+    分数接近时可能出现「分数略高但因形态让位」的顺序，这是刻意的（不污染对外 score 语义）。
+    """
+    return sorted(results, key=lambda r: r.score * form_score_multiplier(r), reverse=True)
+
+
 # ---------------------------------------------------------------- 查询词覆盖度
 def query_coverage(query: str, result: SearchResult) -> float:
     """查询词在「标题 + 摘要」里的覆盖率（0-1）。
