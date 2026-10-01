@@ -112,6 +112,16 @@ async def test_no_time_range_never_marks_freshness_degraded(settings, tmp_path) 
     await pipeline.close()
 
 
+async def test_news_path_never_emits_no_relevant_results(settings, tmp_path) -> None:
+    """分工：`no_relevant_results` 只作用于通用主题路径；新闻+time_range 的降级仍只报 freshness_unverified。"""
+    hits = [_hit(i, "naver") for i in range(5)]  # 无日期 → freshness_unverified
+    pipeline = await _pipeline(settings, tmp_path, hits)
+    response = await pipeline.search(SearchRequest(query="q", topic="news", time_range="day", max_results=5))
+    assert response.degraded_reason == "freshness_unverified"
+    assert "no_relevant_results" not in (response.degraded_reason or "")
+    await pipeline.close()
+
+
 # ---------------------------------------------------------------- REST / MCP 通道
 def _degraded_response() -> SearchResponse:
     return SearchResponse(

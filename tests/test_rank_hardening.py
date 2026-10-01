@@ -7,12 +7,16 @@ import pytest
 from utf8_search.models import ExtractItem, SearchRequest, SearchResult
 from utf8_search.rank.diversity import (
     apply_rank_filters,
+    count_on_topic_candidates,
+    has_news_intent,
     has_item_like_content,
+    has_no_relevant_results,
     has_substantive_content,
     is_aggregator_page,
     is_content_farm,
     is_offtopic_index_page,
     looks_like_offtopic_index_page,
+    news_non_content_form,
     off_topic_form,
 )
 from utf8_search.rank.spec_tokens import extract_spec_tokens, modifier_exact_match
@@ -23,6 +27,7 @@ def _r(title: str, url: str, content: str = "摘要内容", **kwargs) -> SearchR
 
 
 _LONG = "这是一段有实质内容的正文。" * 12  # 240 字，含多个句末标点
+_ITEMIZED = "2026-09-28 要闻发布。2026-09-27 行业动态。2026-09-26 观察评论。2026-09-25 数据发布。"
 
 
 # ---------------------------------------------------------------- D) 聚合页口径
@@ -595,3 +600,180 @@ async def test_bing_fallback_relevant_result_still_injected(settings, tmp_path) 
     )
     assert len(hits) == 1 and engines_used == ["bing"]
     await pipeline.close()
+
+
+# ---------------------------------------------------------------- H) 主题相关性闸门（2026-10-01 T10）
+def test_dated_daily_brief_not_aggregator() -> None:
+    """T10①正例：短摘要但带条目时间线索的日报（AIHOT：'4 weeks ago — …8:00…'，53 字）不再被判聚合页。"""
+    page = _r(
+        "AI 日报 · AIHOT",
+        "https://aihot.virxact.com/daily",
+        "4 weeks ago — AIHOT 每日 8:00 自动生成的过去 24 小时一手 AI 动态精选报。",
+    )
+    assert has_substantive_content(page) is True
+    assert is_aggregator_page(page) is False
+
+
+def test_navigation_page_with_single_date_still_aggregator() -> None:
+    """T10①反例：纯导航页即使带一枚日期（只一类时间线索）→ 仍判聚合页。"""
+    page = _r("财经首页", "https://finance.example.com/", "财经 股票 基金 期货 银行 · 2026-10-01 · 更多")
+    assert has_substantive_content(page) is False
+    assert is_aggregator_page(page) is True
+
+
+def test_topic_gate_pure_function() -> None:
+    """T10②：判据是纯函数 —— 池内覆盖率达标候选 <2 判「无切题候选」。"""
+    junk = [
+        _r("nocache - npm", "https://www.npmjs.com/package/nocache", "Middleware to destroy caching."),
+        _r("DuckDuckGo - Wikipedia", "https://en.wikipedia.org/wiki/DuckDuckGo", "DuckDuckGo is a search engine."),
+    ]
+    assert count_on_topic_candidates("最近一周 AI 行业动态", junk) == 0
+    assert has_no_relevant_results("最近一周 AI 行业动态", junk) is True
+    good = [
+        _r("AI行业发展一周动态 - 知乎", "https://zhuanlan.zhihu.com/p/1", "最近一周 AI 行业动态与融资事件汇总"),
+        _r("每日AI资讯、热点、动态", "https://ai-bot.cn/daily", "AI 行业动态：最近一周的模型发布与融资"),
+    ]
+    assert count_on_topic_candidates("最近一周 AI 行业动态", good) == 2
+    assert has_no_relevant_results("最近一周 AI 行业动态", good) is False
+    assert has_no_relevant_results("最近一周 AI 行业动态", []) is True  # 空池也算无切题候选
+
+
+def test_topic_gate_stats_conservative() -> None:
+    """保守性：池里只要有 **1 条**切题候选，就不置 no_relevant_results（即便它排名靠后）。"""
+    pool = [
+        _r("nocache - npm", "https://www.npmjs.com/package/nocache", "Middleware to destroy caching."),
+        _r("DuckDuckGo - Wikipedia", "https://en.wikipedia.org/wiki/DuckDuckGo", "A search engine."),
+        _r("AI行业发展一周动态 - 知乎", "https://zhuanlan.zhihu.com/p/1", "最近一周 AI 行业动态与融资事件汇总"),
+    ]
+    _kept, stats = apply_rank_filters(
+        pool, query="最近一周 AI 行业动态", max_results=5, min_query_coverage=0.0
+    )
+    assert stats["on_topic_candidates"] == 1
+    assert stats["no_relevant_results"] == 0
+
+
+def test_topic_gate_off_when_aggregator_filter_disabled() -> None:
+    """新闻路径（drop_aggregator_pages=False）不参与主题闸门统计（与聚合页过滤共用开关）。"""
+    junk = [_r("nocache - npm", "https://www.npmjs.com/package/nocache", "Middleware to destroy caching.")]
+    _kept, stats = apply_rank_filters(
+        junk,
+        query="最近一周 AI 行业动态",
+        max_results=5,
+        min_query_coverage=0.0,
+        drop_aggregator_pages=False,
+    )
+    assert "no_relevant_results" not in stats
+
+
+class _JunkSearxng:
+    name = "searxng"
+    unresponsive_engines: list[str] = []
+
+    def __init__(self, hits) -> None:
+        self._hits = list(hits)
+
+    async def search(self, query, **kwargs):  # noqa: ANN003
+        return list(self._hits)
+
+
+async def test_response_marks_no_relevant_results(settings, tmp_path) -> None:
+    """响应层：池内无切题候选 → degraded=true + degraded_reason 含 no_relevant_results。"""
+    from utf8_search.providers.base import SearchHit
+
+    junk = [
+        SearchHit(title="nocache - npm", url="https://www.npmjs.com/package/nocache", engine="brave"),
+        SearchHit(title="DuckDuckGo - Wikipedia", url="https://en.wikipedia.org/wiki/DuckDuckGo", engine="brave"),
+    ]
+    pipeline = await _pipeline(settings, tmp_path, [_JunkSearxng(junk)])
+    response = await pipeline.search(SearchRequest(query="最近一周 AI 行业动态", max_results=5, depth="basic"))
+    assert response.degraded is True
+    assert response.degraded_reason is not None and "no_relevant_results" in response.degraded_reason.split(",")
+    await pipeline.close()
+
+
+async def test_response_merges_multiple_degraded_reasons(settings, tmp_path) -> None:
+    """响应层：多原因允许同时出现（逗号分隔、去重保序）—— fallback_low_relevance + no_relevant_results。"""
+    from utf8_search.providers.base import SearchHit
+
+    junk = [SearchHit(title="Walmart Water Filters", url="https://www.walmart.com/browse/water-filters", engine="bing")]
+    pipeline = await _pipeline(settings, tmp_path, [_EmptySearxng(), _BingProvider(junk)])
+    response = await pipeline.search(SearchRequest(query="最近一周 AI 行业动态", max_results=5, depth="basic"))
+    assert response.degraded_reason == "fallback_low_relevance,no_relevant_results"
+    await pipeline.close()
+
+
+# ---------------------------------------------------------------- I) 新闻意图 × 来源类型（2026-10-02 T11）
+def test_news_intent_pure_function() -> None:
+    """意图判据是纯函数：新闻/动态/时间词命中，商品类查询不命中。"""
+    assert has_news_intent("最近一周 AI 行业动态") is True
+    assert has_news_intent("2026年9月 国内外重大新闻") is True
+    assert has_news_intent("latest news semiconductor export controls") is True
+    assert has_news_intent("iPhone 17 Pro 价格 参数") is False
+    assert has_news_intent("FastAPI 与 Django 性能对比") is False
+
+
+def test_news_intent_drops_portal_homepage_when_sufficient() -> None:
+    """新闻意图：门户首页/站点首页形态候选充足时剔除（带实质内容也剔除）。"""
+    portal = _r("扣子 Coze - 字节跳动旗下职场AI伙伴扣子与一站式AI开发平台", "https://www.coze.cn/", _ITEMIZED)
+    assert has_substantive_content(portal) is True and is_aggregator_page(portal) is False  # 有实质条目 → 不是聚合页
+    assert news_non_content_form(portal, "最近一周 AI 行业动态") == "portal_homepage"
+    articles = [
+        _r("AI行业发展一周动态", "https://zhuanlan.zhihu.com/p/1", _LONG),
+        _r("每日AI资讯、热点、动态", "https://ai-bot.cn/daily-ai-news/", _LONG),
+        _r("本周 AI 融资与产品发布汇总", "https://example.com/news/ai-weekly", _LONG),
+        _r("AI 行业观察：模型与芯片进展", "https://example.com/blog/ai-observe", _LONG),
+    ]
+    kept, stats = apply_rank_filters(
+        [portal, *articles], query="最近一周 AI 行业动态", max_results=3, min_query_coverage=0.0
+    )
+    assert "https://www.coze.cn/" not in [r.url for r in kept]
+    assert stats["news_non_content"] == 1
+
+
+def test_news_intent_rule_inactive_for_non_news_query() -> None:
+    """非新闻意图（商品类）不受该规则影响：门户页照常参与排序。"""
+    portal = _r("扣子 Coze - 字节跳动旗下职场AI伙伴", "https://www.coze.cn/", _LONG)
+    assert news_non_content_form(portal, "iPhone 17 Pro 价格 参数") is None
+
+
+def test_dated_ephemera_dropped_and_news_headline_kept() -> None:
+    """日期活动页/杂志目录页剔除；反例：带日期的新闻标题不误伤。"""
+    event = _r(
+        "2026年9月13日（日）「秋の合同相談会」を開催します",
+        "https://osakatsushin-g.jp/news/2026/09/post-1.html",
+        _LONG,
+    )
+    magazine = _r("IRONMAN(アイアンマン) 2026年9月号", "https://example.com/books/ironman-202609", _LONG)
+    headline = _r("2026年9月13日 商务部发布最新外贸数据", "https://example.com/news/trade-20260913.html", _LONG)
+    assert news_non_content_form(event, "2026年9月 国内外重大新闻") == "dated_ephemera"
+    assert news_non_content_form(magazine, "2026年9月 国内外重大新闻") == "dated_ephemera"
+    assert news_non_content_form(headline, "2026年9月 国内外重大新闻") is None
+
+
+async def test_news_structure_refill_marks_degraded(settings, tmp_path) -> None:
+    """候选不足时门户页被补回 → 响应标记 news_structure_unverified（REST/MCP 同一字段）。"""
+    from utf8_search.providers.base import SearchHit
+
+    portals = [
+        SearchHit(title="扣子 Coze - 职场AI伙伴", url="https://www.coze.cn/", engine="brave", snippet=_ITEMIZED),
+        SearchHit(title="OSCHINA - 开源 × AI 生态社区", url="https://www.oschina.net/", engine="brave", snippet=_ITEMIZED),
+    ]
+    pipeline = await _pipeline(settings, tmp_path, [_JunkSearxng(portals)])
+    response = await pipeline.search(SearchRequest(query="最近一周 AI 行业动态", max_results=5, depth="basic"))
+    reasons = (response.degraded_reason or "").split(",")
+    assert "news_structure_unverified" in reasons
+    await pipeline.close()
+
+
+def test_content_farm_marker_without_video_tail_dropped() -> None:
+    """T11-C：只有农场标记、没有「在线观看」尾部的漏网形态（AI成人短剧 | 17黑料网）也判农场。"""
+    page = _r(
+        "AI成人短剧《高三爱情故事》第4到20... | 17黑料网",
+        "https://author.knwfhxd.cc/archives/199863/",
+        "该文章由 17黑料网 发布",
+    )
+    assert is_content_farm(page, "最近一周 AI 行业动态") is True
+    assert is_content_farm(page, "短剧 推荐 在线观看") is False
+    # 反例：只谈「短剧」但没有成人/视频站形态的页面不受影响
+    legit = _r("2026年短剧市场研究报告", "https://example.com/report/short-drama", "短剧市场规模")
+    assert is_content_farm(legit, "最近一周 AI 行业动态") is False

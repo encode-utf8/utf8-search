@@ -70,6 +70,23 @@ def build_http_mounts(hosts: list[str]) -> dict[str, Any] | None:
         return None
     return {f"all://{host}": None for host in hosts}
 
+def merge_degraded_reason(current: str | None, reason: str) -> str:
+    """把新的降级原因并入 `degraded_reason`（**逗号分隔、去重、保序**）。
+
+    口径（2026-10-01 T10 明确）：**同一次响应允许多个 reason 同时出现**，按发生顺序拼接。
+    例：`fallback_low_relevance,no_relevant_results`。
+    当前分工：`no_relevant_results` 只作用于通用主题路径（与 `spec_unverified` 同路径），
+    `freshness_unverified` 只作用于新闻+`time_range` 路径，因此这两者不会同时出现；
+    但响应层对多值一律按逗号分隔解析（REST 与 MCP 同一字段）。
+    """
+    if not current:
+        return reason
+    parts = [part for part in current.split(",") if part]
+    if reason not in parts:
+        parts.append(reason)
+    return ",".join(parts)
+
+
 def _group_hits(hits: list[SearchHit]) -> list[list[SearchHit]]:
     """按来源引擎分组，供 RRF 融合使用（同源结果保持原有顺序即排名）。"""
     groups: dict[str, list[SearchHit]] = {}
@@ -200,9 +217,13 @@ class SearchPipeline:
         # 规格不匹配被"补回"（候选不足，只能降权保留）时，明确告诉调用方：结果里含规格不符项
         rank_stats = getattr(self, "last_rank_stats", {}) or {}
         if rank_stats.get("spec_mismatch_refilled"):
-            degraded_reason = ",".join(
-                dict.fromkeys([*(degraded_reason.split(",") if degraded_reason else []), "spec_unverified"])
-            )
+            degraded_reason = merge_degraded_reason(degraded_reason, "spec_unverified")
+        # 主题相关性闸门（T10）：池内没有足够切题候选 → 如实降级，而不是把无关结果硬凑成 5 条
+        if rank_stats.get("no_relevant_results"):
+            degraded_reason = merge_degraded_reason(degraded_reason, "no_relevant_results")
+        # 新闻/动态意图下非内容页形态被补回（T11）：候选不足，只能保留门户页/日期活动页
+        if rank_stats.get("news_non_content_refilled"):
+            degraded_reason = merge_degraded_reason(degraded_reason, "news_structure_unverified")
 
         # 3) 深度模式：并发抓取正文（受总预算约束）
         pages_read = 0
