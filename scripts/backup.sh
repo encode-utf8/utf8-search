@@ -129,14 +129,36 @@ fi
 #   ② 整目录也已超过保留期的，连目录一起删；③ 最后清掉遗留的空目录。
 KEEP_DAYS="${BACKUP_KEEP_DAYS:-30}"
 BACKUP_ROOT="${BACKUP_ROOT:-/root}"
+# 排除名单（2026-10-01 P9）：**人工回滚备份**不能按"超期"删掉。
+# 默认排除 `deploy-backups-20260929`（实测该目录装的是 .env 备份 / compose 快照 / 压测证据，属人工资产），
+# 可用空格分隔的 glob 追加，例如：BACKUP_EXCLUDE="deploy-backups-20260929 deploy-backups-manual-*"
+BACKUP_EXCLUDE="${BACKUP_EXCLUDE:-deploy-backups-20260929}"
 if [ "$KEEP_DAYS" -gt 0 ] 2>/dev/null; then
-  echo "== 保留策略：BACKUP_KEEP_DAYS=$KEEP_DAYS，扫描 $BACKUP_ROOT/deploy-backups-* =="
+  echo "== 保留策略：BACKUP_KEEP_DAYS=$KEEP_DAYS，扫描 $BACKUP_ROOT/deploy-backups-*（排除：${BACKUP_EXCLUDE:-无}）=="
+  # 排除名单 → find 的 -not -path 条件
+  EXCLUDE_ARGS=()
+  for pattern in $BACKUP_EXCLUDE; do
+    EXCLUDE_ARGS+=(-not -path "$BACKUP_ROOT/$pattern" -not -path "$BACKUP_ROOT/$pattern/*")
+  done
+  # 「永不删光」保险：先算出**最新一份产物**所在目录，它一定不删（连同它的 SHA256SUMS）
+  NEWEST_ARTIFACT="$(find "$BACKUP_ROOT" -maxdepth 2 -type f -name 'utf8-search-backup-*' \
+        -path "$BACKUP_ROOT/deploy-backups-*/*" -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 | awk '{print $2}')"
+  NEWEST_DIR="${NEWEST_ARTIFACT%/*}"
+  if [ -n "$NEWEST_ARTIFACT" ]; then
+    echo "（保险）最新产物不会被删：$NEWEST_ARTIFACT"
+  fi
   STALE_FILES="$(find "$BACKUP_ROOT" -maxdepth 2 -type f \
         \( -name 'utf8-search-backup-*' -o -name 'SHA256SUMS' \) \
-        -path "$BACKUP_ROOT/deploy-backups-*/*" -mtime +"$KEEP_DAYS" \
+        -path "$BACKUP_ROOT/deploy-backups-*/*" "${EXCLUDE_ARGS[@]}" -mtime +"$KEEP_DAYS" \
         -printf '%TY-%Tm-%Td %TH:%TM  %p\n' 2>/dev/null | sort)"
+  if [ -n "$NEWEST_ARTIFACT" ] && [ -n "$STALE_FILES" ]; then
+    STALE_FILES="$(echo "$STALE_FILES" | grep -v -F "$NEWEST_ARTIFACT" | grep -v -F "$NEWEST_DIR/SHA256SUMS" || true)"
+  fi
   STALE_DIRS="$(find "$BACKUP_ROOT" -maxdepth 1 -type d -name 'deploy-backups-*' \
-        -mtime +"$KEEP_DAYS" -printf '%TY-%Tm-%Td %TH:%TM  %p\n' 2>/dev/null | sort)"
+        "${EXCLUDE_ARGS[@]}" -mtime +"$KEEP_DAYS" -printf '%TY-%Tm-%Td %TH:%TM  %p\n' 2>/dev/null | sort)"
+  if [ -n "$NEWEST_DIR" ] && [ -n "$STALE_DIRS" ]; then
+    STALE_DIRS="$(echo "$STALE_DIRS" | grep -v -F "$NEWEST_DIR" || true)"
+  fi
   if [ -n "$STALE_FILES" ] || [ -n "$STALE_DIRS" ]; then
     echo "将删除以下超过 $KEEP_DAYS 天的条目（先打印，后删除）："
     [ -n "$STALE_FILES" ] && echo "$STALE_FILES"
@@ -155,7 +177,8 @@ if [ "$KEEP_DAYS" -gt 0 ] 2>/dev/null; then
       done
     fi
     # 清掉被删空的 deploy-backups-* 目录（打印后再删）
-    EMPTY_DIRS="$(find "$BACKUP_ROOT" -maxdepth 1 -type d -name 'deploy-backups-*' -empty 2>/dev/null)"
+    EMPTY_DIRS="$(find "$BACKUP_ROOT" -maxdepth 1 -type d -name 'deploy-backups-*' \
+          "${EXCLUDE_ARGS[@]}" -empty 2>/dev/null)"
     if [ -n "$EMPTY_DIRS" ]; then
       echo "$EMPTY_DIRS" | sed 's/^/（空目录，一并删除）/'
       echo "$EMPTY_DIRS" | while IFS= read -r victim; do
