@@ -1,0 +1,744 @@
+{
+  "rows": [
+    {
+      "id": 1,
+      "category": "新闻",
+      "query": "2026年9月 国内外重大新闻",
+      "degraded": false,
+      "degraded_reason": null,
+      "pool_size": 23,
+      "on_topic_candidates": 7,
+      "no_relevant_results": false,
+      "results": [
+        {
+          "title": "SBS一周大事件（2026年9月18日）",
+          "url": "https://www.sbs.com.au/language/chinese/zh-hans/podcast-episode/weekly-news-wrap-20260918/qw26jpdga",
+          "content": "2주 전澳大利亚政府公布重大移民政策改革方案；中国出入境新规生效，公民出境或需接受面谈；美联储无视总统特朗普降息要求，三年内首次加息；欧盟委员会主席提议让加拿大成为欧盟首个“联席成员”。 欢迎下载应用程序SBS Audio，订阅Mandar"
+        },
+        {
+          "title": "2026年9月22日外交部发言人郭嘉昆主持例行记者会_中华人民共和国驻大韩民国大....",
+          "url": "https://kr.china-embassy.gov.cn/fyrth/202609/t20260922_12028748.htm",
+          "content": "1주 전国家副主席韩正将于9月24日至26日赴纽约出席第81届联合国大会一般性辩论。与会期间，韩正副主席还将出席中方举办的全球发展倡议5周年高级别对话会，会见联合国秘书长、第81届联大主席及有关国家领导人。 第48届世界技能大赛将于9月22"
+        },
+        {
+          "title": "rfi.fr/cn/中国/20260929...",
+          "url": "https://www.rfi.fr/cn/%E4%B8%AD%E5%9B%BD/20260929-%E6%97%A5%E6%9C%AC%E5%AE%98%E6%88%BF%E9%95%BF%E5%AE%98%E5%9B%9E%E5%BA%94%E7%8E%8B%E6%AF%85%E4%BC%9A%E8%A7%81%E6%97%A5%E6%9C%AC%E5%89%8D%E5%A4%96%E7%9B%B8-%E6%8F%90%E5%87%BA%E6%97%A5%E4%B8%AD-%E5%86%8D%E6%AC%A1%E5%AE%9E%E7%8E%B0%E6%AD%A3%E5%B8%B8%E5%8C%96-%E6%9D%A1%E4%BB%B6",
+          "content": "中国外交部网页28日深夜发表《王毅会见日本国际贸易促进协会会长岩屋毅》的消息称：2026年9月28日，中共中央政治局委员、中央外办主任王毅在北京会. 见日本国际贸易促进协会会长岩屋毅。"
+        },
+        {
+          "title": "2026年9月13日（日）「秋の合同相談会」を開催します",
+          "url": "https://osakatsushin-g.jp/news/2026-autumn-godosoudankai/",
+          "content": "大阪通信制高校グループ加盟12校による「秋の合同相談会」を、2026年9月13日（日）10:00〜16:00、天満橋OMMビル2F Cホールで開催します"
+        },
+        {
+          "title": "IRONMAN(アイアンマン) 2026年9月号 | フィットネススポーツ |本 | 通販 | Amazon",
+          "url": "https://www.amazon.co.jp/IRONMAN-%E3%82%A2%E3%82%A4%E3%82%A2%E3%83%B3%E3%83%9E%E3%83%B3-2026%E5%B9%B49%E6%9C%88%E5%8F%B7-%E3%83%95%E3%82%A3%E3%83%83%E3%83%88%E3%83%8D%E3%82%B9%E3%82%B9%E3%83%9D%E3%83%BC%E3%83%84/dp/B0H7M9BGZZ",
+          "content": "AmazonでフィットネススポーツのIRONMAN(アイアンマン) 2026年9月号。アマゾンならポイント還元本が多数。フィットネススポーツ作品ほか、お急ぎ便対象商品は当日お届けも可能。またIRONMAN(アイアンマン) 2026年9月号も"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "category": "新闻",
+      "query": "最近一周 AI 行业动态",
+      "degraded": true,
+      "degraded_reason": "no_relevant_results",
+      "pool_size": 23,
+      "on_topic_candidates": 0,
+      "no_relevant_results": true,
+      "results": [
+        {
+          "title": "即梦AI - 一站式AI创作平台",
+          "url": "https://jimeng.jianying.com/ai-tool/home?type=video",
+          "content": "即梦AI支持文字绘图、文字生成视频和图片生成视频，并提供创作灵感。最近上新. 精选. 广告营销."
+        },
+        {
+          "title": "nocache - npm",
+          "url": "https://www.npmjs.com/package/nocache",
+          "content": "Middleware to destroy caching. Latest version: 4.0.0, last published: 3 years ago. Start using nocache in your project b"
+        },
+        {
+          "title": "regex - Adding ?nocache=1 to every url (including the assets like...",
+          "url": "https://stackoverflow.com/questions/38333569/adding-nocache-1-to-every-url-including-the-assets-like-stylesheet-behind-the",
+          "content": "Jul 12, 2016 · Alright, this is due to the pain that godaddy gives me by implementing their own caching in a MANAGED WOR"
+        },
+        {
+          "title": "nocache/README at master · Feh/nocache · GitHub",
+          "url": "https://github.com/Feh/nocache/blob/master/README",
+          "content": "minimize caching effects. Contribute to Feh/nocache development by creating an account on GitHub."
+        },
+        {
+          "title": "GitHub - helmetjs/nocache: Middleware to disable client-side...",
+          "url": "https://github.com/helmetjs/nocache",
+          "content": "Middleware to disable client-side caching. Contribute to helmetjs/nocache development by creating an account on GitHub."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "category": "新闻",
+      "query": "latest news semiconductor export controls",
+      "degraded": false,
+      "degraded_reason": null,
+      "pool_size": 24,
+      "on_topic_candidates": 17,
+      "no_relevant_results": false,
+      "results": [
+        {
+          "title": "Biden’s Unprecedented Semiconductor Bet | Carnegie Endowment for...",
+          "url": "https://carnegieendowment.org/posts/2022/10/bidens-unprecedented-semiconductor-bet",
+          "content": "In issuing the latest round of export controls, President Joe Biden’s administration chose to play the cards it had for "
+        },
+        {
+          "title": "Insight into the U.S. Semiconductor Export Controls Update",
+          "url": "https://www.csis.org/analysis/insight-us-semiconductor-export-controls-update",
+          "content": "The Scholl Chair team analyzes the latest update to U.S. advanced semiconductor export controls, which come a year after"
+        },
+        {
+          "title": "Trump's AI chip export controls could go either way for Korea - Korea JoongAng Daily ,Korean news in Engl....",
+          "url": "https://www.koreajoongangdaily.com/business/trumps-ai-chip-export-controls-could-go-either-way-for-korea/12444537",
+          "content": "2025.05.14.Published May 14, 2025 - 6:36 p.m. Modified May 14, 2025 - 8:06 p.m.2025.05.14."
+        },
+        {
+          "title": "China Lashes Out at Latest US Export Controls on Chips - VOA",
+          "url": "https://www.voanews.com/a/china-lashes-out-at-latest-us-export-controls-on-chips/6781565.html",
+          "content": "2022.10.08.FILE - Employees wearing protective equipment work at a semiconductor production facility for Renesas Electro"
+        },
+        {
+          "title": "Semiconductor Export Controls in 2026: Dual-Use Risk, Re-export...",
+          "url": "https://frilinglaw.com/blog/semiconductor-export-controls",
+          "content": "This article explains semiconductor export controls in 2026, with special focus on dual-use risk, resale responsibility,"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "category": "新闻",
+      "query": "台风 最新消息 路径",
+      "degraded": false,
+      "degraded_reason": null,
+      "pool_size": 22,
+      "on_topic_candidates": 20,
+      "no_relevant_results": false,
+      "results": [
+        {
+          "title": "第17号台风米娜最新台风路径图（持续更新）- 深圳本地宝",
+          "url": "https://m.bendibao.com/show992475.html",
+          "content": "第17号台风米娜最新台风路径图（持续更新）. -图源中央气象台. （三）深圳台风网路径图（9月19日20时19分截图）. 实时路径查询：点此进入. 台风最新消息：2025深圳台风最新消息（持续更新）."
+        },
+        {
+          "title": "台风“凤凰”路径距离福州有多少公里-抖音",
+          "url": "https://www.douyin.com/shipin/7572755927724656691",
+          "content": "台风凤凰继续影响台闽浙，新台风胚胎91和强冷空气酝酿中！ #台风 #台风凤凰 #台风最新消息台风实时路径 #最新天气预报 #广东天气."
+        },
+        {
+          "title": "2026广州台风最新消息_广州台风实时路径|登陆时间地点-广州本地宝",
+          "url": "http://gz.bendibao.com/news/zhuantitaifeng/",
+          "content": "登陆时间＋地点 ; 预计，“红霞”将以每小时20-25公里的速度向西偏北方向移动，强度逐渐加强，将于今天夜间至26日早晨在香港到广东陆丰一带沿海登陆（35-42米/秒，12-14级，台风级或强台风级），登陆后转向偏北方向移动，强度逐渐减弱。"
+        },
+        {
+          "title": "7号台风，最新路径公布！ 广东35以上高温来了_广州日报大洋网",
+          "url": "https://news.dayoo.com/guangdong/202606/21/139996_54972184.htm",
+          "content": "预计，台风“米克拉”将以每小时20～25公里的速度向西偏北方向移动，强度逐渐增强，最强可达强台风级或超强台风级（48～55米/秒，15～16级），并逐渐向我国."
+        },
+        {
+          "title": "超强台风“巴威”即将进入福建警戒区！福州或迎强降雨_福视悦动 - 福州明珠 ....",
+          "url": "https://www.zohi.tv/p/415464.html",
+          "content": "2026.07.07.17级以上！超强台风“巴威”路径北调了，或在闽浙沿海一带登陆！ 台风“巴威”最新消息 今天（7日）早晨8时35分，今年第9号台风“巴威”（超强台风级）的中心位于关岛塞班偏西方向约640公里的洋面上，中心附近最大风力有1"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "category": "新闻",
+      "query": "美国 关税 最新政策",
+      "degraded": false,
+      "degraded_reason": null,
+      "pool_size": 24,
+      "on_topic_candidates": 18,
+      "no_relevant_results": false,
+      "results": [
+        {
+          "title": "特朗普为何突然出台重大关税豁免？ “特别适用于中国产品”",
+          "url": "https://www.jfdaily.com/wx/detail.do?id=892234",
+          "content": "最新豁免的出台，终结了美国出台“对等关税”后的“狂野一周”，也被视为美国政府关税政策的“180度大转弯”，再次凸显其贸易政策的混乱本质。"
+        },
+        {
+          "title": "外媒：关税或将致美国日用品全面涨价-运城晚报",
+          "url": "https://www.edurew.com/html/03c79099206.html",
+          "content": "针对美国最新公布的关税政策，英国广播公司、美联社等报道称，美新关税政策将推高美国民众几乎所有日用品的价格，尤其是服装、食品等，损害美国消费者和企业的利益。 报道称，美国服装与鞋类协会近日表示，根据最新 西安碑林区（小姐上门服务）全套服务（薇"
+        },
+        {
+          "title": "三年来首次下滑！关税政策正让美国经济经历“超出预期的糟糕” - 韩国最大的....",
+          "url": "https://chinese.joins.com/news/articleView.html?idxno=119620",
+          "content": "2025.05.02.美国商务部4月30日公布最新数据显示，2025年第一季度，按年率计算，美国国内生产总值(GDP)环比萎缩0.3%，为2022年以来的首次收缩。这一最新数据的糟糕程度超出市场预期，凸显美国政府关税政策引发的不确定性持续上"
+        },
+        {
+          "title": "拦不住的美国关税大棒，我听到卖家一片哀嚎 - 电商派",
+          "url": "https://www.pai.com.cn/p/01jqr3hhnvsf7be9e7vmzxhwjd",
+          "content": "事实上，美国关税政策反复无常，T86清关模式也不是第一次面临取消的命运。美国暂缓取消T86清关政策 图源：whitehouse."
+        },
+        {
+          "title": "Temu 和 Shein...",
+          "url": "https://www.100ec.cn/detail--6648723.html",
+          "content": "9 日起取消 Google 购物平台所有支出，并于 4 月 25 日因 “全球贸易规则和关税致运营费用上涨” 进行价格调整，Shein 也将在同日实施相同举措。 一、政策背景：特朗普政府关税新政及其影响."
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "category": "技术",
+      "query": "Python 3.13 新特性",
+      "degraded": false,
+      "degraded_reason": null,
+      "pool_size": 24,
+      "on_topic_candidates": 17,
+      "no_relevant_results": false,
+      "results": [
+        {
+          "title": "好学编程：Python 3.13 这些新特性你一定要知道！ - 知乎",
+          "url": "https://zhuanlan.zhihu.com/p/12824443094",
+          "content": "Python 3.13 已于 2024 年 10 月 7 日正式发布。作为 Python 的最新版本，它带来了多项令人振奋的新特性和改进。本文好学编程将为你详细介绍这些重要更新，帮助你更好地利用 Python 3.13 进行开发。"
+        },
+        {
+          "title": "Python的新变化 — Python 3.13.15 文档",
+          "url": "https://docs.python.org/zh-cn/3.13/whatsnew/index.html",
+          "content": "Mar 13, 2015 · 这个“Python 有什么新变化？”系列内容会带您浏览 Python 大版本之间重要的变化。在新版发布后，如果您希望掌握最新变化，请务必阅读这些内容。 Python 3.13 有什么新变化- 摘要 -- 发布重"
+        },
+        {
+          "title": "[アップデート] AWS Lambda で Python 3.13...",
+          "url": "https://dev.classmethod.jp/articles/aws_lambda_support_python313/",
+          "content": "情報が古い可能性がありますので、ご注意ください。 いわさです。 先日、AWS SAM CLI にて Python 3.13 サポートがアナウンスされました。"
+        },
+        {
+          "title": "「Python 3.13」が正式版に ～「GIL... | 窓の杜",
+          "url": "https://forest.watch.impress.co.jp/docs/news/1629636.html",
+          "content": "Python Insider: Python 3.13.0 (final) released.「Python 3.14」が正式版に ～Androidバイナリも公式提供."
+        },
+        {
+          "title": "Python 3.13 Debuts With New Interactive Interpreter & Experimental JIT",
+          "url": "https://www.phoronix.com/news/Python-3.13-Released",
+          "content": "Following a last minute delay due to a performance regression, Python 3.13 stable is out today as the annual major featu"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "category": "技术",
+      "query": "MCP protocol specification 2026",
+      "degraded": false,
+      "degraded_reason": null,
+      "pool_size": 24,
+      "on_topic_candidates": 17,
+      "no_relevant_results": false,
+      "results": [
+        {
+          "title": "다음 MCP 스펙 릴리즈(2026-07-28)의 주요 내용: Stateless 전환 및 공식 확장 도입 예....",
+          "url": "https://discuss.pytorch.kr/t/mcp-2026-07-28-stateless/10387",
+          "content": "2026.05.27.MCP 스펙 릴리즈 후보(The 2026-07-28 MCP Specification Release Candidate) 소개 Model Context Protocol(MCP)은 AI 모델과 외부 도"
+        },
+        {
+          "title": "The New MCP Roadmap | Model Context Protocol Blog",
+          "url": "https://blog.modelcontextprotocol.io/posts/mcp-roadmap/",
+          "content": "2026.08.22.An update on the Model Context Protocol roadmap and focus areas for upcoming specification releases. August 2"
+        },
+        {
+          "title": "MCP, 세션 지우고 HTTP 인프라 위로… 2026-07-28 spec 확정 - Insights",
+          "url": "https://insights.marvin-42.com/articles/mcp-http-2026-07-28-spec",
+          "content": "2026.07.30.agent tool 서버를 띄울 때 붙어 다니던 sticky session 부담이 MCP 정식 spec에서 사라진다. Model Context Protocol 팀은 2026년 7월 28일 spec"
+        },
+        {
+          "title": "Specification - Model Context Protocol",
+          "url": "https://modelcontextprotocol.io/specification/2026-07-28",
+          "content": "3일 전You are viewing an older version (2026-07-28) of the specification. View the latest version (latest) Copyright © Mod"
+        },
+        {
+          "title": "The Myceloom Protocol Specification (MCP-1) | myceloom",
+          "url": "https://myceloom.com/protocol/spec.html",
+          "content": "Keywords: Myceloom Protocol, MCP-1, Technical Specification, Web4 Standard, Distributed Systems, Protocol Design, Living"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "category": "技术",
+      "query": "FastAPI 与 Django 性能对比",
+      "degraded": false,
+      "degraded_reason": null,
+      "pool_size": 24,
+      "on_topic_candidates": 9,
+      "no_relevant_results": false,
+      "results": [
+        {
+          "title": "fastapi与django异步的并发对比_faskapi 并发访问-CSDN博客",
+          "url": "https://blog.csdn.net/weixin_36179862/article/details/104857488",
+          "content": "django-ninja VS fastapi性能对比.FastAPI 与 Django 在性能方面相比，FastAPI 更快。"
+        },
+        {
+          "title": "Django 与 FastAPI 架构对比：学习路径指南Django 与 FastAPI...",
+          "url": "https://juejin.cn/post/7565799761123786806",
+          "content": "Django 提供模板系统及全栈功能，而 FastAPI 主打异步性能与类型安全。 本文将详解如何对两者进行评估选择。"
+        },
+        {
+          "title": "FastAPI 与 Django：2026 年最佳 Python 框架",
+          "url": "https://www.lastingdynamics.com/zh/blog/fastapi-vs-django/",
+          "content": "FastAPI vs Django for Startups（MVP）.FastAPI 与 Django 的主要区别. 性能比较. 异步功能. 开发人员体验."
+        },
+        {
+          "title": "2026年Django vs Flask vs FastAPI ： 该选哪个 | [ Mecanik Dev ]",
+          "url": "https://mecanik.dev/zh-cn/posts/python-web-framework-comparison-2026-django-vs-flask-vs-fastapi/",
+          "content": "本指南深入对比Django、Flask和FastAPI，涵盖性能、生态系统、学习曲线，以及根据实际构建内容应该选择哪个框架。"
+        },
+        {
+          "title": "用Python构建微服务架构实践_FastAPI与Django对比详解-PHP中文网",
+          "url": "https://www.php.cn/faq/1920314.html",
+          "content": "FastAPI和Django都能用于微服务开发，但定位、设计哲学和适用场景差异明显——FastAPI更适合轻量、高性能、API优先的微服务；Django则更适合作为功能完备的单体服务或需快. 速集成用户管理、Admin、ORM等能力的中型微"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "category": "技术",
+      "query": "how does HTTP/3 QUIC work",
+      "degraded": false,
+      "degraded_reason": null,
+      "pool_size": 24,
+      "on_topic_candidates": 20,
+      "no_relevant_results": false,
+      "results": [
+        {
+          "title": "HTTP/3 Maintains a Consistent Connection ID",
+          "url": "https://www.pubnub.com/blog/http3-and-quic-the-connection-id/",
+          "content": "How does HTTP/3 maintain a constant Connection ID? How does switching from 5G to Wi-Fi affect HTTP/3 connections? How do"
+        },
+        {
+          "title": "[Illustration] How does HTTP/3 (HTTP over QUIC) work?... | SEの道標",
+          "url": "https://milestone-of-se.nesuke.com/en/l7protocol/http/http3-over-quic/",
+          "content": "Change from HTTP/2 to HTTP/3. HTTP/3 has been decided to operate on a new protocol called QUIC. QUIC works over UDP. HTT"
+        },
+        {
+          "title": "QUIC | HAProxy Technologies Glossary",
+          "url": "https://www.haproxy.com/glossary/what-is-quic",
+          "content": "# How does QUIC work?HTTP/3 works at the application layer to unify functionality between QUIC and the greater HTTP prot"
+        },
+        {
+          "title": "The Future of the Internet is here: QUIC Protocol and HTTP/3 | Medium",
+          "url": "https://medium.com/@luisrodri/the-future-of-the-internet-is-here-quic-protocol-and-http-3-d7061adf424f",
+          "content": "How does QUIC work? Unlike TCP, which uses a connection-oriented approach, QUIC uses a multiplexed stream of UDP packets"
+        },
+        {
+          "title": "What Are QUIC and HTTP/3?",
+          "url": "https://www.f5.com/glossary/quic-http3",
+          "content": "2025.08.01.Learn how QUIC HTTP/3 work and why you might want to choose them for improvement of security and performance."
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "category": "技术",
+      "query": "Rust async runtime tokio 原理",
+      "degraded": false,
+      "degraded_reason": null,
+      "pool_size": 24,
+      "on_topic_candidates": 19,
+      "no_relevant_results": false,
+      "results": [
+        {
+          "title": "Rust Async + Tokio 入門：非同步 Rust vs Python asyncio · 每日拍拍",
+          "url": "https://dailypypy.org/learn/rust-async-tokio/",
+          "content": "Rust：tokio::sync::mpsc. 八、底層原理：Python vs Rust 的非同步模型.features = [\"full\"] 會啟用所有功能（runtime、net、time、sync 等）。"
+        },
+        {
+          "title": "Topics | Tokio - An asynchronous Rust runtime",
+          "url": "https://tokio.rs/tokio/topics?search=Rust+async+runtime+tokio+%E5%8E%9F%E7%90%86+site%3Atokio.rs&safe=0",
+          "content": "Tokio is a runtime for writing reliable asynchronous applications with Rust. It provides async I/O, networking, scheduli"
+        },
+        {
+          "title": "Why Tokio Isn’t Just an Async Runtime — It’s an Entire Concurrency Framework | by Aayush Tiwari",
+          "url": "https://medium.com/@aayush71727/why-tokio-isnt-just-an-async-runtime-it-s-an-entire-concurrency-framework-c4e8b505a627",
+          "content": "2025.09.24.Why Tokio Isn’t Just an Async Runtime — It’s an Entire Concurrency Framework A Surprising Overlooked Truth Mo"
+        },
+        {
+          "title": "Rust Tokio ランタイム Deep Dive — Future、Waker、Work-Stealing...",
+          "url": "https://www.youngju.dev/blog/culture/2026-04-15-rust-tokio-async-runtime-future-waker-work-stealing-deep-dive-guide-2025.ja",
+          "content": "Runtime: Tokio (事実上の標準)、async-std、smol、embassy (no_std)、glommio (io_uring per-core)。 Library: hyper/axum, reqwest, sqlx,"
+        },
+        {
+          "title": "Rust async 简介 - Tokio Internals",
+          "url": "https://tony612.github.io/tokio-internals/01_intro_async.html",
+          "content": "2.1. Tokio runtime 启动. 2.2. 主线程 - 整体逻辑和等待连接.Tokio Internals. Rust async 简介."
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "category": "政策",
+      "query": "2026年 新能源汽车 补贴政策",
+      "degraded": false,
+      "degraded_reason": null,
+      "pool_size": 22,
+      "on_topic_candidates": 12,
+      "no_relevant_results": false,
+      "results": [
+        {
+          "title": "新能源汽车补贴退坡，是“精准扶持”还是“福利缩水”？ 1000+...",
+          "url": "https://post.smzdm.com/p/a82e37rn/",
+          "content": "4. 2026年初新能源汽车补贴新政解读. 知乎. 5. 重磅！ 新能源汽车补贴政策调整，市场格局或变. 微信公众号. 6. 2026年新能源车补贴政策曝光！ 微信公众号.16. 新能源汽车补贴政策延续. 微信公众号. 17. 2026年新"
+        },
+        {
+          "title": "国补出炉！ 电车油车补贴揭晓-有驾",
+          "url": "https://youjia-pc.bdstatic.com/article/9608259256117415955.html",
+          "content": "好消息是，2026年的购车补贴政策终于出来了，不管是电车还是油车，补贴额度是多少？新能源汽车补贴政策. 咱们再来看看置换补贴这块儿。 新能源汽车的最高补贴是1.5万元，也就是购车价格的8%。"
+        },
+        {
+          "title": "2026年4月汽车国补置换2万元申请全攻略：手把手教你领到国家补贴",
+          "url": "https://www.zhihu.com/tardis/jm/art/2033119484798616793",
+          "content": "2026年，国家继续实施汽车以旧换新补贴政策，也就是大家常说的“国补”。补贴金额： · 买新能源车 → 按新车销售价格的12%补贴，最高2万元."
+        },
+        {
+          "title": "qdzb07b20260116C",
+          "url": "https://epaper.qingdaonews.com/qdzb/resfile/2026-01-16/A07/qdzb-20260116-A07.pdf",
+          "content": "2026 年伊始新一轮购车国补新政正式落地实施。 此次新政不仅对补贴模式进行了优化还 同步调整了新能源汽车购置税优惠政策形成“国补+税补”的双重让利格局。"
+        },
+        {
+          "title": "2026年新能源汽车下乡活动（四川宜宾站）与世界动力电池大会同期启动 中国汽....",
+          "url": "http://www.caam.org.cn/chn/1/cate_3/con_5237303.html",
+          "content": "2026.09.04.9月3日，2026年新能源汽车下乡活动——四川宜宾站，在“中国动力电池之都”宜宾国际会展中心正式启动，活动将持续至9月6日。本次活动受工业和信息化部、商务部、国家发展改革委、农业农村部、国家能源局五部委委托，中国汽车工"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "category": "政策",
+      "query": "数据出境安全评估办法 最新",
+      "degraded": false,
+      "degraded_reason": null,
+      "pool_size": 23,
+      "on_topic_candidates": 19,
+      "no_relevant_results": false,
+      "results": [
+        {
+          "title": "数据出境安全评估新规落地，跨境数据流动迎强监管 - 知乎",
+          "url": "https://zhuanlan.zhihu.com/p/2067659580465845111",
+          "content": "Aug 27, 2026 · 2026 年，数据出境安全监管持续加码，《数据出境安全评估办法》配套实施细则和指南陆续发布，数据出境安全评估进入常态化、规范化新阶段。随着数字经济全球化发展，数据跨境流动越来越频繁，但数据安全风险也日益…"
+        },
+        {
+          "title": "数据出境安全评估办法.docx - 墨天轮文档",
+          "url": "https://www.modb.pro/doc/70005",
+          "content": "规范数据出境活动，保护个人信息权益，维护国家安全和社会公共利益，促进数据跨境安全、自由流动，制定的管理办法。数据出境安全评估办法.docx."
+        },
+        {
+          "title": "中国网络安全审查“组合拳”学者:全面管制时代来临 - 美国之音中文网 您可靠....",
+          "url": "https://www.voachinese.com/a/china-launches-security-review-on-cnki-the-country-s-leading-academic-research-database-0722222/6666367.html",
+          "content": "2022.07.22.中国国家互联网信息办公室(网信办)针对网络审查再祭出一系列新规，除自8月1日起要求境内各网络平台严格核实使用者的身分外，也发布《数据出境安全评估办法》，严格管控数据跨国流通，更对中国最重要的学术平台“知网”启动网络安全"
+        },
+        {
+          "title": "数据出境安全评估办法",
+          "url": "https://zhuanti.mct.gov.cn/2025gjwlaqz_detail_2/9240.html",
+          "content": "Sep 10, 2025 · 法律法规 版权所有：中华人民共和国文化和旅游部 地址：东城区朝阳门北大街10号 邮编：100020"
+        },
+        {
+          "title": "国家网信办发布《数据出境安全评估申报指南（第三版）》",
+          "url": "https://www.toutiao.com/article/7520599274888004150/",
+          "content": "Jun 27, 2025 · 中新网6月27日电 据中国网信网消息，为了指导和帮助数据处理者规范有序申报数据出境安全评估，国家互联网信息办公室编制了《数据出境安全评估申报指南 (第三版)》，对数据处理者申报数据出境安全评估需要提交的相关材料"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "category": "政策",
+      "query": "EU AI Act compliance requirements",
+      "degraded": false,
+      "degraded_reason": null,
+      "pool_size": 24,
+      "on_topic_candidates": 24,
+      "no_relevant_results": false,
+      "results": [
+        {
+          "title": "EU AI Act Compliance | Microsoft Trust Center",
+          "url": "https://www.microsoft.com/en-au/trust-center/compliance/eu-ai-act",
+          "content": "Microsoft has incorporated “prohibited practices” into our internal, company-wide Restricted Use Policy. The EU AI Act o"
+        },
+        {
+          "title": "EU AI Act Compliance Guide | Sinaptic.AI",
+          "url": "https://sinaptic.ai/articles/eu-ai-act-compliance",
+          "content": "For providers and deployers of GPAI (including chatbots like ChatGPT), there are strict transparency requirements. Users"
+        },
+        {
+          "title": "EU AI Act Compliance: What You Need to Know",
+          "url": "https://www.sai360.com/regulations/eu-ai-act",
+          "content": "SAI360 helps organizations take a practical, structured approach to meeting the requirements of the EU AI Act. It brings"
+        },
+        {
+          "title": "How different stakeholders are thinking about EU AI Act compliance | IAPP",
+          "url": "https://iapp.org/news/a/how-different-stakeholders-are-thinking-about-eu-ai-act-compliance",
+          "content": "ITIC argues in its EU AI policy priorities that member states and the Commission need to coordinate on implementation re"
+        },
+        {
+          "title": "EU AI Act - EU AI Compliance Act (EN)",
+          "url": "https://www.udemy.com/course/eu-ai-act-eu-ai-compliance-act-en/",
+          "content": "This course contains the use of artificial intelligence.This basic course is dedicated to the EU AI Act - a European Uni"
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "category": "政策",
+      "query": "个人所得税 专项附加扣除 标准",
+      "degraded": false,
+      "degraded_reason": null,
+      "pool_size": 22,
+      "on_topic_candidates": 15,
+      "no_relevant_results": false,
+      "results": [
+        {
+          "title": "月底截止，事关收入！ 抓紧确认",
+          "url": "https://m.gmw.cn/2025-12/02/content_1304246592.htm",
+          "content": "个税专项附加扣除信息确认. 开始啦！ 纳税人可通过个人所得税App.3岁以下婴幼儿照护、子女教育专项附加扣除标准为每个子女每月2000元。 赡养老人专项附加扣除标准为每月3000元。"
+        },
+        {
+          "title": "事关你的钱袋子，今起确认！ | 每日经济新闻",
+          "url": "https://m.nbd.com.cn/articles/2025-12-01/4162702.html",
+          "content": "各个项目. 分别按照什么标准扣除？ 3岁以下婴幼儿照护、子女教育专项附加扣除标准为每个子女每月2000元。 赡养老人专项附加扣除标准为每月3000元。税务部门提醒. 个人所得税专项附加扣除信息."
+        },
+        {
+          "title": "国务院关于提高个人所得税有关专项附加扣除标准的通知_税务_中国政府网",
+          "url": "https://www.gov.cn/zhengce/content/202308/content_6901206.htm",
+          "content": "为进一步减轻家庭生育养育和赡养老人的支出负担，依据《中华人民共和国个人所得税法》有关规定，国务院决定，提高3岁以下婴幼儿照护等三项个人所得税专项附加扣除标准。"
+        },
+        {
+          "title": "事关医疗、孩子、房贷！ 个人所得税专项附加扣除常见问题解答",
+          "url": "https://www.cq.gov.cn/zwgk/zfxxgkml/hygq/202503/t20250310_14387291_wap.html",
+          "content": "个人所得税专项附加扣除常见问题解答.父母可以选择由其中一方按扣除标准的100%扣除，也可以选择由双方分别按扣除标准的50%扣除，具体扣除方式在一个纳税年度内不能变更。 住房贷款提前还清了，该如何修改专项附加扣除？"
+        },
+        {
+          "title": "国家税务总局关于贯彻执行提高个人所得税有关专项附加扣除标准政策的公告_....",
+          "url": "https://www.gov.cn/zhengce/zhengceku/202309/content_6901454.htm",
+          "content": "3岁以下婴幼儿照护、子女教育专项附加扣除标准，由每个婴幼儿（子女）每月1000元提高到2000元。"
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "category": "政策",
+      "query": "children privacy law COPPA update",
+      "degraded": false,
+      "degraded_reason": null,
+      "pool_size": 24,
+      "on_topic_candidates": 18,
+      "no_relevant_results": false,
+      "results": [
+        {
+          "title": "Cheat Sheet: Children’s privacy law update adds pressure against Facebook’s Instagram for kids plan",
+          "url": "https://digiday.com/media/cheat-sheet-childrens-privacy-law-update-adds-pressure-against-facebooks-instagram-for-kids-plan/",
+          "content": "2021.05.12.Cheat Sheet: Children’s privacy law update adds pressure against Facebook’s Instagram for kids plan2021.05.12"
+        },
+        {
+          "title": "Senator Says Federal Law Protecting Children Online Needs Updating",
+          "url": "https://www.wsj.com/livecoverage/facebook-hearing-live-updates/card/TwUpnUNNG7lhv25M7F8I",
+          "content": "2021.10.01.Sen. Maria Cantwell (D., Wash.)—who chairs the powerful Commerce Committee—said the big policy takeaway from "
+        },
+        {
+          "title": "Privacy Policy - The Wheeler School - N-12 Coed Day School in Providence RI",
+          "url": "https://www.wheelerschool.org/privacy-policy/",
+          "content": "COPPA Statement The Children’s Online Privacy Protection Act (COPPA) is a federal law governing the online collection of"
+        },
+        {
+          "title": "What is COPPA? The Children's Online Privacy Protection Act",
+          "url": "https://ed.link/community/coppa/",
+          "content": "The Children's Online Privacy Protection Act, or COPPA, is a U.S. federal law that protects the personal data of childre"
+        },
+        {
+          "title": "Children’s Online Privacy in 2025: The Amended COPPA Rule | Loeb & Loeb LLP",
+          "url": "https://www.loeb.com/en/insights/publications/2025/05/childrens-online-privacy-in-2025-the-amended-coppa-rule",
+          "content": "2025.01.05.Discover key 2025 COPPA rule changes, FTC enforcement updates, and how companies must adapt to protect childr"
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "category": "商品",
+      "query": "iPhone 17 Pro 价格 参数",
+      "degraded": false,
+      "degraded_reason": null,
+      "pool_size": 24,
+      "on_topic_candidates": 3,
+      "no_relevant_results": false,
+      "results": [
+        {
+          "title": "淘宝数码网-数码百科知识与数码百科资讯平台",
+          "url": "https://shuma.taobao.com/",
+          "content": "数码百科知识，数码百科资讯，数码，淘宝数码网。"
+        },
+        {
+          "title": "iPhone 17 Pro and 17 Pro Max online in Saudi Arabia",
+          "url": "https://redsea.com/en/iphone-17-pro",
+          "content": "Explore iPhone, the world’s most powerful personal device. Check out iPhone 17 Pro, iPhone 17 Pro Max"
+        },
+        {
+          "title": "Apple unveils iPhone 17 Pro and iPhone 17 Pro Max",
+          "url": "https://www.apple.com/newsroom/2025/09/apple-unveils-iphone-17-pro-and-iphone-17-pro-max/",
+          "content": "iPhone 17 Pro is by far the most powerful iPhone we’ve ever made, with a stunning new design rebuilt from the inside out"
+        },
+        {
+          "title": "Apple、iPhone 17 ProとiPhone 17 Pro Maxを発表 - Apple (日本)",
+          "url": "https://www.apple.com/jp/newsroom/2025/09/apple-unveils-iphone-17-pro-and-iphone-17-pro-max/",
+          "content": "2025.09.09.A19 Proを搭載したまったく新しい設計により、iPhone 17 ProはiPhone史上最高のパフォーマンス、カメラシステム、バッテリー駆動時間を実現します2025.09.09."
+        },
+        {
+          "title": "iPhone 17 Pro Case Collection - Spigen.com Official Site",
+          "url": "https://www.spigen.com/collections/iphone-17-pro-case-collection?sort_by=manual&filter.v.option.device=iPhone+17+Pro&current.device.choice=iPhone+17+Pro",
+          "content": "Protect your iPhone 17 Pro with one of our cases. Select from rugged, slim and clear cases. Stylish Defense, MagSafe Com"
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "category": "商品",
+      "query": "best noise cancelling headphones 2026 review",
+      "degraded": false,
+      "degraded_reason": null,
+      "pool_size": 24,
+      "on_topic_candidates": 16,
+      "no_relevant_results": false,
+      "results": [
+        {
+          "title": "Best Noise Cancelling Headphones 2026 Review | TikTok",
+          "url": "https://www.tiktok.com/discover/best-noise-cancelling-headphones-2026-review",
+          "content": "Best headphones in 2026 #techtok #apple #airpodspro2 AirPods Pro 2 review 2026: best noise-cancelling Apple headphones. "
+        },
+        {
+          "title": "Best cheap noise-cancelling headphones 2026: expert-tested recommendations | Wha",
+          "url": "https://www.whathifi.com/best-buys/best-cheap-noise-cancelling-headphones",
+          "content": "All review verdicts are agreed upon by the team rather than an individual reviewer to eliminate any personal preference "
+        },
+        {
+          "title": "Best noise-cancelling headphones 2026 – tested by our in-house review experts |",
+          "url": "https://www.whathifi.com/best-buys/headphones/best-noise-cancelling-headphones",
+          "content": "The two most important things to consider are whether having different levels of ANC is important to you or whether you "
+        },
+        {
+          "title": "The 5 Best Noise Cancelling Headphones of 2026 - RTINGS.com",
+          "url": "https://www.rtings.com/headphones/reviews/best/by-feature/noise-cancelling",
+          "content": "2026.06.26.The Sony WH-1000XM6 are the best noise cancelling headphones we've tested. These premium over-ears have remar"
+        },
+        {
+          "title": "Best Noise-Cancelling Headphones of 2026: Tested... | CompareElite",
+          "url": "https://compareelite.com/blog/article/best-noise-cancelling-headphones-2026",
+          "content": "What are the best noise-cancelling headphones in 2026?Premium noise-cancelling headphones from Sony, Bose, and Sennheise"
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "category": "商品",
+      "query": "扫地机器人 推荐 性价比",
+      "degraded": false,
+      "degraded_reason": null,
+      "pool_size": 23,
+      "on_topic_candidates": 6,
+      "no_relevant_results": false,
+      "results": [
+        {
+          "title": "【26...",
+          "url": "https://www.bilibili.com/video/BV1btfZBxEYB/",
+          "content": "【2026年1月扫地机器人推荐】不同品牌的扫地机器人到底该怎么选？ 哪个价位选哪款？ 一期视频帮你解决选购问题！【26年扫地机器人推荐-性价比篇】值得买的型号就只有这些，扫地机器人选购攻略！ 10:35."
+        },
+        {
+          "title": "石头P20 Max vs... | 新浪网",
+          "url": "https://k.sina.com.cn/article_7879923199_1d5ae15ff06801jub0.html",
+          "content": "石头P20 Max vs 同价位扫地机，谁才是性价比之王？ 3个维度硬核对比+FAQ.关键字 : 石头P20 Max 扫地机器人推荐 高性价比扫地机 同价位扫地机对比 2026年扫地机选购."
+        },
+        {
+          "title": "【秒懂知识库】扫地机器人只用来扫地你就out了",
+          "url": "https://jd.zol.com.cn/816/8165571.html",
+          "content": "【秒懂知识库】扫地机器人只用来扫地你就out了. 单扫地、扫地+拖地机器人价格便宜.对于租房党新手来说，推荐入手扫地+拖地机器人，性价比更高。"
+        },
+        {
+          "title": "闲鱼小米扫地机器人很便宜-抖音",
+          "url": "https://www.douyin.com/shipin/7349852712957413391",
+          "content": "好用便宜，这才是高性价比的扫地机 #小米米家免扫拖机器人2 #小米扫地机 #开箱评测.小米扫地机器人，100分只能算合格。"
+        },
+        {
+          "title": "扫地机哪个牌子好？ 求推荐一个性价比高的? - 知乎",
+          "url": "https://www.zhihu.com/tardis/jm/ans/2066203690583773200",
+          "content": "租房两年，前后换两台扫地机踩大坑，终于挖到 MOVA 这个性价比牌子，P70S 水箱版千元出头，功能对标两三千机型，预算 2000 内闭眼冲。"
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "category": "商品",
+      "query": "RTX 5090 benchmark 价格",
+      "degraded": false,
+      "degraded_reason": null,
+      "pool_size": 24,
+      "on_topic_candidates": 13,
+      "no_relevant_results": false,
+      "results": [
+        {
+          "title": "ASUS Details GeForce RTX 5090 and 5080 Pricing",
+          "url": "https://www.techporn.ph/asus-details-geforce-rtx-5090-and-5080-pricing/",
+          "content": "ASUS has officially launched the highly anticipated GeForce RTX 5090 and 5080 graphics cards in the Philippines, setting"
+        },
+        {
+          "title": "NVIDIA GeForce RTX 5090 Review: Pushing Boundaries with AI Acceleration - Storag",
+          "url": "https://www.storagereview.com/review/nvidia-geforce-rtx-5090-review-pushing-boundaries-with-ai-acceleration",
+          "content": "The Procyon AI Text Generation Benchmark Benchmark simplifies AI LLM performance testing by offering a compact and consi"
+        },
+        {
+          "title": "GeForce RTX 5090 D [in 1 benchmark]",
+          "url": "https://technical.city/en/video/GeForce-RTX-5090-D",
+          "content": "This section provides details about the physical dimensions of GeForce RTX 5090 D and its compatibility with other compu"
+        },
+        {
+          "title": "NVIDIA RTX 5090, il futuro è nelle tecnologie | Test & Recensione",
+          "url": "https://www.tomshw.it/hardware/nvidia-rtx-5090-test-recensione",
+          "content": "Per i benchmark con DLSS / FSR indichiamo, vicino al nome della scheda, la versione dell’upscaler usata. In fase di rece"
+        },
+        {
+          "title": "GPU price tracking 2026 — Lowest price on every graphics card from Nvidia, AMD, and Intel today",
+          "url": "https://www.tomshardware.com/pc-components/gpus/lowest-gpu-prices-tracking",
+          "content": "2026.01.24.Also, check out our list of the best graphics cards and our GPU benchmark hierarchy to see evergreen performa"
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "category": "商品",
+      "query": "国产显卡 摩尔线程 最新型号",
+      "degraded": false,
+      "degraded_reason": null,
+      "pool_size": 23,
+      "on_topic_candidates": 12,
+      "no_relevant_results": false,
+      "results": [
+        {
+          "title": "国产显卡品牌摩尔线程发新卡 单卡48GB显存_凤凰网",
+          "url": "https://i.ifeng.com/c/8VfiImHtDxn",
+          "content": "国产显卡品牌摩尔线程，终于又要发新显卡了。这张显卡的具体型号为MTT S4000，规格方面非常不错。 国产显卡品牌摩尔线程发新卡 单卡48GB显存."
+        },
+        {
+          "title": "MTTS70显卡多少钱_摩尔线程MTTS70国产显卡售价及参数-硬件之家",
+          "url": "https://www.yingjianzhijia.com/zhishi/76390.html",
+          "content": "摩尔线程MTTS70国产显卡售价及参数. 发售价格：2499元. 品牌：摩尔线程. 型号：MTTS70. 显卡核心：春晓. 核心频率：1.6GHz."
+        },
+        {
+          "title": "疑摩尔线程S90首曝！2年前的国产显卡 玩游戏竟然比RTX4060还厉害--快科技--科技....",
+          "url": "https://news.mydrivers.com/1/1064/1064120.htm",
+          "content": "疑摩尔线程S90首曝！2年前的国产显卡 玩游戏竟然比RTX4060还厉害"
+        },
+        {
+          "title": "国产显卡厂商摩尔线程宣布完成 15 亿元 B 轮融资，加速多功能 GPU...",
+          "url": "https://m.ithome.com/html/663833.htm",
+          "content": "国产显卡厂商摩尔线程宣布完成 15 亿元 B 轮融资，加速多功能 GPU 快速迭代."
+        },
+        {
+          "title": "摩尔线程（MooreThreads）MTT S80 8K高清 16G大显存 国产游戏独立显卡【图片 价格 品牌 报价】-京东",
+          "url": "https://item.jd.com/10065360417210.html",
+          "content": "摩尔线程（MooreThreads）MTT S80 8K高清 16G大显存 国产游戏独立显卡图片、价格、品牌样样齐全！【京东正品行货，全国配送，心动不如行动，立即购买享受更多优惠哦"
+        }
+      ]
+    }
+  ]
+}
