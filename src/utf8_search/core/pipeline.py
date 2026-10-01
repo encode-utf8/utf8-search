@@ -221,6 +221,9 @@ class SearchPipeline:
         # 主题相关性闸门（T10）：池内没有足够切题候选 → 如实降级，而不是把无关结果硬凑成 5 条
         if rank_stats.get("no_relevant_results"):
             degraded_reason = merge_degraded_reason(degraded_reason, "no_relevant_results")
+        # 新闻/动态意图下非内容页形态被补回（T11）：候选不足，只能保留门户页/日期活动页
+        if rank_stats.get("news_non_content_refilled"):
+            degraded_reason = merge_degraded_reason(degraded_reason, "news_structure_unverified")
 
         # 3) 深度模式：并发抓取正文（受总预算约束）
         pages_read = 0

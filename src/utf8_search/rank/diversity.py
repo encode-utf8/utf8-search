@@ -223,6 +223,9 @@ def is_aggregator_page(result: SearchResult) -> bool:
 # 命中即**硬剔除**（不参与"候选不足补回"——垃圾站不该因为池子空就被放回来）。
 _FARM_MARKERS = ("短剧", "漫剧", "擦边", "成人视频", "色情", "艳情", "福利视频")
 _FARM_VIDEO_TAILS = ("在线观看", "免费观看", "在线播放", "免费在线", "全集")
+# 成人向标记（T11-C 补形态）：T10 漏网页「AI成人短剧《高三爱情故事》第4到20… | 17黑料网」
+# 有短剧/成人标记、但标题没有「在线观看」这类视频站尾部 —— 只有"标记"也要能判成农场形态。
+_FARM_ADULT_MARKERS = ("成人", "色情", "擦边", "艳情", "福利视频")
 
 
 def is_content_farm(result: SearchResult, query: str) -> bool:
@@ -230,7 +233,57 @@ def is_content_farm(result: SearchResult, query: str) -> bool:
     if any(marker in (query or "") for marker in _FARM_MARKERS):
         return False
     text = f"{result.title or ''} {result.url or ''}"
-    return any(marker in text for marker in _FARM_MARKERS) and any(tail in text for tail in _FARM_VIDEO_TAILS)
+    has_farm = any(marker in text for marker in _FARM_MARKERS)
+    if not has_farm:
+        return False
+    return any(tail in text for tail in _FARM_VIDEO_TAILS) or any(
+        adult in text for adult in _FARM_ADULT_MARKERS
+    )
+
+
+# ------------------------------------------------------------------ 新闻/动态意图 × 来源类型（2026-10-02 T11，T9 方案①）
+# 观察：Q1/Q2 这类「新闻/动态」查询里，坏结果常是**非内容页形态** ——
+#   ① 站点首页 / 门户首页 / 栏目页（有实质内容也占槽位，如 Q2 的 Coze/OSCHINA/中集网、Q1 的发改委首页）；
+#   ② 日期活动页 / 杂志目录页（Q1 的「2026年9月13日…を開催します」「IRONMAN 2026年9月号」）。
+# 口径（T11）：识别为**新闻/动态意图**时，要求结果具备**内容页形态**；上述两类在**候选充足时剔除**，
+# 不足时按既有补回机制放回并标 `news_structure_unverified`。
+# 判据是纯函数 + 形态词（无站点黑名单、不对具体查询特判）。
+_NEWS_INTENT_TERMS = ("新闻", "动态", "资讯", "要闻", "快讯", "报道", "news", "headlines", "latest", "update")
+_EPHEMERA_MARKERS = (
+    "月号", "月刊", "開催", "共催", "イベント", "説明会", "相談会", "セミナー", "お知らせ", "お得情報", "募集",
+    "举办", "举行", "讲座", "沙龙", "活动预告", "报名",
+)
+_DATE_HEAD_WINDOW = 30  # 「IRONMAN(アイアンマン) 2026年9月号」这类刊名前缀要能容纳
+
+
+def has_news_intent(query: str) -> bool:
+    """是否为「新闻/动态」类意图（词面判据；复用既有时间意图词表）。"""
+    q = (query or "").lower()
+    if any(term in q for term in _NEWS_INTENT_TERMS):
+        return True
+    from .recency import has_recency_intent  # 局部导入，避免模块级循环依赖
+
+    return has_recency_intent(query)
+
+
+def looks_like_dated_ephemera(result: SearchResult) -> bool:
+    """**日期活动页 / 杂志目录页**形态：标题前 20 字里有日期，且带活动/刊物类词。"""
+    title = result.title or ""
+    head = title[:_DATE_HEAD_WINDOW]
+    if not _ITEM_TIME_PATTERNS["date"].search(head):
+        return False
+    return any(marker in title for marker in _EPHEMERA_MARKERS)
+
+
+def news_non_content_form(result: SearchResult, query: str) -> str | None:
+    """新闻/动态意图下的「非内容页形态」：`portal_homepage` / `dated_ephemera`；非新闻意图恒为 None。"""
+    if not has_news_intent(query):
+        return None
+    if looks_like_column(result):
+        return "portal_homepage"
+    if looks_like_dated_ephemera(result):
+        return "dated_ephemera"
+    return None
 
 
 # ---------------------------------------------------------------- 主题相关性闸门（2026-10-01 T10）
@@ -461,6 +514,11 @@ def apply_rank_filters(
     if drop_aggregator_pages:
         # 三类「无关形态」（T7）：电视节目单 / 院校迎新 / 开运日历 —— 形态命中且查询不是找这类内容。
         steps.append(("offtopic_form", lambda items: _split(items, lambda r: off_topic_form(r, query) is not None)))
+    if drop_aggregator_pages:
+        # 新闻/动态意图要求内容页形态（T11）：站点/门户首页、日期活动页、杂志目录页候选充足时剔除。
+        steps.append(
+            ("news_non_content", lambda items: _split(items, lambda r: news_non_content_form(r, query) is not None))
+        )
     spec_tokens = extract_spec_tokens(query)
     if spec_tokens:
         # 规格不匹配（如查询 iPhone 17 Pro 却给 iPhone 8、查询 Python 3.13 却给 3.14）：
@@ -527,6 +585,7 @@ def apply_rank_filters(
             "aggregator_page": 2,
             "offtopic_page": 2,
             "offtopic_form": 2,
+            "news_non_content": 2,
             "spec_mismatch": 3,
             "script_mismatch": 4,
         }
@@ -545,6 +604,10 @@ def apply_rank_filters(
             wanted -= 1
         # 统计「因候选不足而被补回的规格不匹配条数」——上层据此标 degraded（候选不足时只降权，不静默丢）
         stats["spec_mismatch_refilled"] = sum(1 for r in kept if id(r) in spec_dropped_ids)
+        news_dropped_ids = {
+            id(result) for name, removed in by_stage if name == "news_non_content" for result in removed
+        }
+        stats["news_non_content_refilled"] = sum(1 for r in kept if id(r) in news_dropped_ids)
 
     if spec_tokens:
         # 部分匹配（iPhone 17 对 iPhone 17 Pro）**降权**：不动剔除逻辑，只把它们挪到同组末尾。
