@@ -23,7 +23,7 @@ def apply_form_penalty(results):        # 幂等：不改 score，只按有效�
 
 ## 2) `drop_stale=True` 的召回证据（20 条 2-9 对照）
 
-方法（`data/measure/p7-recall-20260930/recall_ab.py`，只读、禁缓存）：
+方法（`scripts/recall_ab.py`，只读、禁缓存；2026-10-01 从 `data/measure/` 移入仓库，见 `docs/reports/recall-ab-usage-20261001.md`）：
 同一批 20 条查询跑两次流水线 —— **before** 把 `apply_recency` 包一层强制 `drop_stale=False`（模拟 P5 之前），
 **after** 用当前代码（命中时间意图时 `drop_stale=True`），对比**返回结果条数**。
 
@@ -64,6 +64,6 @@ def apply_form_penalty(results):        # 幂等：不改 score，只按有效�
 | 内容 | 路径 |
 | --- | --- |
 | 幂等单测 | `tests/test_rank_hardening.py::test_form_penalty_is_idempotent` |
-| 召回对照脚本与结果 | `data/measure/p7-recall-20260930/{recall_ab.py,recall-ab.json}` |
+| 召回对照脚本（已移入仓库）/结果 | `scripts/recall_ab.py`、`data/recall-ab.json`（gitignored 工作副本） |
 | 2-9 本批复测（含明细/速览/卫生度） | `docs/reports/m2-9-p7-ranking-20260930{,-brief}.md`、`data/measure/p7-recall-20260930/hygiene-after.json` |
 | P1 验收批（对照基线） | `docs/reports/m2-9-p1-ranking-20260930-scores-judge.md` |
