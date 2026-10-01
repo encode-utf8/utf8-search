@@ -129,6 +129,25 @@ def has_substantive_content(result: SearchResult) -> bool:
     return len(text) >= 60 and sentences >= 3
 
 
+# 「条目感」判据（2026-10-01 T6，治 Q3 的 newsfilter.io）：
+# newsfilter.io 是**站点首页**，正文是站点自我介绍（"We deliver real-time business and markets news to the world…"），
+# 因为「有实质内容」被 `is_aggregator_page` 放行 —— 但首页/栏目页的实质内容应当是**条目**（带日期的标题、
+# 多条快讯），而不是站点自述。收紧后：有实质内容 **且** 内容像条目，才豁免聚合页判据。
+# 已按既有裁决核对：发改委首页（"2026年9月11日…"）、美国之音首页（"5 days ago —"）、外交部栏目页（"（2026-09-26）"）
+# 都带日期 → 保持豁免；只有纯自我介绍式的首页会被判聚合页。
+_ITEM_DATE_RE = re.compile(r"(?:19|20)\d{2}\s*[-/年]\s*\d{1,2}(?:\s*[-/月]\s*\d{1,2})?")
+_ITEM_AGE_RE = re.compile(r"\b\d+\s*(?:分钟|小时|天|周|个月)前|ago\b|published|posted\b|updated\b|更新于", re.IGNORECASE)
+
+
+def has_item_like_content(result: SearchResult) -> bool:
+    """首页/栏目页的「实质内容」是否像**条目**（带日期/时间线的快讯列表）。"""
+    text = result.content or ""
+    if _ITEM_DATE_RE.search(text) or _ITEM_AGE_RE.search(text):
+        return True
+    # 多条快讯常用 `·` / `|` 分隔（≥3 个分隔符 ≈ 至少 4 段）
+    return (text.count("·") + text.count("|")) >= 3
+
+
 def looks_like_column(result: SearchResult) -> bool:
     """**形态**上像站点首页 / 栏目页 / 专题页 / 列表汇总页（不看内容）。"""
     try:
@@ -161,11 +180,33 @@ def is_aggregator_page(result: SearchResult) -> bool:
     * 首页 / 栏目页 / 频道页 / 专题页 + 短短几行导航 → 判聚合页（剔除）；
     * 标题含「汇总 / 日报 / 周报 / 速览」但**正文有实质内容**（如每日新闻汇总、周报正文）→ **保留**。
 
+    2026-10-01（T6）再收紧一格：实质内容还必须**像条目**（带日期/时间线，见 `has_item_like_content`）——
+    站点首页的纯自我介绍（newsfilter.io 这类「We deliver …」的使命陈述）不再豁免（Q3 三轮都栽在它上面）。
+    正文是文章的情况本来就不走这条分支（`looks_like_column` 为假）。
+
     旧实现只看 URL/标题形态，把后者也一并剔除了，与判分口径不一致（Q1 的每日新闻汇总就被误伤）。
     """
     if not looks_like_column(result):
         return False
-    return not has_substantive_content(result)
+    return not (has_substantive_content(result) and has_item_like_content(result))
+
+
+# ------------------------------------------------------------------ 内容农场/成人视频站（2026-10-01 T6，治 Q2）
+# 2-9 的 Q2（最近一周 AI 行业动态）反复被「短剧/漫剧免费在线观看」这类内容农场站占据 top5
+# （随机子域 + .cc 域名 + 标题带站点名，如「高三爱情故事 - 短剧视频在线观看 | 黄果短剧」）。
+# 它们属于**站点形态**问题（不是主题匹配）：页面本身是盗版/成人视频聚合站，正文是色情文案，
+# 对任何非该类查询都不该出现。判据 = 「站点标记 + 视频站尾部」双命中，且**查询本身不是这类内容**；
+# 命中即**硬剔除**（不参与"候选不足补回"——垃圾站不该因为池子空就被放回来）。
+_FARM_MARKERS = ("短剧", "漫剧", "擦边", "成人视频", "色情", "艳情", "福利视频")
+_FARM_VIDEO_TAILS = ("在线观看", "免费观看", "在线播放", "免费在线", "全集")
+
+
+def is_content_farm(result: SearchResult, query: str) -> bool:
+    """内容农场/成人视频站形态（查询本身不是这类内容时生效）。"""
+    if any(marker in (query or "") for marker in _FARM_MARKERS):
+        return False
+    text = f"{result.title or ''} {result.url or ''}"
+    return any(marker in text for marker in _FARM_MARKERS) and any(tail in text for tail in _FARM_VIDEO_TAILS)
 
 
 # ------------------------------------------------------------------ 非主题页（2026-10-01 T5，治 Q6）
@@ -312,6 +353,13 @@ def apply_rank_filters(
     kept = list(results)
     dropped: list[SearchResult] = []
     stats: dict[str, int] = {}
+
+    if drop_aggregator_pages:
+        # 内容农场/成人视频站：**硬剔除**，不参与后面的"候选不足补回"（垃圾站不因池子空而被放回）。
+        farmed = [item for item in kept if is_content_farm(item, query)]
+        if farmed:
+            stats["content_farm"] = len(farmed)
+            kept = [item for item in kept if not is_content_farm(item, query)]
 
     steps: list[tuple[str, Callable[[list[SearchResult]], tuple[list, list]]]] = []
     if drop_script_mismatch:

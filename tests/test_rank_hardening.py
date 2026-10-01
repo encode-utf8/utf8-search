@@ -7,8 +7,10 @@ import pytest
 from utf8_search.models import ExtractItem, SearchRequest, SearchResult
 from utf8_search.rank.diversity import (
     apply_rank_filters,
+    has_item_like_content,
     has_substantive_content,
     is_aggregator_page,
+    is_content_farm,
     is_offtopic_index_page,
     looks_like_offtopic_index_page,
 )
@@ -45,6 +47,68 @@ def test_article_path_never_aggregator() -> None:
     """负例：文章路径（含日期/序号）即便摘要很短也不是聚合页。"""
     page = _r("商务部召开例行新闻发布会", "https://www.mofcom.gov.cn/xwfb/202609/t20260903_1.html", "简短")
     assert looks_like_column(page) is False if False else is_aggregator_page(page) is False
+
+
+def test_boilerplate_homepage_is_aggregator() -> None:
+    """T6①：站点首页的「实质内容」若是自我介绍（无条目）→ 判聚合页（Q3 的 newsfilter.io）。"""
+    page = _r(
+        "Business & Financial News | newsfilter.io",
+        "https://newsfilter.io/",
+        "We deliver real-time business and markets news to the world covering FDA approvals, M&A, "
+        "corporate filings, guidance and other market-moving events as they happen. Our platform "
+        "aggregates filings, press releases and regulatory notices so that analysts and investors "
+        "can monitor the stories that matter as they develop across global markets.",
+    )
+    assert has_substantive_content(page) is True   # 旧判据正是被这条放行
+    assert has_item_like_content(page) is False
+    assert is_aggregator_page(page) is True
+
+
+def test_homepage_with_dated_items_kept() -> None:
+    """反向：首页/栏目页的实质内容是**带日期的条目** → 保持豁免（发改委首页 / 美国之音首页的形态）。"""
+    ndrc = _r(
+        "中华人民共和国国家发展和改革委员会",
+        "https://www.ndrc.gov.cn/",
+        "July 22, 2026 — 2026年9月11日国家对成品油价格实施调控 · 拥抱“十五五” 共谋新发展 "
+        "“国家发展改革委与美在华跨国企业高层圆桌会”在京举行 · 时政要闻｜习近平给四川大学全体师生回信 "
+        "· 国家发展改革委举行9月份新闻发布会 · 关于健全社会信用体系的意见 · 2026年8月全国能源生产情况发布 "
+        "· 国家发展改革委下达中央预算内投资支持灾后恢复重建 · 关于印发促进民间投资高质量发展若干措施的通知",
+    )
+    voa = _r(
+        "美国之音中文网新闻 - 美国之音中文网",
+        "https://www.voachinese.com/",
+        "5 days ago — 唐纳德·特朗普总统在结束接待中国国家主席习近平对美国进行的三天国事访问之际表示，"
+        "美国展示了实力以及与中国的友谊。这次在华盛顿举行的美中峰会持续了三天，双方讨论了贸易、"
+        "关税与地区安全等议题。白宫方面表示，双方同意继续就相关问题保持沟通。分析人士认为，"
+        "这次访问对下一阶段的经贸谈判具有重要影响。",
+    )
+    assert is_aggregator_page(ndrc) is False
+    assert is_aggregator_page(voa) is False
+
+
+def test_content_farm_dropped_hard_for_unrelated_query() -> None:
+    """T6②：短剧/成人视频内容农场站 → 与无关查询硬剔除（不参与候选不足补回）。"""
+    farm = _r(
+        "高三爱情故事 - 短剧视频在线观看 | 黄果短剧",
+        "https://c4cab.kmexvuoz.cc/video/117/",
+        "最近，应心理学教授徐立铭的邀请…（色情文案）",
+    )
+    assert is_content_farm(farm, "最近一周 AI 行业动态") is True
+    good = [
+        _r("AI 行业本周动态汇总", "https://example.com/blog/ai-weekly", _LONG),
+        _r("本周 AI 融资与产品发布", "https://example.com/news/ai-funding", _LONG),
+    ]
+    kept, stats = apply_rank_filters(
+        [farm, *good], query="最近一周 AI 行业动态", max_results=5, min_query_coverage=0.0
+    )
+    assert farm not in kept            # 硬剔除：即使只剩 2 条也不补回垃圾站
+    assert stats["content_farm"] == 1
+
+
+def test_content_farm_kept_when_query_is_about_it() -> None:
+    """查询本身就在找短剧时，这类站点不受该规则影响。"""
+    farm = _r("高三爱情故事 - 短剧视频在线观看", "https://c4cab.kmexvuoz.cc/video/117/", "短剧")
+    assert is_content_farm(farm, "短剧 推荐 在线观看") is False
 
 
 # ---------------------------------------------------------------- B) 规格 token 过滤

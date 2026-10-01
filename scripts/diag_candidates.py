@@ -61,6 +61,11 @@ async def main() -> int:
     parser = argparse.ArgumentParser(description="受控回放：指定查询的候选集逐条诊断")
     parser.add_argument("ids", nargs="+", type=int, help="QUERIES 的 1-based 编号")
     parser.add_argument("--out", default="", help="JSON 输出路径")
+    parser.add_argument(
+        "--dump-pool",
+        default="",
+        help="把候选池完整 dump 到该 JSON（供 scripts/replay_pool.py 做 before/after 对拍）",
+    )
     args = parser.parse_args()
 
     captured: dict[str, list] = {}
@@ -114,6 +119,7 @@ async def main() -> int:
                 "query": query,
                 "spec_tokens": tokens,
                 "pool_size": len(pool),
+                "pool_dump": [c.model_dump(mode="json") for c in pool],
                 "final_top5": [{"rank": i + 1, "title": (r.title or "")[:90], "url": r.url} for i, r in enumerate(response.results)],
                 "rank_stats": captured.get("stats", {}),
                 "candidates": rows,
@@ -135,6 +141,12 @@ async def main() -> int:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
         print("明细:", path)
+    if args.dump_pool:
+        path = Path(args.dump_pool)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        dumps = {str(q["id"]): q["pool_dump"] for q in report["queries"]}  # type: ignore[union-attr]
+        path.write_text(json.dumps(dumps, ensure_ascii=False, indent=2), encoding="utf-8")
+        print("候选池 dump:", path)
     return 0
 
 
