@@ -90,6 +90,43 @@
 （PID **377233**，17:59:41 起，预计 18:59:41 结束；首采样 OK / 1368ms / 5 条 / RSS 108.1MB）。
 结果与 `/health` cooling、`/metrics` rejected 终值见 §6（跑满后回填）。
 
-## 6. 1h 回看结果（跑满后回填）
+## 6. 1h 回看结果
 
-⏳ 待回填。
+`--summarize`（17:59:41 → 18:59:41，**11 个计入样本**（13 行含 2 预热）、覆盖 100%）：
+
+| 指标 | 值 |
+| --- | --- |
+| 可用率 | **100%**（空结果 / 异常 / 跳过 = 0 / 0 / 0） |
+| 延迟 | **P50 1369ms / P95 2588ms / max 2588ms / mean 1553ms** |
+| 内存（容器 RSS） | 103.4MB（最低）/ 104.8MB（末次 = 峰值）；中位 103.5 → 104.8MB（+1.2%） |
+| `/metrics` 终值 | `requests_total{result="ok"} 26`；**无 `result="error"`、无 `rejected_total` 序列** |
+| `/health` cooling 终值 | 5 个（`resulthunter` timeout、`google` captcha、`brave` rate_limit、`privacywall` denied、`yep` denied）；窗口内波动 3–5 个，服务不受影响 |
+
+窗口内 12 个 5 分钟快照（requests_ok 单调 4→26，error/rejected 序列始终 0，cooling 3–5）：
+
+```
+18:05 samples=2  lat=2559ms requests_ok=4  cooling=5
+18:10 samples=3  lat=1316ms requests_ok=6  cooling=4
+18:15 samples=4  lat=1135ms requests_ok=8  cooling=5
+18:20 samples=5  lat=1196ms requests_ok=10 cooling=5
+18:25 samples=6  lat=2588ms requests_ok=12 cooling=5
+18:30 samples=7  lat=1550ms requests_ok=14 cooling=5
+18:35 samples=8  lat=1390ms requests_ok=16 cooling=5
+18:40 samples=9  lat=2588ms requests_ok=18 cooling=5
+18:45 samples=10 lat=1369ms requests_ok=20 cooling=3
+18:50 samples=11 lat=1136ms requests_ok=22 cooling=5
+18:56 samples=12 lat=1303ms requests_ok=24 cooling=5
+19:01 samples=13 lat=1513ms requests_ok=26 cooling=5（finished）
+```
+
+⇒ 1h 回看结论：新镜像（P1/P5/P7）上线后 **无 429（闸门/RPM 都没有）、无 error、可用率 100%**，
+延迟维持基线水平（P95 2.59s，与 24h 的 2.57s 同量级）；cooling 波动来自免费引擎的 rate limit / CAPTCHA，
+属常态（`resulthunter`/`brave`/`privacywall`/`yep`/`google`），不影响服务可用性。
+
+## 7. 回滚方式
+
+```bash
+docker tag utf8-search-utf8-search:pre-p1ranking-20261001 utf8-search-utf8-search:latest  # 或直接改 compose 用 tag
+docker compose up -d --no-deps utf8-search   # 上次实测 7.6s 恢复
+```
+> `.env` / `docker-compose.yml` 的改动前副本：`/root/deploy-backups-20261001/t4-pre-deploy-{compose,env}-20261001-1749.*`。
