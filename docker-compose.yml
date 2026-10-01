@@ -3,7 +3,14 @@ services:
   searxng:
     image: searxng/searxng:latest
     container_name: utf8-search-searxng
+    # 自愈：服务器重启或进程崩溃后自动拉起（2026-09-30 复核，三个服务统一）
     restart: unless-stopped
+    # 日志轮转：SearXNG 的 WARNING/引擎异常较吵，默认 json-file 不封顶会吃满磁盘
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     volumes:
       # 默认用云端直连配置；本机（中国大陆网络需走代理）在 .env 里指定
       # SEARXNG_SETTINGS_FILE=./searxng/settings.local.yml
@@ -30,6 +37,12 @@ services:
         PIP_INDEX_URL: ${PIP_INDEX_URL:-https://pypi.org/simple}
     container_name: utf8-search-app
     restart: unless-stopped
+    # 日志轮转（同上）：本服务请求日志 + uvicorn 访问日志
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       searxng:
         condition: service_healthy
@@ -82,6 +95,13 @@ services:
     image: caddy:2-alpine
     container_name: utf8-search-caddy
     restart: unless-stopped
+    # 日志轮转：Caddyfile 里已经用 roll_size 10MiB / roll_keep 5 管自己的访问日志，
+    # 这里再给容器 stdout/stderr 兜一层，避免 docker logs 无上限增长
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       utf8-search:
         condition: service_healthy

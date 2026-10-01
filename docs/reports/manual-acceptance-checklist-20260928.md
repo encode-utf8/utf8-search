@@ -124,3 +124,9 @@ cd /root/utf8-search
 3. **报告里必须注明"是否绕缓存"**；基于缓存快照得到的数字一律视为无效样本
    （例：`m6-news-freshness-20260930.md` 里容器路径 52% 的 3 轮回放已标为无效）。
 4. 顺带提醒：`/metrics` 的计数器在**容器重建后归零**，跨重建比较计数时要注明起点。
+
+> 📎 **配套素材（2026-09-30 新增）**：`docs/reports/20260930-p4-3-9-client-config-pack.md` ——
+> 7 个客户端（Claude Desktop / Codex / Cursor / Cherry Studio / Dify / n8n / 自研 Agent）的
+> **复制即用**配置片段（MCP + REST 两种接入、Host 头要求、三种 Key 传法）、每客户端的最小验证操作
+> （含 `degraded` / `degraded_reason` 怎么读），以及 **421 / 401 / 429（限流 vs 闸门过载）** 故障对照表。
+> 本操作单的「跑通/失败备注」直接按素材包 §4 的 3 步回填即可。
