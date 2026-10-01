@@ -121,21 +121,50 @@ else
 fi
 
 # 5) 分卷保留策略：默认保留 30 天（BACKUP_KEEP_DAYS），**先打印再删除**
+#
+# 2026-10-01 修正：cron 每天传一个**新目录**（`/root/deploy-backups-<YYYYMMDD>`），
+# 而旧实现只扫 `OUT_DIR` 单层 ⇒ **永远清不掉历史目录**（旧备份会无限堆积，磁盘慢慢被吃满）。
+# 现在改成：扫 `BACKUP_ROOT`（默认 `/root`）下的 `deploy-backups-*` 目录，按 mtime 清理 ——
+#   ① 删掉其中超过保留期的产物（`.tar.gz[.enc]`）与 `SHA256SUMS`；
+#   ② 整目录也已超过保留期的，连目录一起删；③ 最后清掉遗留的空目录。
 KEEP_DAYS="${BACKUP_KEEP_DAYS:-30}"
+BACKUP_ROOT="${BACKUP_ROOT:-/root}"
 if [ "$KEEP_DAYS" -gt 0 ] 2>/dev/null; then
-  echo "== 保留策略：BACKUP_KEEP_DAYS=$KEEP_DAYS（清理 $OUT_DIR 下的旧产物）=="
-  OLD_LIST="$(find "$OUT_DIR" -maxdepth 1 -type f \
+  echo "== 保留策略：BACKUP_KEEP_DAYS=$KEEP_DAYS，扫描 $BACKUP_ROOT/deploy-backups-* =="
+  STALE_FILES="$(find "$BACKUP_ROOT" -maxdepth 2 -type f \
         \( -name 'utf8-search-backup-*' -o -name 'SHA256SUMS' \) \
-        -mtime +"$KEEP_DAYS" -printf '%TY-%Tm-%Td %TH:%TM  %p\n' | sort)"
-  if [ -n "$OLD_LIST" ]; then
-    echo "将删除以下超过 $KEEP_DAYS 天的文件："
-    echo "$OLD_LIST"
-    echo "$OLD_LIST" | awk '{print $3}' | while IFS= read -r victim; do
-      [ -n "$victim" ] && rm -f -- "$victim"
-    done
-    echo "（已删除；如需保留请提高 BACKUP_KEEP_DAYS）"
+        -path "$BACKUP_ROOT/deploy-backups-*/*" -mtime +"$KEEP_DAYS" \
+        -printf '%TY-%Tm-%Td %TH:%TM  %p\n' 2>/dev/null | sort)"
+  STALE_DIRS="$(find "$BACKUP_ROOT" -maxdepth 1 -type d -name 'deploy-backups-*' \
+        -mtime +"$KEEP_DAYS" -printf '%TY-%Tm-%Td %TH:%TM  %p\n' 2>/dev/null | sort)"
+  if [ -n "$STALE_FILES" ] || [ -n "$STALE_DIRS" ]; then
+    echo "将删除以下超过 $KEEP_DAYS 天的条目（先打印，后删除）："
+    [ -n "$STALE_FILES" ] && echo "$STALE_FILES"
+    if [ -n "$STALE_DIRS" ]; then
+      echo "（以下为整目录，连同内容一起删除）"
+      echo "$STALE_DIRS"
+    fi
+    if [ -n "$STALE_FILES" ]; then
+      echo "$STALE_FILES" | awk '{print $3}' | while IFS= read -r victim; do
+        [ -n "$victim" ] && [ -f "$victim" ] && rm -f -- "$victim"
+      done
+    fi
+    if [ -n "$STALE_DIRS" ]; then
+      echo "$STALE_DIRS" | awk '{print $3}' | while IFS= read -r victim; do
+        [ -n "$victim" ] && [ -d "$victim" ] && rm -rf -- "$victim"
+      done
+    fi
+    # 清掉被删空的 deploy-backups-* 目录（打印后再删）
+    EMPTY_DIRS="$(find "$BACKUP_ROOT" -maxdepth 1 -type d -name 'deploy-backups-*' -empty 2>/dev/null)"
+    if [ -n "$EMPTY_DIRS" ]; then
+      echo "$EMPTY_DIRS" | sed 's/^/（空目录，一并删除）/'
+      echo "$EMPTY_DIRS" | while IFS= read -r victim; do
+        [ -n "$victim" ] && rmdir -- "$victim" 2>/dev/null || true
+      done
+    fi
+    echo "（已删除；如需保留更久请提高 BACKUP_KEEP_DAYS）"
   else
-    echo "没有超过 $KEEP_DAYS 天的旧产物，无需清理。"
+    echo "没有超过 $KEEP_DAYS 天的旧条目，无需清理。"
   fi
 else
   echo "== 保留策略：BACKUP_KEEP_DAYS=$KEEP_DAYS（<=0，跳过清理）=="
