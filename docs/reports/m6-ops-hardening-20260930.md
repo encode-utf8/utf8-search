@@ -69,8 +69,8 @@ curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8000/health
 ### 3.2 cron（已安装）
 
 ```
-*/5 * * * * cd /root/utf8-search && /root/utf8-search/.venv/bin/python scripts/ops_check.py \
-            >> /root/utf8-search/data/ops-check.cron.log 2>&1
+*/5 * * * * cd /opt/utf8-search && /opt/utf8-search/.venv/bin/python scripts/ops_check.py \
+            >> /opt/utf8-search/data/ops-check.cron.log 2>&1
 ```
 
 `cron` 服务状态 `active`（PID 706）。每小时 12 次巡检，日志落在 `data/`（已被备份脚本覆盖）。
@@ -103,7 +103,7 @@ exit=1
 | `searxng/settings.yml` + `settings.local.yml` | 引擎集合与出网策略 | 普通 |
 | `data/` | SQLite 缓存（可重建）、测量产物、长稳 CSV/JSON、巡检日志 | 内部（含查询样本） |
 
-备份应落在**仓库外**的受控目录（默认 `/root/deploy-backups-<日期>`，权限 700）；异地保存前先加密（age/gpg）。
+备份应落在**仓库外**的受控目录（默认 `/var/backups/utf8-search/deploy-backups-<日期>`，权限 700）；异地保存前先加密（age/gpg）。
 
 ### 4.2 `scripts/backup.sh`
 

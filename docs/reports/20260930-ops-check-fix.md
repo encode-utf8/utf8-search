@@ -34,11 +34,11 @@ BACKUP_PAIR_TOLERANCE_SEC = 3600     # SHA256SUMS 与产物必须同目录且同
 
 ## 3. 遗留明文包的处置
 
-处置对象：`/root/deploy-backups-20260930/utf8-search-backup-2026-09-30.tar.gz`（P2 时生成，**内含明文 API Key**）。
+处置对象：`/var/backups/utf8-search/deploy-backups-20260930/utf8-search-backup-2026-09-30.tar.gz`（P2 时生成，**内含明文 API Key**）。
 
 | 时间（2026-09-30） | 动作 | 结果 |
 | --- | --- | --- |
-| 18:56 | 用 P3 口令文件（`/root/.utf8-search-backup.pass`）把该明文包**重新加密**为同目录 `….tar.gz.enc`（600） | 产出 1,473,808 B 的 `.enc` |
+| 18:56 | 用 P3 口令文件（`/etc/utf8-search/backup.pass`）把该明文包**重新加密**为同目录 `….tar.gz.enc`（600） | 产出 1,473,808 B 的 `.enc` |
 | 18:56 | `openssl enc -d …` 解密并与原明文包 `cmp` | **逐字节一致** ⇒ 加密包完整覆盖原内容 |
 | 18:56 | 重算 `SHA256SUMS`（记密文哈希）并 `touch -r` 对齐 mtime | `e1713e48…83e  utf8-search-backup-2026-09-30.tar.gz.enc` |
 | 18:56 | 明文包移出备份目录到 `/tmp/withdrawn-plaintext-20260930/`，随后 **`shred -u` 覆写删除** | 目录已空，备份目录内只剩 `.enc` + SHA256SUMS |
@@ -51,9 +51,9 @@ BACKUP_PAIR_TOLERANCE_SEC = 3600     # SHA256SUMS 与产物必须同目录且同
 `utf8-search-backup-*` 与 `SHA256SUMS`（同目录、按 mtime）。cron 已带上该参数：
 
 ```
-30 3 * * * cd /root/utf8-search && BACKUP_PASSPHRASE_FILE=/root/.utf8-search-backup.pass \
+30 3 * * * cd /opt/utf8-search && BACKUP_PASSPHRASE_FILE=/etc/utf8-search/backup.pass \
             BACKUP_SKIP_CACHE=1 BACKUP_KEEP_DAYS=30 bash scripts/backup.sh \
-            /root/deploy-backups-$(date +%Y%m%d) $(date +%Y%m%d) >> data/backup.cron.log 2>&1
+            /var/backups/utf8-search/deploy-backups-$(date +%Y%m%d) $(date +%Y%m%d) >> data/backup.cron.log 2>&1
 ```
 
 **实测（/tmp 演练目录，造一个 40 天前的旧包）**：
@@ -80,7 +80,7 @@ BACKUP_PAIR_TOLERANCE_SEC = 3600     # SHA256SUMS 与产物必须同目录且同
 | --- | --- |
 | 修复后的巡检脚本 | `scripts/ops_check.py`（`BACKUP_ARTIFACT_GLOBS` / `BACKUP_PAIR_TOLERANCE_SEC`） |
 | 回归单测 | `tests/test_ops_check_backup.py`（5 passed） |
-| 处置后的备份目录 | `/root/deploy-backups-20260930/`（只剩 `.tar.gz.enc` + `SHA256SUMS`） |
+| 处置后的备份目录 | `/var/backups/utf8-search/deploy-backups-20260930/`（只剩 `.tar.gz.enc` + `SHA256SUMS`） |
 | 保留策略实测 | `/tmp/keep-drill-<时间戳>/`（旧包已删，新包保留） |
 | cron | `crontab -l`（备份行已带 `BACKUP_KEEP_DAYS=30`） |
 | 退出码证据 | `/tmp/p6-a.log`（OK）、`/tmp/p6-b.log`（ALERT） |

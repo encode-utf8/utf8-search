@@ -2,13 +2,13 @@
 
 > 分支 `chore/ops-hardening-20260930`（未合并 main）。只改 `scripts/backup.sh` 保留段 + cron 文本 + docs/05 §14.8。
 
-## 1. 实际目录判定（`ls -d /root/deploy-backups-*`）
+## 1. 实际目录判定（`ls -d /var/backups/utf8-search/deploy-backups-*`）
 
 | 目录 | 内容 | 判定 |
 | --- | --- | --- |
-| `/root/deploy-backups-20260929` | `env.bak` / `env.20260930-pre-*.bak` / `compose-config-*.yml` / `app-*-before*.json` / `images-before.txt` / loadtest 与 selfcheck 证据 | **人工回滚备份**（**不是** backup.sh 产物）→ **必须排除** |
-| `/root/deploy-backups-20260930` | `utf8-search-backup-2026-09-30.tar.gz.enc` + `SHA256SUMS` | 自动备份（加密，P6 处置后） |
-| `/root/deploy-backups-20261001` | 03:30 cron 产物，当时工作区不在本分支 ⇒ **明文** `utf8-search-backup-20261001.tar.gz` | 自动备份；**已重加密并销毁明文**（见 §4） |
+| `/var/backups/utf8-search/deploy-backups-20260929` | `env.bak` / `env.20260930-pre-*.bak` / `compose-config-*.yml` / `app-*-before*.json` / `images-before.txt` / loadtest 与 selfcheck 证据 | **人工回滚备份**（**不是** backup.sh 产物）→ **必须排除** |
+| `/var/backups/utf8-search/deploy-backups-20260930` | `utf8-search-backup-2026-09-30.tar.gz.enc` + `SHA256SUMS` | 自动备份（加密，P6 处置后） |
+| `/var/backups/utf8-search/deploy-backups-20261001` | 03:30 cron 产物，当时工作区不在本分支 ⇒ **明文** `utf8-search-backup-20261001.tar.gz` | 自动备份；**已重加密并销毁明文**（见 §4） |
 
 ## 2. 加固内容
 
@@ -49,5 +49,5 @@ t 日 cron 产出的 `utf8-search-backup-20261001.tar.gz` 是**明文**（cron �
 | --- | --- |
 | 场景① / ② 的 before/after | `/tmp/p9-drill-<随机>`（`/tmp/p9-root.txt`）、`/tmp/p9b-root-<随机>` |
 | cron 文本 | `crontab -l`（含 `BACKUP_EXCLUDE`） |
-| 重加密后的 10-01 备份目录 | `/root/deploy-backups-20261001/`（仅 `.enc` + `SHA256SUMS`） |
+| 重加密后的 10-01 备份目录 | `/var/backups/utf8-search/deploy-backups-20261001/`（仅 `.enc` + `SHA256SUMS`） |
 | 手册 | `docs/05-服务器部署手册.md` §14.8 |

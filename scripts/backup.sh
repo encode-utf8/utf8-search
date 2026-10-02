@@ -11,7 +11,7 @@
 #
 # 用法：
 #   BACKUP_PASSPHRASE='<口令>' bash scripts/backup.sh [输出目录] [日期]     # 加密（默认，推荐）
-#   BACKUP_PASSPHRASE_FILE=/root/.backup.pass bash scripts/backup.sh        # 从 600 权限文件读口令（cron 用）
+#   BACKUP_PASSPHRASE_FILE=/etc/utf8-search/backup.pass bash scripts/backup.sh   # 从 600 权限文件读口令（cron 用）
 #   bash scripts/backup.sh --allow-plaintext [输出目录] [日期]              # 显式放弃加密（不推荐）
 #
 # 说明：
@@ -32,7 +32,7 @@ if [ "${1:-}" = "--allow-plaintext" ]; then
   shift
 fi
 DATE="${2:-$(date +%Y%m%d-%H%M)}"
-OUT_DIR="${1:-/root/deploy-backups-$DATE}"
+OUT_DIR="${1:-/var/backups/utf8-search/deploy-backups-$DATE}"
 STAGE="$(mktemp -d)"
 ARCHIVE="$OUT_DIR/utf8-search-backup-$DATE.tar.gz"
 ENCRYPTED_ARCHIVE="$ARCHIVE.enc"
@@ -122,17 +122,17 @@ fi
 
 # 5) 分卷保留策略：默认保留 30 天（BACKUP_KEEP_DAYS），**先打印再删除**
 #
-# 2026-10-01 修正：cron 每天传一个**新目录**（`/root/deploy-backups-<YYYYMMDD>`），
+# 2026-10-01 修正：cron 每天传一个**新目录**（`/var/backups/utf8-search/deploy-backups-<YYYYMMDD>`），
 # 而旧实现只扫 `OUT_DIR` 单层 ⇒ **永远清不掉历史目录**（旧备份会无限堆积，磁盘慢慢被吃满）。
 # 现在改成：扫 `BACKUP_ROOT`（默认 `/root`）下的 `deploy-backups-*` 目录，按 mtime 清理 ——
 #   ① 删掉其中超过保留期的产物（`.tar.gz[.enc]`）与 `SHA256SUMS`；
 #   ② 整目录也已超过保留期的，连目录一起删；③ 最后清掉遗留的空目录。
 KEEP_DAYS="${BACKUP_KEEP_DAYS:-30}"
-BACKUP_ROOT="${BACKUP_ROOT:-/root}"
+BACKUP_ROOT="${BACKUP_ROOT:-/var/backups/utf8-search}"
 # 排除名单（2026-10-01 P9）：**人工回滚备份**不能按"超期"删掉。
-# 默认排除 `deploy-backups-20260929`（实测该目录装的是 .env 备份 / compose 快照 / 压测证据，属人工资产），
-# 可用空格分隔的 glob 追加，例如：BACKUP_EXCLUDE="deploy-backups-20260929 deploy-backups-manual-*"
-BACKUP_EXCLUDE="${BACKUP_EXCLUDE:-deploy-backups-20260929}"
+# 默认排除 `deploy-backups-manual-*`（人工资产目录：.env 备份 / compose 快照 / 压测证据），
+# 可用空格分隔的 glob 追加，例如：BACKUP_EXCLUDE="deploy-backups-manual-* deploy-backups-20260101"
+BACKUP_EXCLUDE="${BACKUP_EXCLUDE:-deploy-backups-manual-*}"
 if [ "$KEEP_DAYS" -gt 0 ] 2>/dev/null; then
   echo "== 保留策略：BACKUP_KEEP_DAYS=$KEEP_DAYS，扫描 $BACKUP_ROOT/deploy-backups-*（排除：${BACKUP_EXCLUDE:-无}）=="
   # 排除名单 → find 的 -not -path 条件

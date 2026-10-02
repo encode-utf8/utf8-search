@@ -22,7 +22,7 @@
 | 离线套件 | **364 passed / 4 deselected** |
 | 推送 / 工作区 | `push c5eb1ac..ff5a4ae main`；工作区在 main（cron 跟随） |
 | 回滚锚点 | `pre-t12-20261002` = **`dc7b5f4257ff`**（部署前镜像） |
-| 备份 | `docker-compose.yml` / `.env` → `/root/deploy-backups-20261001/t12-pre-deploy-*`（env 600） |
+| 备份 | `docker-compose.yml` / `.env` → `/var/backups/utf8-search/deploy-backups-20261001/t12-pre-deploy-*`（env 600） |
 | 构建 / 上线 | build **54.2s**；`up -d --no-deps utf8-search` **停机 8.3s** → 新镜像 **`3a521d3e6f9d`** |
 
 ## 2. 线上复验

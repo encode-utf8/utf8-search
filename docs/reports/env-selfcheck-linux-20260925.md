@@ -2,7 +2,7 @@
 
 - 生成时间：2026-09-25 20:37:58 +0800
 - 运行环境：Python 3.10.12 / Linux-5.15.0-191-generic-x86_64-with-glibc2.35
-- 仓库：`/root/utf8-search`
+- 仓库：`/opt/utf8-search`
 - 覆盖通道：stdio, stdio-raw, http-mcp, rest, ratelimit
 - 服务实例：http://127.0.0.1:55193（临时实例，API Key=selfcheck-key，不限流）；http://127.0.0.1:38841（临时实例，API Key=selfcheck-key，RPM=1）
 - 查询：`2026年 新能源汽车 补贴政策`；新闻查询：`最近一周 AI 行业动态`；抽取 URL：`https://example.com`

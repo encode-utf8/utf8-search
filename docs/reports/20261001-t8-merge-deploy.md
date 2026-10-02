@@ -28,7 +28,7 @@
 | 项 | 值 |
 | --- | --- |
 | 回滚锚点 | `docker tag … pre-t8-20261001` = **`5694bdc297e2`**（部署前镜像） |
-| 备份 | `docker-compose.yml` / `.env` → `/root/deploy-backups-20261001/t8-pre-deploy-{compose,env}-20261001-2058.*`（env 600） |
+| 备份 | `docker-compose.yml` / `.env` → `/var/backups/utf8-search/deploy-backups-20261001/t8-pre-deploy-{compose,env}-20261001-2058.*`（env 600） |
 | 构建 | `docker compose build utf8-search` **53.2s** → 新镜像 **`dc7b5f4257ff`** |
 | 上线 | `docker compose up -d --no-deps utf8-search`：recreate 2.7s；**`/health` 200 恢复 7.5s** |
 | 未动 | searxng / caddy 未重启；端口矩阵不变 |

@@ -110,8 +110,8 @@ services:
       - "443:443"
       - "443:443/udp"   # HTTP/3
     environment:
-      # 无域名方案：sslip.io 免费 DNS 会把这个名字解析到 IP 内嵌的地址
-      - UTF8SEARCH_DOMAIN=${UTF8SEARCH_DOMAIN:-43.106.104.49.sslip.io}
+      # 域名：在 .env 里设置 UTF8SEARCH_DOMAIN=<你的域名>（无自有域名可用 <你的IP>.sslip.io）
+      - UTF8SEARCH_DOMAIN=${UTF8SEARCH_DOMAIN:-localhost}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       # 证书与 ACME 账号必须持久化，否则每次重启都重新签发（会撞 Let's Encrypt 配额）

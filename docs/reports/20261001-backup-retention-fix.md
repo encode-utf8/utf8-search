@@ -5,7 +5,7 @@
 
 ## 1. 缺陷
 
-cron 每天传一个**新目录**（`/root/deploy-backups-<YYYYMMDD>`），而旧实现只扫 `OUT_DIR` **单层**
+cron 每天传一个**新目录**（`/var/backups/utf8-search/deploy-backups-<YYYYMMDD>`），而旧实现只扫 `OUT_DIR` **单层**
 （当天的目录）⇒ **历史目录永远不会被清理**，备份会无限堆积直到吃满磁盘 —— 而"保留 30 天"的语义形同虚设。
 
 ## 2. 修复（`scripts/backup.sh`）
@@ -23,12 +23,12 @@ KEEP_DAYS="${BACKUP_KEEP_DAYS:-30}"; BACKUP_ROOT="${BACKUP_ROOT:-/root}"
 cron 文本同步更新（显式带上 `BACKUP_ROOT=/root`）：
 
 ```
-30 3 * * * cd /root/utf8-search && BACKUP_ROOT=/root BACKUP_PASSPHRASE_FILE=/root/.utf8-search-backup.pass \
+30 3 * * * cd /opt/utf8-search && BACKUP_ROOT=/root BACKUP_PASSPHRASE_FILE=/etc/utf8-search/backup.pass \
             BACKUP_SKIP_CACHE=1 BACKUP_KEEP_DAYS=30 bash scripts/backup.sh \
-            /root/deploy-backups-$(date +%Y%m%d) $(date +%Y%m%d) >> data/backup.cron.log 2>&1
+            /var/backups/utf8-search/deploy-backups-$(date +%Y%m%d) $(date +%Y%m%d) >> data/backup.cron.log 2>&1
 ```
 
-**与巡检的衔接**：`ops_check.py` 的 `--backup-glob` 默认仍是 `/root/deploy-backups-*`（本次未改），
+**与巡检的衔接**：`ops_check.py` 的 `--backup-glob` 默认仍是 `/var/backups/utf8-search/deploy-backups-*`（本次未改），
 所以清理逻辑与巡检口径一致；实测清理后巡检 **`[OK]` exit=0**（仍能命中当天目录里的 `.enc` + 同龄 `SHA256SUMS`）。
 
 ## 3. 验证（/tmp 造 3 个日期目录 + 1 个 40 天旧产物）

@@ -6,7 +6,7 @@
     .venv/bin/python scripts/diag_candidates.py 2 3 --dump-pool data/measure/t6-pool.json
     # 2) 同一份候选池，分别用「改动前 / 改动后」的代码各跑一遍，逐位对比 top5
     PYTHONPATH=/tmp/t6-before/src .venv/bin/python scripts/replay_pool.py data/measure/t6-pool.json --out /tmp/before.json
-    PYTHONPATH=/root/utf8-search/src  .venv/bin/python scripts/replay_pool.py data/measure/t6-pool.json --out /tmp/after.json
+    PYTHONPATH=/opt/utf8-search/src  .venv/bin/python scripts/replay_pool.py data/measure/t6-pool.json --out /tmp/after.json
     diff <(python -m json.tool /tmp/before.json) <(python -m json.tool /tmp/after.json) && echo IDENTICAL
 
 只做排序层复算（`apply_rank_filters` + `apply_form_penalty`），不联网、不写产品数据。

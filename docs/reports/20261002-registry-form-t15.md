@@ -57,7 +57,7 @@ content(117 字): sed -i 's#python:3.13.9-slim#swr.cn-north-4.myhuaweicloud.com/
 
 ```bash
 REPLAY_SRC=/tmp/t15-before/src .venv/bin/python scripts/replay_pool.py <Q6 固定池> --out before.json   # 7fe8b80（改前）
-REPLAY_SRC=/root/utf8-search/src  .venv/bin/python scripts/replay_pool.py <Q6 固定池> --out after.json   # 8f4fd1b（改后）
+REPLAY_SRC=/opt/utf8-search/src  .venv/bin/python scripts/replay_pool.py <Q6 固定池> --out after.json   # 8f4fd1b（改后）
 ```
 
 | 位 | 改前 top5 | 改后 top5 |

@@ -19,7 +19,7 @@
 $ docker inspect utf8-search-app --format '{{range .Config.Env}}{{println .}}{{end}}' | grep UTF8SEARCH
 UTF8SEARCH_API_KEYS=…
 UTF8SEARCH_RATE_LIMIT_RPM=60
-UTF8SEARCH_MCP_ALLOWED_HOSTS=43.106.104.49:*,43.106.104.49.sslip.io
+UTF8SEARCH_MCP_ALLOWED_HOSTS=203.0.113.10:*,203.0.113.10.sslip.io
 UTF8SEARCH_DEFAULT_ENGINES=resulthunter,…,quark          # 上一轮新增的最小注入
 UTF8SEARCH_NEWS_ENGINES=duckduckgo news,google news,chinaso news,tiger news   # 同上
 UTF8SEARCH_SEARXNG_URL=http://searxng:8080
@@ -160,12 +160,12 @@ services:
 | 代理项误注入 | 大陆开发机的 `HTTP_PROXY` 若被带进服务器容器，会让抓取全部走不存在的代理 | §3 的 C 类显式中性化三条 |
 | `SEARXNG_URL` 被覆盖错 | 一旦丢了 environment 覆盖，容器会去连自己的 8888 | 该键保留在 environment，并在 §4-1 核对 |
 | 鉴权/RPM 被 `.env` 覆盖搞坏 | `API_KEYS`/`MCP_ALLOWED_HOSTS` 若缺失，公网会裸奔或全部 421 | 保留显式注入 + §4-6 回归；`.env` 已备份 |
-| 回滚 | —— | `cp /root/deploy-backups-20260929/env.20260930-pre-engine-list.bak .env`（如需）+ `git checkout <旧 commit> -- docker-compose.yml` + `docker compose up -d --no-deps utf8-search`；镜像侧 `utf8-search-utf8-search:pre-m5-20260929` 仍是回滚锚点（本轮不需重建镜像） |
+| 回滚 | —— | `cp /var/backups/utf8-search/deploy-backups-20260929/env.20260930-pre-engine-list.bak .env`（如需）+ `git checkout <旧 commit> -- docker-compose.yml` + `docker compose up -d --no-deps utf8-search`；镜像侧 `utf8-search-utf8-search:pre-m5-20260929` 仍是回滚锚点（本轮不需重建镜像） |
 
 **回滚演练步骤**（实施轮执行）：
 
 ```bash
-cp docker-compose.yml /root/deploy-backups-20260929/compose-config-$(date +%Y%m%d).yml.bak   # 备份 compose
+cp docker-compose.yml /var/backups/utf8-search/deploy-backups-20260929/compose-config-$(date +%Y%m%d).yml.bak   # 备份 compose
 docker compose config | grep -A 12 'utf8-search:' | head -30                                  # 干跑核对
 docker compose up -d --no-deps utf8-search && sleep 10 && curl -s http://127.0.0.1:8000/health
 # 回滚：git checkout <旧 commit> -- docker-compose.yml && docker compose up -d --no-deps utf8-search

@@ -41,7 +41,7 @@
 | 项 | 值 |
 | --- | --- |
 | 回滚锚点 | `docker tag utf8-search-utf8-search:latest utf8-search-utf8-search:pre-p1ranking-20261001` = **`fe0252b06803`**（旧镜像） |
-| 备份 | `docker-compose.yml`、`.env` → `/root/deploy-backups-20261001/t4-pre-deploy-{compose,env}-20261001-1749.*`（env 600） |
+| 备份 | `docker-compose.yml`、`.env` → `/var/backups/utf8-search/deploy-backups-20261001/t4-pre-deploy-{compose,env}-20261001-1749.*`（env 600） |
 | 构建 | `docker compose build utf8-search` **52.8s** → 新镜像 **`5694bdc297e2`** |
 | 上线 | `docker compose up -d --no-deps utf8-search`：recreate 命令 3.3s；**`/health` 200 恢复耗时 7.6s** |
 | 未动 | searxng / caddy（未重启）；端口矩阵不变（app 仅 127.0.0.1:8000） |
@@ -129,4 +129,4 @@
 docker tag utf8-search-utf8-search:pre-p1ranking-20261001 utf8-search-utf8-search:latest  # 或直接改 compose 用 tag
 docker compose up -d --no-deps utf8-search   # 上次实测 7.6s 恢复
 ```
-> `.env` / `docker-compose.yml` 的改动前副本：`/root/deploy-backups-20261001/t4-pre-deploy-{compose,env}-20261001-1749.*`。
+> `.env` / `docker-compose.yml` 的改动前副本：`/var/backups/utf8-search/deploy-backups-20261001/t4-pre-deploy-{compose,env}-20261001-1749.*`。

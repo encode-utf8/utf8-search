@@ -37,7 +37,7 @@ REPO = Path(__file__).resolve().parents[1]
 DEFAULT_LOG = REPO / "data" / "ops-check.log"
 STATE = REPO / "data" / "ops-check-state.json"
 SNAPSHOT_CSV = REPO / "data" / "ops-metrics-snapshot.csv"
-BACKUP_GLOB = "/root/deploy-backups-*"
+BACKUP_GLOB = os.environ.get("OPS_BACKUP_GLOB", "/var/backups/utf8-search/deploy-backups-*")
 # 备份产物后缀：P3（2026-09-30）之后默认是加密包 `.tar.gz.enc`；旧的明文包是 `.tar.gz`，两种都要认。
 # 曾经的缺陷：这里只 glob 了 `*.tar.gz` ⇒ 加密备份上线后每 5 分钟误报「未找到任何备份产物」。
 BACKUP_ARTIFACT_GLOBS = ("utf8-search-backup-*.tar.gz", "utf8-search-backup-*.tar.gz.enc")
@@ -189,12 +189,14 @@ def main() -> int:
     parser.add_argument("--max-rejected-delta", type=int, default=200)
     parser.add_argument("--max-used-ratio", type=float, default=0.85)
     parser.add_argument("--max-data-gib", type=float, default=5.0)
-    parser.add_argument("--cert-host", default=os.environ.get("OPS_CERT_HOST", "43.106.104.49.sslip.io"))
+    parser.add_argument("--cert-host", default=os.environ.get("OPS_CERT_HOST", ""),
+                        help="证书检查的主机名（默认取 OPS_CERT_HOST；未配置则跳过证书检查）")
     parser.add_argument("--cert-port", type=int, default=443)
     parser.add_argument("--cert-min-days", type=float, default=30.0,
                         help="证书剩余天数低于该值告警（Let's Encrypt 90 天有效，30 天是续期预警线）")
     parser.add_argument("--cert-skip", action="store_true", help="跳过证书检查（内网/离线环境）")
-    parser.add_argument("--backup-glob", default=BACKUP_GLOB, help="备份目录 glob（默认 /root/deploy-backups-*）")
+    parser.add_argument("--backup-glob", default=BACKUP_GLOB,
+                        help="备份目录 glob（默认取 OPS_BACKUP_GLOB 或 /var/backups/utf8-search/deploy-backups-*）")
     parser.add_argument("--backup-max-hours", type=float, default=48.0, help="最近备份的最大允许年龄（小时）")
     parser.add_argument("--snapshot-csv", default=str(SNAPSHOT_CSV), help="指标快照 CSV 路径")
     parser.add_argument("--no-probe-search", action="store_true",
@@ -265,7 +267,10 @@ def main() -> int:
             except Exception as exc:  # noqa: BLE001
                 problems.append(f"探针搜索失败：{exc}")
     # 2) 证书剩余天数（遗留 #5：续期依赖 80/443 放行，必须能提前发现）
-    if not args.cert_skip:
+    if not args.cert_skip and not args.cert_host:
+        snapshot["cert_skipped"] = "OPS_CERT_HOST 未配置"
+        print("注意：未配置 OPS_CERT_HOST，证书检查已跳过（cron 里应显式设置）")
+    elif not args.cert_skip:
         try:
             days, not_after = cert_days(args.cert_host, args.cert_port)
             snapshot["cert_days"] = round(days, 1)

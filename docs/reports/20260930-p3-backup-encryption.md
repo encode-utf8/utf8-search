@@ -20,11 +20,11 @@
 ## 2. 服务器落地
 
 ```bash
-openssl rand -base64 32 > /root/.utf8-search-backup.pass && chmod 600 /root/.utf8-search-backup.pass
+openssl rand -base64 32 > /etc/utf8-search/backup.pass && chmod 600 /etc/utf8-search/backup.pass
 # cron 已更新为使用口令文件：
-30 3 * * * cd /root/utf8-search && BACKUP_PASSPHRASE_FILE=/root/.utf8-search-backup.pass \
-            BACKUP_SKIP_CACHE=1 bash scripts/backup.sh /root/deploy-backups-$(date +%Y%m%d) $(date +%Y%m%d) \
-            >> /root/utf8-search/data/backup.cron.log 2>&1
+30 3 * * * cd /opt/utf8-search && BACKUP_PASSPHRASE_FILE=/etc/utf8-search/backup.pass \
+            BACKUP_SKIP_CACHE=1 bash scripts/backup.sh /var/backups/utf8-search/deploy-backups-$(date +%Y%m%d) $(date +%Y%m%d) \
+            >> /opt/utf8-search/data/backup.cron.log 2>&1
 ```
 
 已用 `BACKUP_PASSPHRASE_FILE=… bash scripts/backup.sh /tmp/p3-drill <日期>` 模拟 cron 调用 → 加密成功。
@@ -64,5 +64,5 @@ UTF8SEARCH_API_KEYS=***REDACTED***
 | 脚本 | `scripts/backup.sh` |
 | 加密产物 + 校验和 | `/tmp/p3-drill/utf8-search-backup-2026-09-30.tar.gz.enc`、`SHA256SUMS` |
 | 解密恢复目录（临时） | `/tmp/p3-restore-<随机>`（路径记在 `/tmp/p3-restore-path.txt`） |
-| 口令文件（600，未入备份） | `/root/.utf8-search-backup.pass` |
+| 口令文件（600，未入备份） | `/etc/utf8-search/backup.pass` |
 | 手册 | `docs/05-服务器部署手册.md` §14.5（口令保管 + 解密恢复步骤） |

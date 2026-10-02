@@ -33,7 +33,7 @@
  （上方注释同步更新：sogou wechat 在当前出口 0 结果且已从 SearXNG 删除；新增两个中文源的实测数字）
 ```
 
-- 备份：`/root/deploy-backups-20260929/env.20260930-pre-engine-list.bak`（与改前 `.env` md5 一致 `f6bf9829…`，
+- 备份：`/var/backups/utf8-search/deploy-backups-20260929/env.20260930-pre-engine-list.bak`（与改前 `.env` md5 一致 `f6bf9829…`，
   保留 09-29 那份 `env.bak`）；`UTF8SEARCH_DEFAULT_ENGINES` 本轮**未改**（仍是 12 个通用引擎）。
 
 ### 1.2 仓库 `docker-compose.yml`（接线缺口的最小修复）
@@ -192,7 +192,7 @@ curl -s http://127.0.0.1:8000/health   # active 里已含 chinaso news / tiger n
 
 ```bash
 # ① 配置回退（服务器）：恢复引擎列表
-cp /root/deploy-backups-20260929/env.20260930-pre-engine-list.bak .env
+cp /var/backups/utf8-search/deploy-backups-20260929/env.20260930-pre-engine-list.bak .env
 docker compose up -d --no-deps utf8-search        # env 变化要 recreate
 curl -s http://127.0.0.1:8000/health | grep -o 'sogou wechat'   # 应重新出现（回退成功）
 
@@ -230,7 +230,7 @@ docker compose config | grep -A 3 'published'
 | 通用列表 A/B 复跑（24 样本） | `docs/reports/engine-list-env-general-compare-20260930.json` |
 | 2-9 明细 / 速览 / 打分 / 判定 | `docs/reports/m2-9-engine-list-env-20260930{,-brief,-scores,-scores-judge}.md/.csv` |
 | 卫生度 JSON | `docs/reports/engine-list-env-hygiene-20260930.json` |
-| `.env` 改前备份（仓库外） | `/root/deploy-backups-20260929/env.20260930-pre-engine-list.bak` |
+| `.env` 改前备份（仓库外） | `/var/backups/utf8-search/deploy-backups-20260929/env.20260930-pre-engine-list.bak` |
 
 ---
 

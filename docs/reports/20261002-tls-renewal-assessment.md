@@ -7,7 +7,7 @@
 
 | 项 | 结论 | 依据类型 |
 | --- | --- | --- |
-| ACME 方式 | **Let's Encrypt ACME（证书域名 `43.106.104.49.sslip.io`），无 DNS-01**；续期与首签走同一条路（HTTP-01 / TLS-ALPN-01，需要公网回连 80 或 443） | **实测**（Caddyfile `tls { issuer acme; issuer internal }` + 证书签发者） |
+| ACME 方式 | **Let's Encrypt ACME（证书域名 `203.0.113.10.sslip.io`），无 DNS-01**；续期与首签走同一条路（HTTP-01 / TLS-ALPN-01，需要公网回连 80 或 443） | **实测**（Caddyfile `tls { issuer acme; issuer internal }` + 证书签发者） |
 | 续期自动化 | **Caddy 已按 ARI 排定续期窗口：2026-11-23 19:03 → 2026-11-25 14:14 UTC**（约到期前 30 天），并持续刷新续期信息 | **实测**（Caddy 日志 `got renewal info` / `updated and stored ACME renewal information`） |
 | 证书现状 | Let's Encrypt 真证书，`notBefore 2026-09-25 → notAfter 2026-12-24`，**剩余 83 天**；SAN 与站点一致 | **实测**（对 `127.0.0.1:443` 握手取证书 + `cryptography` 解析） |
 | 80/443 保障 | 宿主侧：`ufw inactive`、`iptables INPUT ACCEPT`、`0.0.0.0:80/443` 监听；云侧：安全组 22/80/443 已放行（2026-09-25），且**当天的 LE 签发成功本身**证明公网回连可用 | 宿主 = **实测**；安全组 = **文档 + 签发成功这一实测旁证** |
@@ -20,21 +20,21 @@
 
 ### 1.1 配置与版本（实测）
 
-* `Caddyfile`：站点块 `{$UTF8SEARCH_DOMAIN}`（默认 `43.106.104.49.sslip.io`），
+* `Caddyfile`：站点块 `{$UTF8SEARCH_DOMAIN}`（默认 `203.0.113.10.sslip.io`），
   `tls { issuer acme; issuer internal }` —— **acme 优先、internal 兜底**；**没有** DNS-01 相关配置
   ⇒ 续期依赖公网回连 **80（HTTP-01）或 443（TLS-ALPN-01）**；
 * `docker exec utf8-search-caddy caddy version` → **v2.11.4**；
-* 证书存储：`/data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/43.106.104.49.sslip.io/`
+* 证书存储：`/data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/203.0.113.10.sslip.io/`
   下 `.crt`/`.key`（Sep 25 17:18 写入）与 **`.json`（Oct 2 08:15 刷新，即 ARI 续期信息）**。
 
 ### 1.2 证书实况（实测）
 
 ```
-subject  : CN=43.106.104.49.sslip.io
+subject  : CN=203.0.113.10.sslip.io
 issuer   : CN=YE1, O=Let's Encrypt, C=US
 notBefore: 2026-09-25T16:19:35+00:00
 notAfter : 2026-12-24T16:19:34+00:00   （评估时剩余 83 天）
-SAN      : ['43.106.104.49.sslip.io']
+SAN      : ['203.0.113.10.sslip.io']
 ```
 
 ### 1.3 续期是否已经/将会发生（实测）
@@ -45,7 +45,7 @@ SAN      : ['43.106.104.49.sslip.io']
 —— 即 **续期尚未实际发生过**（该证书 9-25 才签发，首次续期未到期），但有**周期性**的续期排程证据：
 
 ```
-http.acme_client  "got renewal info"  names=["43.106.104.49.sslip.io"]
+http.acme_client  "got renewal info"  names=["203.0.113.10.sslip.io"]
   window_start=2026-11-23 19:03 UTC  window_end=2026-11-25 14:14 UTC
 tls.cache.maintenance "updated and stored ACME renewal information"  （持续刷新）
 pki "renewed intermediate" ca=local  ← 这是 internal CA 的中间证书，与 LE 证书无关
@@ -67,7 +67,7 @@ pki "renewed intermediate" ca=local  ← 这是 internal CA 的中间证书，�
 ```bash
 .venv/bin/python scripts/ops_check.py --cert-min-days 100     # 阈值调到 > 剩余 83 天，触发告警分支
 [ALERT] health=200 error=0.0 rejected=0 … 通知=log-only
-  ⚠️ 证书剩余 83.2 天（< 100 天，到期 2026-12-24T16:19:34+00:00）：43.106.104.49.sslip.io:443
+  ⚠️ 证书剩余 83.2 天（< 100 天，到期 2026-12-24T16:19:34+00:00）：203.0.113.10.sslip.io:443
 exit=1
 ```
 

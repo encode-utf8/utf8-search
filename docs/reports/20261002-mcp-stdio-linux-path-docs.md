@@ -21,12 +21,12 @@
 
 ## 3. 结论二：服务器上的 Codex 配置本来就是对的
 
-`/root/.codex/config.toml` 已使用 Linux 路径（**无需修改**）：
+`~/.codex/config.toml` 已使用 Linux 路径（**无需修改**）：
 
 ```toml
 [mcp_servers.utf8-search]
 type = "stdio"
-command = '/root/utf8-search/.venv/bin/utf8-search'
+command = '/opt/utf8-search/.venv/bin/utf8-search'
 startup_timeout_sec = 60
 
 [mcp_servers.utf8-search.env]
@@ -41,7 +41,7 @@ UTF8SEARCH_LOG_LEVEL = "WARNING"
 ## 4. 实测证据（服务器，2026-10-02）
 
 ```bash
-cd /root/utf8-search && .venv/bin/python scripts/mcp_selfcheck.py --mode stdio,stdio-raw
+cd /opt/utf8-search && .venv/bin/python scripts/mcp_selfcheck.py --mode stdio,stdio-raw
 ```
 
 **6/6 通过**：
@@ -73,7 +73,7 @@ stdout 返回含 `"serverInfo":{"name":"utf8-search","version":"0.1.0"}` —— 
 | --- | --- | --- |
 | 1 | §1.2 | 可执行文件按平台分表（`Scripts\...exe` vs `bin/utf8-search`），并加 ⚠️ 说明「Linux/macOS 没有 `Scripts\`、没有 `.exe`，抄 Windows 路径会只显示 `unknown (0 tools)`」 |
 | 2 | §3 开头 | `command` 规则补 Linux/macOS：同样用绝对路径，但不要带 `.exe`、不要用 `Scripts/` |
-| 3 | §3.2 | Codex 配置拆成 **Windows** 与 **Linux/macOS** 两段（Linux 段给 `/root/utf8-search/.venv/bin/utf8-search`） |
+| 3 | §3.2 | Codex 配置拆成 **Windows** 与 **Linux/macOS** 两段（Linux 段给 `/opt/utf8-search/.venv/bin/utf8-search`） |
 | 4 | §3.2 后 | 新增「写完先自检 `command`」：① 一条 `printf` + `initialize` 帧；② 仓库自带的 `scripts/mcp_selfcheck.py --mode stdio,stdio-raw`；并注明**改完需重启 Codex 会话** |
 | 5 | §4 HTTP | 新增说明：未鉴权时 `Auth: Unsupported` / `unknown` 属预期（401 不带 `WWW-Authenticate`），**看工具有没有列出来**判断连通性 |
 | 6 | §7.1 | 「另外两条边界」→「另外三条」，补一条同样的 Auth 预期，指向第 4 节 |

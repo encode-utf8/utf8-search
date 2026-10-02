@@ -2,7 +2,7 @@
 
 - 生成时间：2026-09-29 19:40:17 +0800
 - 运行环境：Python 3.10.12 / Linux-5.15.0-191-generic-x86_64-with-glibc2.35
-- 仓库：`/root/utf8-search`
+- 仓库：`/opt/utf8-search`
 - 覆盖通道：stdio, stdio-raw, http-mcp, rest, ratelimit
 - 服务实例：http://127.0.0.1:8000（复用外部实例）；http://127.0.0.1:41011（临时实例，API Key=utf8…IEEA，RPM=1）
 - 查询：`2026年 新能源汽车 补贴政策`；新闻查询：`最近一周 AI 行业动态`；抽取 URL：`https://example.com`
@@ -69,7 +69,7 @@
 ## 5. 复现命令
 
 ```bash
-.venv/bin/python -u scripts/mcp_selfcheck.py --mode all --out /root/deploy-backups-20260929/selfcheck-after.md
+.venv/bin/python -u scripts/mcp_selfcheck.py --mode all --out /var/backups/utf8-search/deploy-backups-20260929/selfcheck-after.md
 # 复用已启动的服务（跳过临时实例）：
 .venv/bin/python -u scripts/mcp_selfcheck.py --mode rest,http --base-url http://127.0.0.1:8000 --api-key <你的 Key>
 ```

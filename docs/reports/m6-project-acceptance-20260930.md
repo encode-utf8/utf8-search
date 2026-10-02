@@ -43,7 +43,7 @@
 | 项 | 内容 |
 | --- | --- |
 | 实现位置 | `docker-compose.yml`（三容器：SearXNG / 应用 / Caddy）、`searxng/settings.yml` + `settings.local.yml`（云端直连 vs 本机代理，单测强制两份仅 proxies 不同）、`docs/05-服务器部署手册.md` |
-| 验收证据 | `m4-4.2-deploy-20260925.md`（阿里云 `43.106.104.49`：三容器 healthy、Let's Encrypt 真证书、Host 白名单 421、鉴权/限流、`data/` 持久化、全通道自检 **24/24**）；checklist §14；本轮环境实测：`https://43.106.104.49.sslip.io/health` 200（证书至 **2026-12-24**） |
+| 验收证据 | `m4-4.2-deploy-20260925.md`（阿里云 `203.0.113.10`：三容器 healthy、Let's Encrypt 真证书、Host 白名单 421、鉴权/限流、`data/` 持久化、全通道自检 **24/24**）；checklist §14；本轮环境实测：`https://203.0.113.10.sslip.io/health` 200（证书至 **2026-12-24**） |
 | 状态 | ✅ **达标** |
 | 备注 | 本机模式要求走 `settings.local.yml`（代理），云端必须用默认 `settings.yml`；两者一致性由 `tests/test_searxng_settings.py` 强制 |
 

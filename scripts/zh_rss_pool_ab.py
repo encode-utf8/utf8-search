@@ -41,7 +41,7 @@ from utf8_search.providers.base import SearchHit  # noqa: E402
 from utf8_search.rank.diversity import query_coverage  # noqa: E402
 
 RSS_URL = "https://www.chinanews.com.cn/rss/scroll-news.xml"
-UA = "utf8-search/0.1 (rss-pool-evaluation; +https://github.com/encode-utf8/utf8-search)"
+UA = "utf8-search/0.1 (rss-pool-evaluation)"
 FRESH_DAYS = 7
 ZH_NEWS_QUERIES = [q for q in NEWS_QUERIES if re.search(r"[\u4e00-\u9fff]", q)]
 

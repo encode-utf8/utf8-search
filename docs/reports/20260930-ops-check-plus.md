@@ -7,8 +7,8 @@
 
 | 巡检项 | 判据 | 告警样例 |
 | --- | --- | --- |
-| **① 证书剩余天数**（遗留 #5 的"无法提前发现"面） | 连 `--cert-host:--cert-port`（默认 `43.106.104.49.sslip.io:443`）读回证书，`notAfter - now < --cert-min-days`（默认 **30 天**）即告警 | `证书剩余 1.0 天（< 30 天，到期 2026-10-01T09:40:16+00:00）：127.0.0.1:8443` |
-| **② 最近备份新鲜度** | 在 `--backup-glob`（默认 `/root/deploy-backups-*`）里找**最新的 tar.gz + SHA256SUMS**，年龄 > `--backup-max-hours`（默认 **48h**）或找不到即告警 | `未找到任何备份产物（/tmp/empty-backups：需要 tar.gz + SHA256SUMS）` |
+| **① 证书剩余天数**（遗留 #5 的"无法提前发现"面） | 连 `--cert-host:--cert-port`（默认 `203.0.113.10.sslip.io:443`）读回证书，`notAfter - now < --cert-min-days`（默认 **30 天**）即告警 | `证书剩余 1.0 天（< 30 天，到期 2026-10-01T09:40:16+00:00）：127.0.0.1:8443` |
+| **② 最近备份新鲜度** | 在 `--backup-glob`（默认 `/var/backups/utf8-search/deploy-backups-*`）里找**最新的 tar.gz + SHA256SUMS**，年龄 > `--backup-max-hours`（默认 **48h**）或找不到即告警 | `未找到任何备份产物（/tmp/empty-backups：需要 tar.gz + SHA256SUMS）` |
 | **③ 坏日样本快照** | 每轮把 `/metrics` 的 `result="error"`、`rejected_total{queue_full}`、`rejected_total{timeout}`、`requests_ok` 与**探针搜索结果条数**追加一行到 `data/ops-metrics-snapshot.csv` | 见 §3 的 CSV 尾部样例 |
 
 实现要点：证书检查用 `ssl` + `cryptography`（本地已有依赖）解析 `notAfter`，**不做链校验**（内网自签也能读）；
@@ -44,12 +44,12 @@
 ## 4. backup.sh 每日 cron（已装）
 
 ```
-30 3 * * * cd /root/utf8-search && BACKUP_SKIP_CACHE=1 bash scripts/backup.sh \
-            /root/deploy-backups-$(date +\%Y\%m\%d) $(date +\%Y\%m\%d) >> /root/utf8-search/data/backup.cron.log 2>&1
+30 3 * * * cd /opt/utf8-search && BACKUP_SKIP_CACHE=1 bash scripts/backup.sh \
+            /var/backups/utf8-search/deploy-backups-$(date +\%Y\%m\%d) $(date +\%Y\%m\%d) >> /opt/utf8-search/data/backup.cron.log 2>&1
 ```
 
 `crontab -l` 已确认两条任务都在（巡检每 5 分钟 + 备份每天 03:30）；`cron` 服务 `active`。
-今天已按同路径生成一份产物：`/root/deploy-backups-20260930/utf8-search-backup-20260930.tar.gz`（1.5MB）+ `SHA256SUMS`，
+今天已按同路径生成一份产物：`/var/backups/utf8-search/deploy-backups-20260930/utf8-search-backup-20260930.tar.gz`（1.5MB）+ `SHA256SUMS`，
 这就是新巡检项②的"新鲜备份"来源（同时验证了 `backup.sh` 可被 cron 直接调用）。
 
 ## 5. 与遗留清单的对应
@@ -66,5 +66,5 @@
 | 巡检日志（含 3 类 ALERT 样本） | `data/ops-check.log` |
 | 坏日样本快照 | `data/ops-metrics-snapshot.csv` |
 | cron 配置 | `crontab -l`（巡检 `*/5`，备份 `30 3 * * *`） |
-| 备份产物 | `/root/deploy-backups-20260930/{utf8-search-backup-20260930.tar.gz,SHA256SUMS}` |
+| 备份产物 | `/var/backups/utf8-search/deploy-backups-20260930/{utf8-search-backup-20260930.tar.gz,SHA256SUMS}` |
 | 过期证书探针（用完即停） | `/tmp/short.crt`、`/tmp/short.key`、`openssl s_server -accept 8443`（已停） |

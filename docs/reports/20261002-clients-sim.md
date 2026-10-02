@@ -11,7 +11,7 @@
 
 | 步骤 | 结果 | 耗时 | 细节 |
 | --- | --- | --- | --- |
-| 配置解析 → command | PASS | 0.00s | /root/utf8-search/.venv/bin/utf8-search |
+| 配置解析 → command | PASS | 0.00s | /opt/utf8-search/.venv/bin/utf8-search |
 | initialize | PASS | 2.82s | utf8-search 0.1.0 |
 | tools/list | PASS | 0.01s | 工具 web_search,web_fetch |
 | call web_search | PASS | 2.50s | （冷查询）3 条结果（1.912s）[yandex] 新能源汽车补贴退坡，是“精准扶持”还是“福利缩水”？ 1；[yandex] 别光顾着过年，快来买车 625亿元“国补”已经发放 - ；[resulthunter] 补贴新政来了，26年新能源车有救了？ - OFweek新 |
@@ -20,7 +20,7 @@
 
 | 步骤 | 结果 | 耗时 | 细节 |
 | --- | --- | --- | --- |
-| 配置解析 → command | PASS | 0.00s | /root/utf8-search/.venv/bin/utf8-search |
+| 配置解析 → command | PASS | 0.00s | /opt/utf8-search/.venv/bin/utf8-search |
 | initialize | PASS | 2.77s | utf8-search 0.1.0 |
 | tools/list | PASS | 0.01s | 工具 web_search,web_fetch |
 | call web_search | PASS | 2.66s | （冷查询）3 条结果（2.554s）[yandex] 新能源汽车补贴退坡，是“精准扶持”还是“福利缩水”？ 1；[yandex] 别光顾着过年，快来买车 625亿元“国补”已经发放 - ；[yandex] qdzb07b20260116C |
@@ -29,7 +29,7 @@
 
 | 步骤 | 结果 | 耗时 | 细节 |
 | --- | --- | --- | --- |
-| 配置解析 → command | PASS | 0.00s | /root/utf8-search/.venv/bin/utf8-search（docs 模板，解析器 tomli） |
+| 配置解析 → command | PASS | 0.00s | /opt/utf8-search/.venv/bin/utf8-search（docs 模板，解析器 tomli） |
 | initialize | PASS | 2.82s | utf8-search 0.1.0 |
 | tools/list | PASS | 0.01s | 工具 web_search,web_fetch |
 | call web_search | PASS | 0.76s | （冷查询）3 条结果（0.658s）[yandex] 新能源汽车补贴退坡，是“精准扶持”还是“福利缩水”？ 1；[yandex] 别光顾着过年，快来买车 625亿元“国补”已经发放 - ；[yandex] qdzb07b20260116C |
@@ -38,7 +38,7 @@
 
 | 步骤 | 结果 | 耗时 | 细节 |
 | --- | --- | --- | --- |
-| 配置解析 → command | PASS | 0.00s | /root/utf8-search/.venv/bin/utf8-search（/root/.codex/config.toml，解析器 tomli） |
+| 配置解析 → command | PASS | 0.00s | /opt/utf8-search/.venv/bin/utf8-search（~/.codex/config.toml，解析器 tomli） |
 | initialize | PASS | 2.78s | utf8-search 0.1.0 |
 | tools/list | PASS | 0.01s | 工具 web_search,web_fetch |
 | call web_search | PASS | 1.69s | （冷查询）3 条结果（1.582s）[yandex] 新能源汽车补贴退坡，是“精准扶持”还是“福利缩水”？ 1；[yandex] 别光顾着过年，快来买车 625亿元“国补”已经发放 - ；[resulthunter] 补贴新政来了，26年新能源车有救了？ - OFweek新 |
@@ -47,7 +47,7 @@
 
 | 步骤 | 结果 | 耗时 | 细节 |
 | --- | --- | --- | --- |
-| 配置解析 → command | PASS | 0.00s | /root/utf8-search/.venv/bin/utf8-search |
+| 配置解析 → command | PASS | 0.00s | /opt/utf8-search/.venv/bin/utf8-search |
 | initialize | PASS | 3.03s | utf8-search 0.1.0 |
 | tools/list | PASS | 0.01s | 工具 web_search,web_fetch |
 | call web_search | PASS | 2.37s | （冷查询）3 条结果（2.257s）[yandex] 新能源汽车补贴退坡，是“精准扶持”还是“福利缩水”？ 1；[yandex] 2026年新能源汽车补贴最新消息：地方购新补贴全面铺开 ；[resulthunter] 补贴新政来了，26年新能源车有救了？ - OFweek新 |

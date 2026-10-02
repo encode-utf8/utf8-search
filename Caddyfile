@@ -1,6 +1,6 @@
 # utf8-search 反向代理（4.2 云部署，无自有域名方案）
 #
-# 域名由 docker-compose 的 UTF8SEARCH_DOMAIN 注入，默认 43.106.104.49.sslip.io。
+# 域名由 docker-compose 的 UTF8SEARCH_DOMAIN 注入（在 .env 设置，例如 <你的域名> 或 <你的IP>.sslip.io）。
 # sslip.io 是免费通配 DNS：把 IP 写进主机名即可解析回该 IP，因此不用买域名也能
 # 让 Caddy 走标准 ACME（Let's Encrypt）拿到受信任的真证书。
 #
@@ -15,7 +15,7 @@
 	# 两条路都走 TLS，任何时刻都不会退回明文 HTTP。
 	# 安全组放行后若要立刻换成真证书：先删掉已缓存的自签证书、再重启（只 restart 不会重新申请，
 	# 因为 Caddy 会直接复用存储里那张尚未过期的证书）：
-	#   docker compose exec -T caddy sh -c "rm -rf /data/caddy/certificates/local/43.106.104.49.sslip.io"
+	#   docker compose exec -T caddy sh -c "rm -rf /data/caddy/certificates/local/{$UTF8SEARCH_DOMAIN}"
 	#   docker compose restart caddy
 	tls {
 		issuer acme

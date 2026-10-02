@@ -26,7 +26,7 @@
 .venv/bin/python scripts/diag_candidates.py 1..20 --dump-pool data/measure/t11-pool-all.json
 # ② 同一份池子分别过 pre-T11（a13f5e5）与 T11（8de0351）的排序层
 PYTHONPATH=/tmp/t11-before/src .venv/bin/python scripts/replay_pool.py <pool> --out before.json
-PYTHONPATH=/root/utf8-search/src  .venv/bin/python scripts/replay_pool.py <pool> --out after.json
+PYTHONPATH=/opt/utf8-search/src  .venv/bin/python scripts/replay_pool.py <pool> --out after.json
 diff before.json after.json
 ```
 

@@ -67,10 +67,10 @@ compose 里 `environment` 优先级高于 `env_file`，而环境变量又优先�
 ### 2.2 备份与回滚点（改前）
 
 ```
-/root/deploy-backups-20260929/docker-compose.20260930-pre-env-wiring.yml    (md5 fe00e42ff2155afa35a74112ac1bee7e)
-/root/deploy-backups-20260929/env.20260930-pre-env-wiring.bak              (md5 7d6a9f9bb337ca7f8672ebebd535e708)
-/root/deploy-backups-20260929/app-container-before-env-wiring.json
-/root/deploy-backups-20260929/app-images-before-env-wiring.txt              (latest=03bf40b20341；pre-m5-20260929=ba8912a353c6)
+/var/backups/utf8-search/deploy-backups-20260929/docker-compose.20260930-pre-env-wiring.yml    (md5 fe00e42ff2155afa35a74112ac1bee7e)
+/var/backups/utf8-search/deploy-backups-20260929/env.20260930-pre-env-wiring.bak              (md5 7d6a9f9bb337ca7f8672ebebd535e708)
+/var/backups/utf8-search/deploy-backups-20260929/app-container-before-env-wiring.json
+/var/backups/utf8-search/deploy-backups-20260929/app-images-before-env-wiring.txt              (latest=03bf40b20341；pre-m5-20260929=ba8912a353c6)
 ```
 
 ### 2.3 生效方式
@@ -124,7 +124,7 @@ block_private    = True | log_level= INFO
 | --- | --- |
 | **① 生效的引擎列表** | `/health.engines.active` = 12 个通用引擎（**无 `360search`**）+ `duckduckgo news, google news, chinaso news, tiger news`；`cooling` 空 |
 | **② 闸门（4 参数）** | 并发 18 / 36 请求 → **15 成功 + 21 个闸门 429**（0 个限流 429）；样本 `429 + Retry-After: 4`，文案「上游搜索过载（queue_full）」；`/metrics`：`rejected_total{queue_full}=21`、`requests_total{ok}=17` |
-| **③ 缓存落在宿主机同一份 `data/`** | `docker inspect` 挂载 = `bind /root/utf8-search/data -> /app/data (rw)`；跑 1 次容器搜索后宿主机 `data/cache.db-wal` **mtime 前进、size 45352 → 94792**，容器内 `/app/data/cache.db-wal` 是**同一 inode/大小/时间**；`/health.cache_entries` 69 → 71 |
+| **③ 缓存落在宿主机同一份 `data/`** | `docker inspect` 挂载 = `bind /opt/utf8-search/data -> /app/data (rw)`；跑 1 次容器搜索后宿主机 `data/cache.db-wal` **mtime 前进、size 45352 → 94792**，容器内 `/app/data/cache.db-wal` 是**同一 inode/大小/时间**；`/health.cache_entries` 69 → 71 |
 | **④ 鉴权与 RPM 未被破坏** | `POST /v1/search`、`POST /v1/extract`、`GET /metrics` 无 Key → **401**；错 Key → 401；对 Key → 200。RPM：连续 65 次 `/metrics` → **前 60 次 200，第 61 次起 429**，`Retry-After: 59`，body「请求过于频繁」⇒ 限流仍按 `RATE_LIMIT_RPM=60` 工作 |
 | **⑤ `/metrics` 可达 + 计数推进** | 带 Key 200；`utf8search_upstream_requests_total{result="ok"}` 与 `rejected_total{queue_full}` 随上述压测推进；无 `result="error"` 序列 |
 
@@ -161,12 +161,12 @@ setsid nohup .venv/bin/python -X utf8 scripts/soak.py --duration-hours 6 --inter
 
 ```bash
 # ① 回滚 compose（去掉 env_file 与 12 条 environment），再重建 app
-cp /root/deploy-backups-20260929/docker-compose.20260930-pre-env-wiring.yml docker-compose.yml
+cp /var/backups/utf8-search/deploy-backups-20260929/docker-compose.20260930-pre-env-wiring.yml docker-compose.yml
 docker compose up -d --no-deps utf8-search
 docker inspect utf8-search-app --format '{{range .Config.Env}}{{println .}}{{end}}' | grep -c UTF8SEARCH   # 应回到 6 条
 
 # ② 若同时需要回退 .env（引擎列表等）
-cp /root/deploy-backups-20260929/env.20260930-pre-env-wiring.bak .env && docker compose up -d --no-deps utf8-search
+cp /var/backups/utf8-search/deploy-backups-20260929/env.20260930-pre-env-wiring.bak .env && docker compose up -d --no-deps utf8-search
 
 # ③ 镜像级回滚锚点（本轮不需要重建镜像）
 docker tag utf8-search-utf8-search:pre-m5-20260929 utf8-search-utf8-search:latest && docker compose up -d --no-deps --force-recreate utf8-search
@@ -203,7 +203,7 @@ docker tag utf8-search-utf8-search:pre-m5-20260929 utf8-search-utf8-search:lates
 | 2-9：明细 / 速览 / 打分 / 判定 | `docs/reports/m2-9-env-wiring-20260930{,-brief,-scores,-scores-judge}.md/.csv` |
 | 卫生度 JSON | `docs/reports/env-wiring-hygiene-20260930.json` |
 | 中文源只读探测（给 ② 用） | `docs/reports/env-wiring-zh-source-probe-20260930.json` |
-| 改前备份（仓库外） | `/root/deploy-backups-20260929/{docker-compose.20260930-pre-env-wiring.yml,env.20260930-pre-env-wiring.bak,app-container-before-env-wiring.json}` |
+| 改前备份（仓库外） | `/var/backups/utf8-search/deploy-backups-20260929/{docker-compose.20260930-pre-env-wiring.yml,env.20260930-pre-env-wiring.bak,app-container-before-env-wiring.json}` |
 | 长稳产物（`data/` 不入库） | `data/soak-6h-envwiring.{csv,json,meta.json,out.log}` |
 
 ## 附录：中文新闻源只读探测（为下一轮 ② 备料，未改任何配置）

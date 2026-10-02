@@ -6,7 +6,7 @@
 > 前置（服务器上，沙箱外执行）：服务已起、SearXNG 可用。
 >
 > ```bash
-> cd /root/utf8-search
+> cd /opt/utf8-search
 > curl -sS http://127.0.0.1:8888/healthz -o /dev/null -w 'searxng=%{http_code}\n'   # 期望 200
 > curl -sS http://127.0.0.1:8000/health                                          # 期望 searxng=ok
 > ```
@@ -21,7 +21,7 @@
 ### 第 1 步：生成待打分的明细表（约 1-2 分钟，会联网）
 
 ```bash
-cd /root/utf8-search
+cd /opt/utf8-search
 .venv/bin/python scripts/relevance.py --depth basic --out data/acceptance/relevance-<今天的日期>.md
 ```
 
@@ -74,7 +74,7 @@ cd /root/utf8-search
 ### 第 0 步：先跑自动化自检（确认服务侧没问题）
 
 ```bash
-cd /root/utf8-search
+cd /opt/utf8-search
 .venv/bin/python -u scripts/mcp_selfcheck.py --out data/acceptance/selfcheck-<日期>.md
 ```
 
@@ -86,9 +86,9 @@ cd /root/utf8-search
 | --- | --- | --- | --- | --- |
 | 1 | **Claude Desktop** | 按 `docs/03` §3.1 写 `claude_desktop_config.json` → **完全退出**再启动 → 新对话问「今天有什么 AI 新闻」 | 工具列表出现 `web_search` / `web_fetch`；回答能引用 URL | ☐ |
 | 2 | **Codex** | 按 §3.2 写 `~/.codex/config.toml` → 重启 → 让它联网查一条最新消息 | 会话里出现 `utf8-search` 的工具调用与结果 | ☐ |
-| 3 | **Cursor** | 按 §3.3 在 MCP 设置里加 stdio 或 Streamable HTTP（`https://43.106.104.49.sslip.io/mcp`，带 Key） | 设置页显示工具已连接；对话里能搜到实时结果 | ☐ |
+| 3 | **Cursor** | 按 §3.3 在 MCP 设置里加 stdio 或 Streamable HTTP（`https://203.0.113.10.sslip.io/mcp`，带 Key） | 设置页显示工具已连接；对话里能搜到实时结果 | ☐ |
 | 4 | Cherry Studio | 按 §3.4 添加 MCP 服务器（stdio 或 HTTP） | 工具列表出现两个工具，调用返回结果 | ☐ |
-| 5 | Dify | 按 §6.1 建自定义工具（OpenAPI 导入 `https://43.106.104.49.sslip.io`） | 工具测试返回 `results[]`；工作流里可引用 | ☐ |
+| 5 | Dify | 按 §6.1 建自定义工具（OpenAPI 导入 `https://203.0.113.10.sslip.io`） | 工具测试返回 `results[]`；工作流里可引用 | ☐ |
 | 6 | n8n | 按 §6.2 用 HTTP Request 节点 POST `/v1/search` | 返回 JSON 且 `results` 非空 | ☐ |
 | 7 | 自研 Agent | 按 §9 三选一（stdio / Streamable HTTP / REST） | 能拿到结构化结果 | ☐ |
 

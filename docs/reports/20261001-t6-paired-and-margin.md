@@ -27,7 +27,7 @@
 .venv/bin/python scripts/diag_candidates.py 2 3 --dump-pool data/measure/t6/pool-q2-q3.json
 # 2) 同一份候选池，分别过「改动前（main=ccadc21）」与「T5 改动后」的排序层
 PYTHONPATH=/tmp/t6-before/src .venv/bin/python scripts/replay_pool.py <pool> --out /tmp/t6-before.json
-PYTHONPATH=/root/utf8-search/src  .venv/bin/python scripts/replay_pool.py <pool> --out /tmp/t6-after.json
+PYTHONPATH=/opt/utf8-search/src  .venv/bin/python scripts/replay_pool.py <pool> --out /tmp/t6-after.json
 diff <(json.tool /tmp/t6-before.json) <(json.tool /tmp/t6-after.json)   # ⇒ 空
 ```
 

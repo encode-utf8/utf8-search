@@ -23,7 +23,7 @@ sys.path.insert(0, str(SCRIPTS_DIR))
 
 import clients_sim  # noqa: E402 - 需要先把 scripts/ 加进 sys.path
 
-LINUX_ENTRY = "/root/utf8-search/.venv/bin/utf8-search"
+LINUX_ENTRY = "/opt/utf8-search/.venv/bin/utf8-search"
 
 
 def test_claude_json_roundtrip() -> None:
