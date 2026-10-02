@@ -1,0 +1,4301 @@
+{
+  "rss": {
+    "robots_allows": true,
+    "http_status": 200,
+    "items": 30,
+    "fetched_at": "2026-10-02T09:57:23+00:00"
+  },
+  "min_coverage": 0.34,
+  "rss_hits": [
+    {
+      "title": "国庆假期首日福州对台直航航班535人次旅客往返",
+      "url": "https://www.chinanews.com.cn/sh/2026/10-02/10707202.shtml",
+      "snippet": "中新社福州10月2日电 (记者 闫旭)记者2日从福州机场边检站获悉，国庆假期首日，福州对台直航航班往返4架次，搭载旅客共535人次；其中台胞旅客往来375人次，有137人次台胞旅客使用快捷通道通关。",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T09:56:12+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "以阅读传承长征精神 江西省图书馆国庆红色研学活动启幕",
+      "url": "https://www.chinanews.com.cn/sh/2026/10-02/10707212.shtml",
+      "snippet": "中新网南昌10月2日电 (熊锦阳)10月1日，江西省图书馆“跟着长征读懂中国”2026年迎国庆红色研学系列活动拉开帷幕。国庆当天，馆区化身为沉浸式“长征文化体验场”，千余名读者走进书香空间，在互动体验中重温长征峥嵘岁月。",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T09:54:06+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "台青文旅博主李天启：行走中品味大陆",
+      "url": "https://www.chinanews.com.cn/gn/2026/10-02/10707200.shtml",
+      "snippet": "中新社南京10月2日电 题：台青文旅博主李天启：行走中品味大陆",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T09:53:28+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "会8门外语的“莎莎”：让异乡客在这里成为“阿依乐”",
+      "url": "https://www.chinanews.com.cn/txy/2026/10-02/10707206.shtml",
+      "snippet": "中新网义乌10月2日电 题：会8门外语的“莎莎”：让异乡客在这里成为“阿依乐”",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T09:50:56+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "（文化新纪行）“目瑙纵歌”常态展演 非遗创新带旺文旅经济",
+      "url": "https://www.chinanews.com.cn/cul/2026/10-02/10707199.shtml",
+      "snippet": "中新社云南德宏10月2日电 题：“目瑙纵歌”常态展演  非遗创新带旺文旅经济",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T09:50:52+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "莆田2026年秋季文旅活动启幕",
+      "url": "https://www.chinanews.com.cn/sh/2026/10-02/10707211.shtml",
+      "snippet": "中新网莆田10月2日电 (记者 闫旭)“莆阳赏秋·花YOUNG漫游”2026年莆田市秋季文旅活动1日启动，诚邀海内外游客漫游山海、乐享莆阳烟火。",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T09:50:26+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "（爱知·名古屋亚运会）中国选手包子怡夺得拳击女子75公斤级银牌",
+      "url": "http://www.chinanews.com.cn/tp/hd2011/2026/10-02/1206791.shtml",
+      "snippet": "",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T09:45:10+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "（爱知·名古屋亚运会）“大满贯”拳手吴愉升级再夺冠：“一公斤”对我来说是奢侈品",
+      "url": "https://www.chinanews.com.cn/ty/2026/10-02/10707203.shtml",
+      "snippet": "中新社日本名古屋10月2日电 题：“大满贯”拳手吴愉升级再夺冠：“一公斤”对我来说是奢侈品",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T09:44:47+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "（爱知·名古屋亚运会）亚运会拳击争霸 ：中国名将吴愉女子51公斤级夺金",
+      "url": "https://www.chinanews.com.cn/ty/2026/10-02/10707201.shtml",
+      "snippet": "中新社日本名古屋10月2日电 (记者 李志全)爱知·名古屋亚运会2日展开拳击项目决赛争夺，中国选手多点开花。奥运冠军吴愉夺得女子51公斤级冠军，首次参加亚运会的杨成宇、包子怡分获女子60公斤级和75公斤级银牌，韩雪振摘得男子90公斤级银牌。",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T09:32:01+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "（爱知·名古屋亚运会）中国选手吴愉夺得拳击女子51公斤级金牌",
+      "url": "http://www.chinanews.com.cn/tp/hd2011/2026/10-02/1206777.shtml",
+      "snippet": "",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T09:20:20+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "（爱知·名古屋亚运会）虚拟跆拳道：男女选手同场竞技",
+      "url": "http://www.chinanews.com.cn/tp/hd2011/2026/10-02/1206769.shtml",
+      "snippet": "",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T09:00:45+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "直播海报：陪你看亚运会：国足vs乌兹别克斯坦 盼带奖牌回家！",
+      "url": "https://www.chinanews.com.cn/ty/2026/10-02/10707194.shtml",
+      "snippet": "",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T08:54:42+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "国庆假期首日 海南离岛免税购物金额超1亿元",
+      "url": "https://www.chinanews.com.cn/cj/2026/10-02/10707193.shtml",
+      "snippet": "据海口海关统计，今年国庆假期首日，海南离岛免税购物金额达1.07亿元，共有1.89万人次参与离岛免税购物，累计购买离岛免税商品8.30万件。离岛免税购物金额、人数、件数同比分别增长21.17%、13.81%、11.24%。",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T08:51:44+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "直播：香港同胞庆祝中华人民共和国成立七十七周年文艺晚会",
+      "url": "https://www.chinanews.com.cn/iframe/2026/10-02/10707192.shtml",
+      "snippet": "",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T08:50:14+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "学者谈大众电影：让电影回归大众，让大众不再只扮演观众",
+      "url": "https://www.chinanews.com.cn/cul/2026/10-02/10707188.shtml",
+      "snippet": "中新网北京10月2日电(记者 上官云)近日，“中国电影创作高质量发展”学术季第二场活动在中国电影资料馆多功能厅举行。本场讨论以“电影本体论——思想、审美与科技的内在统一”为议题，继续追问“什么是电影”。",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T08:49:48+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "东盟秘书长高金洪：东盟同中国经贸关系将更加紧密",
+      "url": "https://www.chinanews.com.cn/aseaninfo/2026/10-02/10707191.shtml",
+      "snippet": "原标题：“东盟同中国经贸关系将更加紧密”",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T08:48:20+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "英烈倒下的地方 长出守护的力量",
+      "url": "https://www.chinanews.com.cn/sh/2026/10-02/10707190.shtml",
+      "snippet": "追光的你｜英烈倒下的地方 长出守护的力量",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T08:42:48+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "国庆假期：成都杜甫草堂引游人",
+      "url": "https://www.chinanews.com.cn/tp/2026/10-02/10707180.shtml",
+      "snippet": "10月2日，国庆假期第二天，众多游客在成都杜甫草堂博物馆参观游览，乐享国庆假期。图为游客在杜甫草堂拍照留念。中新社记者 安源 摄  \n\n10月2日，当日是国庆假期第二天，众多游客在成都杜甫草堂博物馆参观游览，乐享国庆假期。图为戴AI讲解器的小朋友。中新社记者 安源 摄  \n\n10月2日，当日是国庆假期第二天，众多游客在成都杜甫草堂博物馆参观游览，乐享国庆假期。图为游客排队等待参观杜甫草堂茅屋。中新社记者 安源 摄  \n\n10月2日，当日是国庆假期第二天，众多游客在成都杜甫草堂博物馆参观游览，乐享国庆假期。图为文艺演出现场。中新社记者 安源 摄  \n\n10月2日，当日是国庆假期第二天，众多游客在成都杜甫草堂博物馆参观游览，乐享国庆假期。图为文艺演出现场。中新社记者 安源 摄  \n\n10月2日，当日是国庆假期第二天，众多游客在成都杜甫草堂博物馆参观游览，乐享国庆假期。图为游客在杜甫草堂红墙拍照打卡。中新社记者 安源 摄  \n\n10月2日，当日是国庆假期第二天，众多游客在成都杜甫草堂博物馆参观游览，乐享国庆假期。图为游客参观“月是故乡明——杜甫与秦州主题文物展”。中新社记者 安源 摄  \n\n10月2日，当日是国庆假期第二天，众多游客在成都杜甫草堂博物馆参观游览，乐享国庆假期。图为游客参观“月是故乡明——杜甫与秦州主题文物展”。中新社记者 安源 摄  \n\n10月2日，当日是国庆假期第二天，众多游客在成都杜甫草堂博物馆参观游览，乐享国庆假期。图为游客购买特色美食。中新社记者 安源 摄  \n\n10月2日，当日是国庆假期第二天，众多游客在成都杜甫草堂博物馆参观游览，乐享国庆假期。图为游客观看文艺演出。中新社记者 安源 摄  \n\n10月2日，当日是国庆假期第二天，众多游客在成都杜甫草堂博物馆参观游览，乐享国庆假期。图为游客在杜甫草堂拍照留念。中新社记者 安源 摄  \n\n10月2日，当日是国庆假期第二天，众多游客在成都杜甫草堂博物馆参观游览，乐享国庆假期。图为演员与游客互动。中新社记者 安源 摄  \n\n10月2日，当日是国庆假期第二天，众多游客在成都杜甫草堂博物馆参观游览，乐享国庆假期。图为游客在杜甫草堂参观千诗碑。中新社记者 安源 摄  \n\n10月2日，当日是国庆假期第二天，众多游客在成都杜甫草堂博物馆参观游览，乐享国庆假期。图为游客在杜甫草堂盆景园拍照留念。中新社记者 安源 摄",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T08:36:51+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "中国女足队长吴海燕：年轻球员成长需要过程",
+      "url": "https://www.chinanews.com.cn/ty/2026/10-02/10707189.shtml",
+      "snippet": "中新网10月2日电 (记者 国璇)当地时间10月2日在日本静冈进行的爱知·名古屋亚运会女足铜牌赛中，中国女足以0:1不敌韩国队，无缘本届亚运会奖牌，最终位列第四。",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T08:35:09+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "国庆假期 上海武康大楼再次被游客“包围”",
+      "url": "https://www.chinanews.com.cn/tp/2026/10-02/10707179.shtml",
+      "snippet": "10月2日，正值国庆假期，上海武康大楼再次吸引了众多游客。路口处人头攒动，人们争相占据最佳拍摄点，与这座拥有百年历史的建筑合影留念。图为家长用手机给孩子拍照。中新社记者 殷立勤 摄\n\n10月2日，正值国庆假期，上海武康大楼再次吸引了众多游客。路口处人头攒动，人们争相占据最佳拍摄点，与这座拥有百年历史的建筑合影留念。图为游客在武康路街头拍照。中新社记者 殷立勤 摄\n\n10月2日，正值国庆假期，上海武康大楼再次吸引了众多游客。路口处人头攒动，人们争相占据最佳拍摄点，与这座拥有百年历史的建筑合影留念。图为游客在武康大楼前自拍。中新社记者 殷立勤 摄\n\n10月2日，正值国庆假期，上海武康大楼再次吸引了众多游客。路口处人头攒动，人们争相占据最佳拍摄点，与这座拥有百年历史的建筑合影留念。图为游客在武康大楼对面的咖啡店内，一边品尝美食，一边欣赏城市景观。中新社记者 殷立勤 摄\n\n10月2日，正值国庆假期，上海武康大楼再次吸引了众多游客。路口处人头攒动，人们争相占据最佳拍摄点，与这座拥有百年历史的建筑合影留念。图为武康大楼吸引众多游客前来拍照。中新社记者 殷立勤 摄\n\n10月2日，正值国庆假期，上海武康大楼再次吸引了众多游客。路口处人头攒动，人们争相占据最佳拍摄点，与这座拥有百年历史的建筑合影留念。图为游客在武康路街头拍照。中新社记者 殷立勤 摄",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T08:33:15+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "宁夏石嘴山：电影取景地石炭井迎来打卡潮",
+      "url": "https://www.chinanews.com.cn/tp/2026/10-02/10707178.shtml",
+      "snippet": "10月2日，游客在石嘴山市大武口区石炭井工业文旅影视小镇参观打卡。随着电影《欢迎来龙餐馆》全球热映，作为取景地的石炭井工业文旅影视小镇迅速走红，成为新晋热门打卡点。这座沉寂多年的老矿区，正以“光影梦工厂”的全新面貌重回大众视野。中新社记者 于晶 摄  \n\n10月2日，游客在石嘴山市大武口区石炭井工业文旅影视小镇参观打卡。随着电影《欢迎来龙餐馆》全球热映，作为取景地的石炭井工业文旅影视小镇迅速走红，成为新晋热门打卡点。这座沉寂多年的老矿区，正以“光影梦工厂”的全新面貌重回大众视野。中新社记者 于晶 摄  \n\n10月2日，游客在石嘴山市大武口区石炭井工业文旅影视小镇参观打卡。随着电影《欢迎来龙餐馆》全球热映，作为取景地的石炭井工业文旅影视小镇迅速走红，成为新晋热门打卡点。这座沉寂多年的老矿区，正以“光影梦工厂”的全新面貌重回大众视野。中新社记者 于晶 摄  \n\n10月2日，游客在石嘴山市大武口区石炭井工业文旅影视小镇参观打卡。随着电影《欢迎来龙餐馆》全球热映，作为取景地的石炭井工业文旅影视小镇迅速走红，成为新晋热门打卡点。这座沉寂多年的老矿区，正以“光影梦工厂”的全新面貌重回大众视野。中新社记者 于晶 摄  \n\n10月2日，游客在石嘴山市大武口区石炭井工业文旅影视小镇参观打卡。随着电影《欢迎来龙餐馆》全球热映，作为取景地的石炭井工业文旅影视小镇迅速走红，成为新晋热门打卡点。这座沉寂多年的老矿区，正以“光影梦工厂”的全新面貌重回大众视野。中新社记者 于晶 摄  \n\n10月2日，游客在石嘴山市大武口区石炭井工业文旅影视小镇参观打卡。随着电影《欢迎来龙餐馆》全球热映，作为取景地的石炭井工业文旅影视小镇迅速走红，成为新晋热门打卡点。这座沉寂多年的老矿区，正以“光影梦工厂”的全新面貌重回大众视野。中新社记者 于晶 摄",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T08:32:15+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "中国驻泰使馆：接到有关上海音乐教师失联的求助",
+      "url": "https://www.chinanews.com.cn/sh/2026/10-02/10707187.shtml",
+      "snippet": "中国驻泰国大使馆10月2日对总台记者表示，使馆已接到有关上海一名音乐教师上周在泰国曼谷失联的求助，已向泰国警方通报情况。当事人亲属委托人已在泰国报警，使馆已敦促泰国警方尽快查明当事人下落，目前案件正在侦办中。(总台记者 李敏)",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T08:29:41+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "上海：游客在市集中感受国庆假期户外生活",
+      "url": "https://www.chinanews.com.cn/tp/2026/10-02/10707176.shtml",
+      "snippet": "10月2日，国庆假期，秋艺追光·早春乐事集登陆上海市长宁区延安西路1262号的上生·新所。市集集合非遗表演、手作体验、生活美学等多重板块，汇聚众多生活艺术家，将传统非遗技艺、当代创意好物、特色地方风物带到街区公共空间。图为游客选购商品。中新社记者 殷立勤 摄\n\n10月2日，国庆假期，秋艺追光·早春乐事集登陆上海市长宁区延安西路1262号的上生·新所。市集集合非遗表演、手作体验、生活美学等多重板块，汇聚众多生活艺术家，将传统非遗技艺、当代创意好物、特色地方风物带到街区公共空间。图为游客在商铺的户外区域一边品尝美食，一边聊天。中新社记者 殷立勤 摄\n\n10月2日，国庆假期，秋艺追光·早春乐事集登陆上海市长宁区延安西路1262号的上生·新所。市集集合非遗表演、手作体验、生活美学等多重板块，汇聚众多生活艺术家，将传统非遗技艺、当代创意好物、特色地方风物带到街区公共空间。图为游客带着孩子在商铺的户外区域休息。中新社记者 殷立勤 摄\n\n10月2日，国庆假期，秋艺追光·早春乐事集登陆上海市长宁区延安西路1262号的上生·新所。市集集合非遗表演、手作体验、生活美学等多重板块，汇聚众多生活艺术家，将传统非遗技艺、当代创意好物、特色地方风物带到街区公共空间。图为游客品尝山西老陈醋。中新社记者 殷立勤 摄\n\n10月2日，国庆假期，秋艺追光·早春乐事集登陆上海市长宁区延安西路1262号的上生·新所。市集集合非遗表演、手作体验、生活美学等多重板块，汇聚众多生活艺术家，将传统非遗技艺、当代创意好物、特色地方风物带到街区公共空间。图为游客带着孩子在户外区域一边品尝美食，一边聊天。中新社记者 殷立勤 摄\n\n10月2日，国庆假期，秋艺追光·早春乐事集登陆上海市长宁区延安西路1262号的上生·新所。市集集合非遗表演、手作体验、生活美学等多重板块，汇聚众多生活艺术家，将传统非遗技艺、当代创意好物、特色地方风物带到街区公共空间。图为游客用手机拍摄老建筑。中新社记者 殷立勤 摄\n\n10月2日，国庆假期，秋艺追光·早春乐事集登陆上海市长宁区延安西路1262号的上生·新所。市集集合非遗表演、手作体验、生活美学等多重板块，汇聚众多生活艺术家，将传统非遗技艺、当代创意好物、特色地方风物带到街区公共空间。图为游客在商铺的户外区域品尝美食。中新社记者 殷立勤 摄\n\n10月2日，国庆假期，秋艺追光·早春乐事集登陆上海市长宁区延安西路1262号的上生·新所。市集集合非遗表演、手作体验、生活美学等多重板块，汇聚众多生活艺术家，将传统非遗技艺、当代创意好物、特色地方风物带到街区公共空间。图为游客在广场上用手机拍照。中新社记者 殷立勤 摄\n\n10月2日，国庆假期，秋艺追光·早春乐事集登陆上海市长宁区延安西路1262号的上生·新所。市集集合非遗表演、手作体验、生活美学等多重板块，汇聚众多生活艺术家，将传统非遗技艺、当代创意好物、特色地方风物带到街区公共空间。图为游客带着宠物在商铺的户外区域休息。中新社记者 殷立勤 摄",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T08:15:18+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "一抹中国红，见证跨越时代的奔赴",
+      "url": "https://www.chinanews.com.cn/gn/2026/10-02/10707185.shtml",
+      "snippet": "新华鲜报｜一抹中国红，见证跨越时代的奔赴",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T08:09:48+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "河北石家庄：秋日花海醉游人",
+      "url": "https://www.chinanews.com.cn/tp/2026/10-02/10707174.shtml",
+      "snippet": "10月2日，国庆假期，小朋友在花丛间观赏花卉。河北省石家庄市植物园内秋季花展迎来盛花期，各色花卉竞相绽放，吸引民众前来秋游赏景，感受金秋惬意时光。中新社记者 翟羽佳 摄\n\n10月2日，国庆假期，游客在河北省石家庄市植物园赏花拍照。该园内秋季花展迎来盛花期，各色花卉竞相绽放，吸引民众前来秋游赏景，感受金秋惬意时光。中新社记者 翟羽佳 摄\n\n10月2日，国庆假期，蜜蜂被盛开的醉蝶花吸引。河北省石家庄市植物园内秋季花展迎来盛花期，各色花卉竞相绽放，吸引民众前来秋游赏景，感受金秋惬意时光。中新社记者 翟羽佳 摄\n\n10月2日，国庆假期，游客在河北省石家庄市植物园赏花拍照。该园内秋季花展迎来盛花期，各色花卉竞相绽放，吸引民众前来秋游赏景，感受金秋惬意时光。中新社记者 翟羽佳 摄\n\n10月2日，国庆假期，游客在河北省石家庄市植物园赏花拍照。该园内秋季花展迎来盛花期，各色花卉竞相绽放，吸引民众前来秋游赏景，感受金秋惬意时光。中新社记者 翟羽佳 摄\n\n10月2日，国庆假期，游客在河北省石家庄市植物园花卉旁起舞留影。该园内秋季花展迎来盛花期，各色花卉竞相绽放，吸引民众前来秋游赏景，感受金秋惬意时光。中新社记者 翟羽佳 摄\n\n10月2日，国庆假期，游客在河北省石家庄市植物园赏花拍照。该园内秋季花展迎来盛花期，各色花卉竞相绽放，吸引民众前来秋游赏景，感受金秋惬意时光。中新社记者 翟羽佳 摄\n\n10月2日，国庆假期，游客在河北省石家庄市植物园赏花拍照。该园内秋季花展迎来盛花期，各色花卉竞相绽放，吸引民众前来秋游赏景，感受金秋惬意时光。中新社记者 翟羽佳 摄\n\n10月2日，国庆假期，游客在河北省石家庄市植物园赏花拍照。该园内秋季花展迎来盛花期，各色花卉竞相绽放，吸引民众前来秋游赏景，感受金秋惬意时光。中新社记者 翟羽佳 摄",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T08:07:34+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "非盟敦促埃塞俄比亚、厄立特里亚和埃及避免采取可能破坏稳定的行动",
+      "url": "https://www.chinanews.com.cn/gj/2026/10-02/10707160.shtml",
+      "snippet": "中新社北京10月2日电 亚的斯亚贝巴消息：当地时间10月1日，非盟委员会呼吁埃塞俄比亚、厄立特里亚和埃及保持最大程度的克制，避免采取任何可能加剧紧张局势或破坏地区和平与稳定的行动或言论。",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T08:04:52+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "中国女足0:1不敌韩国队 无缘亚运会奖牌",
+      "url": "https://www.chinanews.com.cn/ty/2026/10-02/10707184.shtml",
+      "snippet": "中新网10月2日电(记者 国璇)当地时间10月2日在日本静冈进行的爱知·名古屋亚运会女足铜牌赛中，中国女足以0:1不敌韩国队，最终位列第四。",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T08:01:13+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "古街迎客 昆明老街国庆假期人气攀升",
+      "url": "https://www.chinanews.com.cn/tp/2026/10-02/10707173.shtml",
+      "snippet": "10月2日，游客在“酒杯楼”前拍照。国庆假期，云南省昆明市历史街区昆明老街成热门旅游“打卡地”，游客在街巷间沉浸式体验春城历史风情。中新社记者 李嘉娴 摄\n\n10月2日，游客漫步在昆明老街。国庆假期，云南省昆明市历史街区昆明老街成热门旅游“打卡地”，游客在街巷间沉浸式体验春城历史风情。中新社记者 李嘉娴 摄\n\n10月2日，游客打卡“昆明”。国庆假期，云南省昆明市历史街区昆明老街成热门旅游“打卡地”，游客在街巷间沉浸式体验春城历史风情。中新社记者 李嘉娴 摄\n\n10月2日，游客在昆明老街游览。国庆假期，云南省昆明市历史街区昆明老街成热门旅游“打卡地”，游客在街巷间沉浸式体验春城历史风情。中新社记者 李嘉娴 摄\n\n10月2日，游客游览聂耳故居。国庆假期，云南省昆明市历史街区昆明老街成热门旅游“打卡地”，游客在街巷间沉浸式体验春城历史风情。中新社记者 李嘉娴 摄\n\n10月2日，游客在“昆明”花墙前拍照。国庆假期，云南省昆明市历史街区昆明老街成热门旅游“打卡地”，游客在街巷间沉浸式体验春城历史风情。中新社记者 李嘉娴 摄\n\n10月2日，“酒杯楼”前人头攒动。国庆假期，云南省昆明市历史街区昆明老街成热门旅游“打卡地”，游客在街巷间沉浸式体验春城历史风情。中新社记者 李嘉娴 摄",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T07:59:05+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "台胞李兴忠“冰城”哈尔滨创业 卤肉饭香飘两岸情",
+      "url": "https://www.chinanews.com.cn/tp/2026/10-02/10707172.shtml",
+      "snippet": "图为9月25日，傍晚时分，位于哈尔滨市南岗区兴达路的卤肉店亮起灯光。中新社记者 赵宇航 摄  \n\n图为9月29日，李兴忠展示他制作的卤肉饭。中新社记者 赵宇航 摄  \n\n图为9月25日，中秋节，李兴忠与在哈台胞和大陆好友在店里一同过中秋。中新社记者 赵宇航 摄  \n\n图为9月29日，李兴忠在店内制作卤肉饭。中新社记者 赵宇航 摄  \n\n图为9月25日，中秋节，李兴忠为好友准备他自己做的卤煮。中新社记者 赵宇航 摄  \n\n图为9月29日，李兴忠在店内将制作好的卤煮摆放整齐。中新社记者 赵宇航 摄  \n\n图为9月29日，李兴忠在店内制作菜脯蛋。中新社记者 赵宇航 摄  \n\n图为9月29日，食客在李兴忠的店内用餐。中新社记者 赵宇航 摄  \n\n图为10月1日，国庆节，李兴忠在店外的牌匾上挂上国旗。中新社记者 赵宇航 摄  \n\n图为10月1日，国庆节，李兴忠在店内备餐。中新社记者 赵宇航 摄  \n\n图为9月29日，李兴忠将卤煮出餐。中新社记者 赵宇航 摄  \n\n图为9月29日，李兴忠（右）在店内与来自齐齐哈尔的食客交流并询问卤肉饭味道如何。中新社记者 赵宇航 摄",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T07:57:43+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    },
+    {
+      "title": "环球大湾区高峰论坛香港举行 李家超：引领共建智慧湾区、绿色湾区",
+      "url": "https://www.chinanews.com.cn/dwq/2026/10-02/10707161.shtml",
+      "snippet": "中新社香港10月2日电 香港特区行政长官李家超2日表示，“深圳—香港—广州”创新集群连续两年位列全球第一，充分展现粤港澳大湾区在创新科技方面的实力和潜力。香港特区政府会继续促进大湾区创新链、产业链、资金链、人才链深度融合，积极培育新质生产力。",
+      "engine": "rss:chinanews",
+      "published_date": "2026-10-02T07:55:38+00:00",
+      "raw_score": 0.0,
+      "extra": {}
+    }
+  ],
+  "zh_news_queries": [
+    "2026年9月 国内外重大新闻",
+    "最近一周 AI 行业动态",
+    "台风 最新消息 路径",
+    "美国 关税 最新政策",
+    "2026年 新能源汽车 补贴政策"
+  ],
+  "rounds": [
+    {
+      "round": 1,
+      "queries": [
+        {
+          "id": 1,
+          "category": "新闻",
+          "query": "2026年9月 国内外重大新闻",
+          "rss_admitted": 2,
+          "top5_changed": true,
+          "before": [
+            {
+              "title": "SBS一周大事件（2026年9月18日）",
+              "url": "https://www.sbs.com.au/language/chinese/zh-hans/podcast-episode/weekly-news-wrap-20260918/qw26jpdga",
+              "date": "2026-09-18"
+            },
+            {
+              "title": "2026年9月22日外交部发言人郭嘉昆主持例行记者会_中华人民共和国驻大韩民国大....",
+              "url": "https://kr.china-embassy.gov.cn/fyrth/202609/t20260922_12028748.htm",
+              "date": "2026-09-22"
+            },
+            {
+              "title": "2026年9月22日外交部发言人郭嘉昆主持例行记者会",
+              "url": "https://hk.ocmfa.gov.cn/gjlc/202609/t20260922_12028748.htm",
+              "date": "2026-09-22"
+            },
+            {
+              "title": "2026年8月28日外交部发言人林剑主持例行记者会_中华人民共和国驻大韩民国大使....",
+              "url": "https://kr.china-embassy.gov.cn/fyrth/202608/t20260828_12012269.htm",
+              "date": "2026-08-28"
+            },
+            {
+              "title": "（经济观察）三个关键词透视中美经贸新动向_凤凰网",
+              "url": "https://news.ifeng.com/c/8woDNeS7SrX",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "SBS一周大事件（2026年9月18日）",
+              "url": "https://www.sbs.com.au/language/chinese/zh-hans/podcast-episode/weekly-news-wrap-20260918/qw26jpdga",
+              "date": "2026-09-18"
+            },
+            {
+              "title": "莆田2026年秋季文旅活动启幕",
+              "url": "https://www.chinanews.com.cn/sh/2026/10-02/10707211.shtml",
+              "date": "2026-10-02T09:50:26+00:00"
+            },
+            {
+              "title": "2026年9月22日外交部发言人郭嘉昆主持例行记者会_中华人民共和国驻大韩民国大....",
+              "url": "https://kr.china-embassy.gov.cn/fyrth/202609/t20260922_12028748.htm",
+              "date": "2026-09-22"
+            },
+            {
+              "title": "台胞李兴忠“冰城”哈尔滨创业 卤肉饭香飘两岸情",
+              "url": "https://www.chinanews.com.cn/tp/2026/10-02/10707172.shtml",
+              "date": "2026-10-02T07:57:43+00:00"
+            },
+            {
+              "title": "2026年9月22日外交部发言人郭嘉昆主持例行记者会",
+              "url": "https://hk.ocmfa.gov.cn/gjlc/202609/t20260922_12028748.htm",
+              "date": "2026-09-22"
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.4
+        },
+        {
+          "id": 2,
+          "category": "新闻",
+          "query": "最近一周 AI 行业动态",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "创业板指(399006)_股票行情_走势图—东方财富网",
+              "url": "https://quote.eastmoney.com/zs399006.html",
+              "date": null
+            },
+            {
+              "title": "MySQL - force not to use cache for testing speed of query",
+              "url": "https://stackoverflow.com/questions/181894/mysql-force-not-to-use-cache-for-testing-speed-of-query",
+              "date": null
+            },
+            {
+              "title": "How to force a web browser NOT to cache images - Stack Overflow",
+              "url": "https://stackoverflow.com/questions/126772/how-to-force-a-web-browser-not-to-cache-images",
+              "date": null
+            },
+            {
+              "title": "Como evitar el caché de los archivos css y js",
+              "url": "https://es.stackoverflow.com/questions/63716/como-evitar-el-cach%C3%A9-de-los-archivos-css-y-js",
+              "date": null
+            },
+            {
+              "title": "Disable cache for specific RUN commands - Stack Overflow",
+              "url": "https://stackoverflow.com/questions/35134713/disable-cache-for-specific-run-commands",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "创业板指(399006)_股票行情_走势图—东方财富网",
+              "url": "https://quote.eastmoney.com/zs399006.html",
+              "date": null
+            },
+            {
+              "title": "MySQL - force not to use cache for testing speed of query",
+              "url": "https://stackoverflow.com/questions/181894/mysql-force-not-to-use-cache-for-testing-speed-of-query",
+              "date": null
+            },
+            {
+              "title": "How to force a web browser NOT to cache images - Stack Overflow",
+              "url": "https://stackoverflow.com/questions/126772/how-to-force-a-web-browser-not-to-cache-images",
+              "date": null
+            },
+            {
+              "title": "Como evitar el caché de los archivos css y js",
+              "url": "https://es.stackoverflow.com/questions/63716/como-evitar-el-cach%C3%A9-de-los-archivos-css-y-js",
+              "date": null
+            },
+            {
+              "title": "Disable cache for specific RUN commands - Stack Overflow",
+              "url": "https://stackoverflow.com/questions/35134713/disable-cache-for-specific-run-commands",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 3,
+          "category": "新闻",
+          "query": "latest news semiconductor export controls",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "Insight into the U.S. Semiconductor Export Controls Update",
+              "url": "https://www.csis.org/analysis/insight-us-semiconductor-export-controls-update",
+              "date": null
+            },
+            {
+              "title": "Trump's AI chip export controls could go either way for Korea - Korea JoongAng Daily ,Korean news in Engl....",
+              "url": "https://www.koreajoongangdaily.com/business/trumps-ai-chip-export-controls-could-go-either-way-for-korea/12444537",
+              "date": null
+            },
+            {
+              "title": "China Lashes Out at Latest US Export Controls on Chips - VOA",
+              "url": "https://www.voanews.com/a/china-lashes-out-at-latest-us-export-controls-on-chips/6781565.html",
+              "date": null
+            },
+            {
+              "title": "Semiconductor Export Controls in 2026: Dual-Use Risk, Re-export...",
+              "url": "https://frilinglaw.com/blog/semiconductor-export-controls",
+              "date": null
+            },
+            {
+              "title": "SIA Statement on New Export Controls - Semiconductor Industry Association",
+              "url": "http://www.semiconductors.org/sia-statement-on-new-export-controls-2/",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "Insight into the U.S. Semiconductor Export Controls Update",
+              "url": "https://www.csis.org/analysis/insight-us-semiconductor-export-controls-update",
+              "date": null
+            },
+            {
+              "title": "Trump's AI chip export controls could go either way for Korea - Korea JoongAng Daily ,Korean news in Engl....",
+              "url": "https://www.koreajoongangdaily.com/business/trumps-ai-chip-export-controls-could-go-either-way-for-korea/12444537",
+              "date": null
+            },
+            {
+              "title": "China Lashes Out at Latest US Export Controls on Chips - VOA",
+              "url": "https://www.voanews.com/a/china-lashes-out-at-latest-us-export-controls-on-chips/6781565.html",
+              "date": null
+            },
+            {
+              "title": "Semiconductor Export Controls in 2026: Dual-Use Risk, Re-export...",
+              "url": "https://frilinglaw.com/blog/semiconductor-export-controls",
+              "date": null
+            },
+            {
+              "title": "SIA Statement on New Export Controls - Semiconductor Industry Association",
+              "url": "http://www.semiconductors.org/sia-statement-on-new-export-controls-2/",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 4,
+          "category": "新闻",
+          "query": "台风 最新消息 路径",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "2026年第18号台风沙德尔最新消息路径实时更新- 杭州本地宝",
+              "url": "https://hz.bendibao.com/news/2026824/172472.shtm",
+              "date": null
+            },
+            {
+              "title": "刚刚！ 台风“丹娜丝”路径有变！ 或在福建浙江登陆",
+              "url": "https://c.m.163.com/news/a/K3NE3U0Q0550IMZX.html?spss=sps_sem",
+              "date": null
+            },
+            {
+              "title": "2026广州台风最新消息_广州台风实时路径|登陆时间地点-广州本地宝",
+              "url": "http://gz.bendibao.com/news/zhuantitaifeng/",
+              "date": null
+            },
+            {
+              "title": "台风路径预报",
+              "url": "https://m.nmc.cn/publish/typhoon/probability-img3.html",
+              "date": null
+            },
+            {
+              "title": "超强台风“巴威”即将进入福建警戒区！福州或迎强降雨_福视悦动 - 福州明珠 ....",
+              "url": "https://www.zohi.tv/p/415464.html",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "2026年第18号台风沙德尔最新消息路径实时更新- 杭州本地宝",
+              "url": "https://hz.bendibao.com/news/2026824/172472.shtm",
+              "date": null
+            },
+            {
+              "title": "刚刚！ 台风“丹娜丝”路径有变！ 或在福建浙江登陆",
+              "url": "https://c.m.163.com/news/a/K3NE3U0Q0550IMZX.html?spss=sps_sem",
+              "date": null
+            },
+            {
+              "title": "2026广州台风最新消息_广州台风实时路径|登陆时间地点-广州本地宝",
+              "url": "http://gz.bendibao.com/news/zhuantitaifeng/",
+              "date": null
+            },
+            {
+              "title": "台风路径预报",
+              "url": "https://m.nmc.cn/publish/typhoon/probability-img3.html",
+              "date": null
+            },
+            {
+              "title": "超强台风“巴威”即将进入福建警戒区！福州或迎强降雨_福视悦动 - 福州明珠 ....",
+              "url": "https://www.zohi.tv/p/415464.html",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 5,
+          "category": "新闻",
+          "query": "美国 关税 最新政策",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "外媒：关税或将致美国日用品全面涨价-运城晚报",
+              "url": "https://www.edurew.com/html/03c79099206.html",
+              "date": null
+            },
+            {
+              "title": "Temu 和 Shein...",
+              "url": "https://www.100ec.cn/detail--6648723.html",
+              "date": null
+            },
+            {
+              "title": "三年来首次下滑！关税政策正让美国经济经历“超出预期的糟糕” - 韩国最大的....",
+              "url": "https://chinese.joins.com/news/articleView.html?idxno=119620",
+              "date": null
+            },
+            {
+              "title": "特朗普新关税政策即将生效：Shein与Temu大幅调价 | 美股ABC",
+              "url": "https://www.meiguabc.com/news/shein-and-temu-significantly-adjust-prices",
+              "date": null
+            },
+            {
+              "title": "美对东南亚太阳能产品加征高达3403%关税！_ 文章_GladCC",
+              "url": "https://www.gladcc.com/article/1914301813400313857",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "外媒：关税或将致美国日用品全面涨价-运城晚报",
+              "url": "https://www.edurew.com/html/03c79099206.html",
+              "date": null
+            },
+            {
+              "title": "Temu 和 Shein...",
+              "url": "https://www.100ec.cn/detail--6648723.html",
+              "date": null
+            },
+            {
+              "title": "三年来首次下滑！关税政策正让美国经济经历“超出预期的糟糕” - 韩国最大的....",
+              "url": "https://chinese.joins.com/news/articleView.html?idxno=119620",
+              "date": null
+            },
+            {
+              "title": "特朗普新关税政策即将生效：Shein与Temu大幅调价 | 美股ABC",
+              "url": "https://www.meiguabc.com/news/shein-and-temu-significantly-adjust-prices",
+              "date": null
+            },
+            {
+              "title": "美对东南亚太阳能产品加征高达3403%关税！_ 文章_GladCC",
+              "url": "https://www.gladcc.com/article/1914301813400313857",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 6,
+          "category": "技术",
+          "query": "Python 3.13 新特性",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "好学编程：Python 3.13 这些新特性你一定要知道！ - 知乎",
+              "url": "https://zhuanlan.zhihu.com/p/12824443094",
+              "date": null
+            },
+            {
+              "title": "Python的新变化 — Python 3.13.15 文档",
+              "url": "https://docs.python.org/zh-cn/3.13/whatsnew/index.html",
+              "date": null
+            },
+            {
+              "title": "[アップデート] AWS Lambda で Python 3.13...",
+              "url": "https://dev.classmethod.jp/articles/aws_lambda_support_python313/",
+              "date": null
+            },
+            {
+              "title": "Python 3.13 - 百度百科",
+              "url": "https://baike.baidu.com/item/Python%203.13/68736281",
+              "date": null
+            },
+            {
+              "title": "The new REPL in Python 3.13 - Trey Hunner",
+              "url": "https://treyhunner.com/2024/05/my-favorite-python-3-dot-13-feature/",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "好学编程：Python 3.13 这些新特性你一定要知道！ - 知乎",
+              "url": "https://zhuanlan.zhihu.com/p/12824443094",
+              "date": null
+            },
+            {
+              "title": "Python的新变化 — Python 3.13.15 文档",
+              "url": "https://docs.python.org/zh-cn/3.13/whatsnew/index.html",
+              "date": null
+            },
+            {
+              "title": "[アップデート] AWS Lambda で Python 3.13...",
+              "url": "https://dev.classmethod.jp/articles/aws_lambda_support_python313/",
+              "date": null
+            },
+            {
+              "title": "Python 3.13 - 百度百科",
+              "url": "https://baike.baidu.com/item/Python%203.13/68736281",
+              "date": null
+            },
+            {
+              "title": "The new REPL in Python 3.13 - Trey Hunner",
+              "url": "https://treyhunner.com/2024/05/my-favorite-python-3-dot-13-feature/",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 7,
+          "category": "技术",
+          "query": "MCP protocol specification 2026",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "다음 MCP 스펙 릴리즈(2026-07-28)의 주요 내용: Stateless 전환 및 공식 확장 도입 예....",
+              "url": "https://discuss.pytorch.kr/t/mcp-2026-07-28-stateless/10387",
+              "date": null
+            },
+            {
+              "title": "MCP, 세션 지우고 HTTP 인프라 위로… 2026-07-28 spec 확정 - Insights",
+              "url": "https://insights.marvin-42.com/articles/mcp-http-2026-07-28-spec",
+              "date": null
+            },
+            {
+              "title": "The 2026-07-28 Specification | Model Context Protocol Blog",
+              "url": "https://blog.modelcontextprotocol.io/posts/2026-07-28/",
+              "date": null
+            },
+            {
+              "title": "Vercel MCP Ships the 2026-07-28 Spec: The MCP... - Developers Digest",
+              "url": "https://www.developersdigest.tech/blog/vercel-mcp-2026-07-28-spec-support",
+              "date": "2026-10-01T11:54:11"
+            },
+            {
+              "title": "The Myceloom Protocol Specification (MCP-1) | myceloom",
+              "url": "https://myceloom.com/protocol/spec.html",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "다음 MCP 스펙 릴리즈(2026-07-28)의 주요 내용: Stateless 전환 및 공식 확장 도입 예....",
+              "url": "https://discuss.pytorch.kr/t/mcp-2026-07-28-stateless/10387",
+              "date": null
+            },
+            {
+              "title": "MCP, 세션 지우고 HTTP 인프라 위로… 2026-07-28 spec 확정 - Insights",
+              "url": "https://insights.marvin-42.com/articles/mcp-http-2026-07-28-spec",
+              "date": null
+            },
+            {
+              "title": "The 2026-07-28 Specification | Model Context Protocol Blog",
+              "url": "https://blog.modelcontextprotocol.io/posts/2026-07-28/",
+              "date": null
+            },
+            {
+              "title": "Vercel MCP Ships the 2026-07-28 Spec: The MCP... - Developers Digest",
+              "url": "https://www.developersdigest.tech/blog/vercel-mcp-2026-07-28-spec-support",
+              "date": "2026-10-01T11:54:11"
+            },
+            {
+              "title": "The Myceloom Protocol Specification (MCP-1) | myceloom",
+              "url": "https://myceloom.com/protocol/spec.html",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.2,
+          "after_fresh_share": 0.2
+        },
+        {
+          "id": 8,
+          "category": "技术",
+          "query": "FastAPI 与 Django 性能对比",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "fastapi与django异步的并发对比_faskapi 并发访问-CSDN博客",
+              "url": "https://blog.csdn.net/weixin_36179862/article/details/104857488",
+              "date": null
+            },
+            {
+              "title": "Django 与 FastAPI 架构对比：学习路径指南Django 与 FastAPI...",
+              "url": "https://juejin.cn/post/7565799761123786806",
+              "date": null
+            },
+            {
+              "title": "FastAPI 与 Django：2026 年最佳 Python 框架",
+              "url": "https://www.lastingdynamics.com/zh/blog/fastapi-vs-django/",
+              "date": null
+            },
+            {
+              "title": "Django框架：优缺点、实用场景及与Flask、FastAPI...",
+              "url": "https://cloud.tencent.com/developer/article/2294156",
+              "date": null
+            },
+            {
+              "title": "2026年Django vs Flask vs FastAPI ： 该选哪个 | [ Mecanik Dev ]",
+              "url": "https://mecanik.dev/zh-cn/posts/python-web-framework-comparison-2026-django-vs-flask-vs-fastapi/",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "fastapi与django异步的并发对比_faskapi 并发访问-CSDN博客",
+              "url": "https://blog.csdn.net/weixin_36179862/article/details/104857488",
+              "date": null
+            },
+            {
+              "title": "Django 与 FastAPI 架构对比：学习路径指南Django 与 FastAPI...",
+              "url": "https://juejin.cn/post/7565799761123786806",
+              "date": null
+            },
+            {
+              "title": "FastAPI 与 Django：2026 年最佳 Python 框架",
+              "url": "https://www.lastingdynamics.com/zh/blog/fastapi-vs-django/",
+              "date": null
+            },
+            {
+              "title": "Django框架：优缺点、实用场景及与Flask、FastAPI...",
+              "url": "https://cloud.tencent.com/developer/article/2294156",
+              "date": null
+            },
+            {
+              "title": "2026年Django vs Flask vs FastAPI ： 该选哪个 | [ Mecanik Dev ]",
+              "url": "https://mecanik.dev/zh-cn/posts/python-web-framework-comparison-2026-django-vs-flask-vs-fastapi/",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 9,
+          "category": "技术",
+          "query": "how does HTTP/3 QUIC work",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "HTTP/3 Maintains a Consistent Connection ID",
+              "url": "https://www.pubnub.com/blog/http3-and-quic-the-connection-id/",
+              "date": null
+            },
+            {
+              "title": "HTTP/3 and QUIC, what do they mean for the web? | Human Level",
+              "url": "https://www.humanlevel.com/en/blog/seo/http3-and-quic",
+              "date": null
+            },
+            {
+              "title": "[Illustration] How does HTTP/3 (HTTP over QUIC) work?... | SEの道標",
+              "url": "https://milestone-of-se.nesuke.com/en/l7protocol/http/http3-over-quic/",
+              "date": null
+            },
+            {
+              "title": "QUIC | HAProxy Technologies Glossary",
+              "url": "https://www.haproxy.com/glossary/what-is-quic",
+              "date": null
+            },
+            {
+              "title": "The Future of the Internet is here: QUIC Protocol and HTTP/3 | Medium",
+              "url": "https://medium.com/@luisrodri/the-future-of-the-internet-is-here-quic-protocol-and-http-3-d7061adf424f",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "HTTP/3 Maintains a Consistent Connection ID",
+              "url": "https://www.pubnub.com/blog/http3-and-quic-the-connection-id/",
+              "date": null
+            },
+            {
+              "title": "HTTP/3 and QUIC, what do they mean for the web? | Human Level",
+              "url": "https://www.humanlevel.com/en/blog/seo/http3-and-quic",
+              "date": null
+            },
+            {
+              "title": "[Illustration] How does HTTP/3 (HTTP over QUIC) work?... | SEの道標",
+              "url": "https://milestone-of-se.nesuke.com/en/l7protocol/http/http3-over-quic/",
+              "date": null
+            },
+            {
+              "title": "QUIC | HAProxy Technologies Glossary",
+              "url": "https://www.haproxy.com/glossary/what-is-quic",
+              "date": null
+            },
+            {
+              "title": "The Future of the Internet is here: QUIC Protocol and HTTP/3 | Medium",
+              "url": "https://medium.com/@luisrodri/the-future-of-the-internet-is-here-quic-protocol-and-http-3-d7061adf424f",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 10,
+          "category": "技术",
+          "query": "Rust async runtime tokio 原理",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "Tokio 运行时 - 深度解析",
+              "url": "https://atcfu.com/ai-articles/tokio-runtime/",
+              "date": null
+            },
+            {
+              "title": "13｜独立王国：初步了解Rust异步并发编程-Rust...",
+              "url": "https://time.geekbang.org/column/article/725837",
+              "date": null
+            },
+            {
+              "title": "理解tokio的核心(1): runtime - Rust入门秘籍",
+              "url": "https://rust-book.junmajinlong.com/ch100/01_understand_tokio_runtime.html",
+              "date": null
+            },
+            {
+              "title": "Why Tokio Isn’t Just an Async Runtime — It’s an Entire Concurrency Framework | by Aayush Tiwari",
+              "url": "https://medium.com/@aayush71727/why-tokio-isnt-just-an-async-runtime-it-s-an-entire-concurrency-framework-c4e8b505a627",
+              "date": null
+            },
+            {
+              "title": "Rust async 运行时拆解：tokio 的调度器到底在干什么",
+              "url": "https://quant67.com/post/rust/tokio-runtime/tokio-runtime.html",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "Tokio 运行时 - 深度解析",
+              "url": "https://atcfu.com/ai-articles/tokio-runtime/",
+              "date": null
+            },
+            {
+              "title": "13｜独立王国：初步了解Rust异步并发编程-Rust...",
+              "url": "https://time.geekbang.org/column/article/725837",
+              "date": null
+            },
+            {
+              "title": "理解tokio的核心(1): runtime - Rust入门秘籍",
+              "url": "https://rust-book.junmajinlong.com/ch100/01_understand_tokio_runtime.html",
+              "date": null
+            },
+            {
+              "title": "Why Tokio Isn’t Just an Async Runtime — It’s an Entire Concurrency Framework | by Aayush Tiwari",
+              "url": "https://medium.com/@aayush71727/why-tokio-isnt-just-an-async-runtime-it-s-an-entire-concurrency-framework-c4e8b505a627",
+              "date": null
+            },
+            {
+              "title": "Rust async 运行时拆解：tokio 的调度器到底在干什么",
+              "url": "https://quant67.com/post/rust/tokio-runtime/tokio-runtime.html",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 11,
+          "category": "政策",
+          "query": "2026年 新能源汽车 补贴政策",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "新能源汽车补贴退坡，是“精准扶持”还是“福利缩水”？ 1000+...",
+              "url": "https://post.smzdm.com/p/a82e37rn/",
+              "date": null
+            },
+            {
+              "title": "2026年新能源汽车补贴最新消息：地方购新补贴全面铺开 | 新浪网",
+              "url": "https://k.sina.com.cn/article_7857141524_1d452771401903gujq.html",
+              "date": null
+            },
+            {
+              "title": "别光顾着过年，快来买车 625亿元“国补”已经发放 - OFweek新能源汽车网",
+              "url": "https://nev.ofweek.com/2026-02/ART-71000-8420-30681174.html",
+              "date": null
+            },
+            {
+              "title": "2026年汽车国补政策需要交易票吗-抖音",
+              "url": "https://www.douyin.com/shipin/7590946035543902262",
+              "date": null
+            },
+            {
+              "title": "qdzb07b20260116C",
+              "url": "https://epaper.qingdaonews.com/qdzb/resfile/2026-01-16/A07/qdzb-20260116-A07.pdf",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "新能源汽车补贴退坡，是“精准扶持”还是“福利缩水”？ 1000+...",
+              "url": "https://post.smzdm.com/p/a82e37rn/",
+              "date": null
+            },
+            {
+              "title": "2026年新能源汽车补贴最新消息：地方购新补贴全面铺开 | 新浪网",
+              "url": "https://k.sina.com.cn/article_7857141524_1d452771401903gujq.html",
+              "date": null
+            },
+            {
+              "title": "别光顾着过年，快来买车 625亿元“国补”已经发放 - OFweek新能源汽车网",
+              "url": "https://nev.ofweek.com/2026-02/ART-71000-8420-30681174.html",
+              "date": null
+            },
+            {
+              "title": "2026年汽车国补政策需要交易票吗-抖音",
+              "url": "https://www.douyin.com/shipin/7590946035543902262",
+              "date": null
+            },
+            {
+              "title": "qdzb07b20260116C",
+              "url": "https://epaper.qingdaonews.com/qdzb/resfile/2026-01-16/A07/qdzb-20260116-A07.pdf",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 12,
+          "category": "政策",
+          "query": "数据出境安全评估办法 最新",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "数据出境安全评估办法.docx - 墨天轮文档",
+              "url": "https://www.modb.pro/doc/70005",
+              "date": null
+            },
+            {
+              "title": "标题",
+              "url": "https://xuebao.zstu.edu.cn/oa/pdfdow.aspx?Sid=20251212",
+              "date": "2025-12-12"
+            },
+            {
+              "title": "国家互联网信息办公室公布《数据出境安全评估办法》",
+              "url": "https://www.cac.gov.cn/2022-07/07/c_1658811536594644.htm",
+              "date": "2022-07-07"
+            },
+            {
+              "title": "《数据出境安全评估办法》答记者问_中央网络安全和信息化委员会办公室",
+              "url": "https://www.cac.gov.cn/2022-07/07/c_1658811536800962.htm",
+              "date": "2022-07-07"
+            },
+            {
+              "title": "环球律师事务所",
+              "url": "https://www.glo.com.cn/Content/2023/02-15/0845294502.html",
+              "date": "2023-02-15"
+            }
+          ],
+          "after": [
+            {
+              "title": "数据出境安全评估办法.docx - 墨天轮文档",
+              "url": "https://www.modb.pro/doc/70005",
+              "date": null
+            },
+            {
+              "title": "标题",
+              "url": "https://xuebao.zstu.edu.cn/oa/pdfdow.aspx?Sid=20251212",
+              "date": "2025-12-12"
+            },
+            {
+              "title": "国家互联网信息办公室公布《数据出境安全评估办法》",
+              "url": "https://www.cac.gov.cn/2022-07/07/c_1658811536594644.htm",
+              "date": "2022-07-07"
+            },
+            {
+              "title": "《数据出境安全评估办法》答记者问_中央网络安全和信息化委员会办公室",
+              "url": "https://www.cac.gov.cn/2022-07/07/c_1658811536800962.htm",
+              "date": "2022-07-07"
+            },
+            {
+              "title": "环球律师事务所",
+              "url": "https://www.glo.com.cn/Content/2023/02-15/0845294502.html",
+              "date": "2023-02-15"
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 13,
+          "category": "政策",
+          "query": "EU AI Act compliance requirements",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "EU AI Act - EU AI Compliance Act (EN)",
+              "url": "https://www.udemy.com/course/eu-ai-act-eu-ai-compliance-act-en/",
+              "date": null
+            },
+            {
+              "title": "The Complete Guide to EU AI Act Compliance: Deadlines, Requirements, and How to Prepare",
+              "url": "https://www.linkedin.com/pulse/complete-guide-eu-ai-act-compliance-deadlines-requirements-how-jhkcf",
+              "date": null
+            },
+            {
+              "title": "Mistral's 'Build Your Own AI' Strategy: Why European... | AI Magi...",
+              "url": "https://www.aimagicx.com/blog/mistral-build-your-own-ai-enterprise-strategy-2026",
+              "date": null
+            },
+            {
+              "title": "EU AI Act Deadlines HR Teams Are Quietly Sleepwalking... | Medium",
+              "url": "https://compliact.medium.com/eu-ai-act-deadlines-hr-teams-are-quietly-sleepwalking-past-in-2026-29d550e2d3ca",
+              "date": null
+            },
+            {
+              "title": "A 25-day warning for businesses: the window to prepare for AI...",
+              "url": "https://www.intellisite.co/articles/the-25-day-warning",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "EU AI Act - EU AI Compliance Act (EN)",
+              "url": "https://www.udemy.com/course/eu-ai-act-eu-ai-compliance-act-en/",
+              "date": null
+            },
+            {
+              "title": "The Complete Guide to EU AI Act Compliance: Deadlines, Requirements, and How to Prepare",
+              "url": "https://www.linkedin.com/pulse/complete-guide-eu-ai-act-compliance-deadlines-requirements-how-jhkcf",
+              "date": null
+            },
+            {
+              "title": "Mistral's 'Build Your Own AI' Strategy: Why European... | AI Magi...",
+              "url": "https://www.aimagicx.com/blog/mistral-build-your-own-ai-enterprise-strategy-2026",
+              "date": null
+            },
+            {
+              "title": "EU AI Act Deadlines HR Teams Are Quietly Sleepwalking... | Medium",
+              "url": "https://compliact.medium.com/eu-ai-act-deadlines-hr-teams-are-quietly-sleepwalking-past-in-2026-29d550e2d3ca",
+              "date": null
+            },
+            {
+              "title": "A 25-day warning for businesses: the window to prepare for AI...",
+              "url": "https://www.intellisite.co/articles/the-25-day-warning",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 14,
+          "category": "政策",
+          "query": "个人所得税 专项附加扣除 标准",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "你可能有一笔“退款”！ 马上截止，尽快确认",
+              "url": "https://m.gmw.cn/2025-12/28/content_1304282511.htm",
+              "date": null
+            },
+            {
+              "title": "事关你的钱袋子，今起确认！ | 每日经济新闻",
+              "url": "https://m.nbd.com.cn/articles/2025-12-01/4162702.html",
+              "date": null
+            },
+            {
+              "title": "月底截止，事关收入！ 抓紧确认_腾讯新闻",
+              "url": "https://news.qq.com/rain/a/20241229A04S4300",
+              "date": null
+            },
+            {
+              "title": "事关你的钱袋子，今起确认！ - 21经济网",
+              "url": "https://www.21jingji.com/article/20251201/herald/13a4382c962f45fff2f75be28e751248.html",
+              "date": null
+            },
+            {
+              "title": "本月记得办！ 事关收入，抓紧确认 -华龙网",
+              "url": "https://www.cqnews.net/1/detail/1445319691382108160/web/content_1445319691382108160.html",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "你可能有一笔“退款”！ 马上截止，尽快确认",
+              "url": "https://m.gmw.cn/2025-12/28/content_1304282511.htm",
+              "date": null
+            },
+            {
+              "title": "事关你的钱袋子，今起确认！ | 每日经济新闻",
+              "url": "https://m.nbd.com.cn/articles/2025-12-01/4162702.html",
+              "date": null
+            },
+            {
+              "title": "月底截止，事关收入！ 抓紧确认_腾讯新闻",
+              "url": "https://news.qq.com/rain/a/20241229A04S4300",
+              "date": null
+            },
+            {
+              "title": "事关你的钱袋子，今起确认！ - 21经济网",
+              "url": "https://www.21jingji.com/article/20251201/herald/13a4382c962f45fff2f75be28e751248.html",
+              "date": null
+            },
+            {
+              "title": "本月记得办！ 事关收入，抓紧确认 -华龙网",
+              "url": "https://www.cqnews.net/1/detail/1445319691382108160/web/content_1445319691382108160.html",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 15,
+          "category": "政策",
+          "query": "children privacy law COPPA update",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "Cheat Sheet: Children’s privacy law update adds pressure against Facebook’s Instagram for kids plan",
+              "url": "https://digiday.com/media/cheat-sheet-childrens-privacy-law-update-adds-pressure-against-facebooks-instagram-for-kids-plan/",
+              "date": null
+            },
+            {
+              "title": "Senator Says Federal Law Protecting Children Online Needs Updating",
+              "url": "https://www.wsj.com/livecoverage/facebook-hearing-live-updates/card/TwUpnUNNG7lhv25M7F8I",
+              "date": null
+            },
+            {
+              "title": "Updates to COPPA (and what it means for your business) - Yoti",
+              "url": "https://www.yoti.com/blog/age-assurance-for-coppa/",
+              "date": null
+            },
+            {
+              "title": "Children’s Online Privacy in 2025: The Amended COPPA Rule | Loeb & Loeb LLP",
+              "url": "https://www.loeb.com/en/insights/publications/2025/05/childrens-online-privacy-in-2025-the-amended-coppa-rule",
+              "date": null
+            },
+            {
+              "title": "Children's Privacy Laws in the US: 2026 Compliance... - Pandectes",
+              "url": "https://pandectes.io/blog/childrens-privacy-laws-in-the-us-2026-compliance-guide/",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "Cheat Sheet: Children’s privacy law update adds pressure against Facebook’s Instagram for kids plan",
+              "url": "https://digiday.com/media/cheat-sheet-childrens-privacy-law-update-adds-pressure-against-facebooks-instagram-for-kids-plan/",
+              "date": null
+            },
+            {
+              "title": "Senator Says Federal Law Protecting Children Online Needs Updating",
+              "url": "https://www.wsj.com/livecoverage/facebook-hearing-live-updates/card/TwUpnUNNG7lhv25M7F8I",
+              "date": null
+            },
+            {
+              "title": "Updates to COPPA (and what it means for your business) - Yoti",
+              "url": "https://www.yoti.com/blog/age-assurance-for-coppa/",
+              "date": null
+            },
+            {
+              "title": "Children’s Online Privacy in 2025: The Amended COPPA Rule | Loeb & Loeb LLP",
+              "url": "https://www.loeb.com/en/insights/publications/2025/05/childrens-online-privacy-in-2025-the-amended-coppa-rule",
+              "date": null
+            },
+            {
+              "title": "Children's Privacy Laws in the US: 2026 Compliance... - Pandectes",
+              "url": "https://pandectes.io/blog/childrens-privacy-laws-in-the-us-2026-compliance-guide/",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 16,
+          "category": "商品",
+          "query": "iPhone 17 Pro 价格 参数",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "Apple、iPhone 17 ProとiPhone 17 Pro Maxを発表 - Apple (日本)",
+              "url": "https://www.apple.com/jp/newsroom/2025/09/apple-unveils-iphone-17-pro-and-iphone-17-pro-max/",
+              "date": null
+            },
+            {
+              "title": "Apple unveils iPhone 17 Pro and iPhone 17 Pro Max - Apple",
+              "url": "https://www.apple.com/newsroom/2025/09/apple-unveils-iphone-17-pro-and-iphone-17-pro-max/",
+              "date": null
+            },
+            {
+              "title": "I bought a MINI iPhone 17 Pro from China! - YouTube",
+              "url": "https://www.youtube.com/watch?v=IjlneBKv8XQ",
+              "date": null
+            },
+            {
+              "title": "淘宝数码网-数码百科知识与数码百科资讯平台",
+              "url": "https://shuma.taobao.com/",
+              "date": null
+            },
+            {
+              "title": "中关村在线 - 大中华区专业IT网站 - The valuable and professional IT business website in Great....",
+              "url": "https://www.zol.com.cn/",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "Apple、iPhone 17 ProとiPhone 17 Pro Maxを発表 - Apple (日本)",
+              "url": "https://www.apple.com/jp/newsroom/2025/09/apple-unveils-iphone-17-pro-and-iphone-17-pro-max/",
+              "date": null
+            },
+            {
+              "title": "Apple unveils iPhone 17 Pro and iPhone 17 Pro Max - Apple",
+              "url": "https://www.apple.com/newsroom/2025/09/apple-unveils-iphone-17-pro-and-iphone-17-pro-max/",
+              "date": null
+            },
+            {
+              "title": "I bought a MINI iPhone 17 Pro from China! - YouTube",
+              "url": "https://www.youtube.com/watch?v=IjlneBKv8XQ",
+              "date": null
+            },
+            {
+              "title": "淘宝数码网-数码百科知识与数码百科资讯平台",
+              "url": "https://shuma.taobao.com/",
+              "date": null
+            },
+            {
+              "title": "中关村在线 - 大中华区专业IT网站 - The valuable and professional IT business website in Great....",
+              "url": "https://www.zol.com.cn/",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 17,
+          "category": "商品",
+          "query": "best noise cancelling headphones 2026 review",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "Best Noise Cancelling Headphones 2026 Review | TikTok",
+              "url": "https://www.tiktok.com/discover/best-noise-cancelling-headphones-2026-review",
+              "date": null
+            },
+            {
+              "title": "The 5 Best Noise Cancelling Headphones of 2026 - RTINGS.com",
+              "url": "https://www.rtings.com/headphones/reviews/best/by-feature/noise-cancelling",
+              "date": null
+            },
+            {
+              "title": "The best noise-canceling headphones of 2026: Tested and reviewed",
+              "url": "https://www.tomsguide.com/us/best-noise-cancelling-headphones,review-5566.html",
+              "date": null
+            },
+            {
+              "title": "Best Noise-Cancelling Headphones 2026: Minimise ambient noise",
+              "url": "https://www.trustedreviews.com/best/best-noise-cancelling-headphones-3440212",
+              "date": null
+            },
+            {
+              "title": "The Best Noise-Cancelling Headphones for 2026",
+              "url": "https://au.pcmag.com/headphones/3341/the-best-noise-cancelling-headphones",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "Best Noise Cancelling Headphones 2026 Review | TikTok",
+              "url": "https://www.tiktok.com/discover/best-noise-cancelling-headphones-2026-review",
+              "date": null
+            },
+            {
+              "title": "The 5 Best Noise Cancelling Headphones of 2026 - RTINGS.com",
+              "url": "https://www.rtings.com/headphones/reviews/best/by-feature/noise-cancelling",
+              "date": null
+            },
+            {
+              "title": "The best noise-canceling headphones of 2026: Tested and reviewed",
+              "url": "https://www.tomsguide.com/us/best-noise-cancelling-headphones,review-5566.html",
+              "date": null
+            },
+            {
+              "title": "Best Noise-Cancelling Headphones 2026: Minimise ambient noise",
+              "url": "https://www.trustedreviews.com/best/best-noise-cancelling-headphones-3440212",
+              "date": null
+            },
+            {
+              "title": "The Best Noise-Cancelling Headphones for 2026",
+              "url": "https://au.pcmag.com/headphones/3341/the-best-noise-cancelling-headphones",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 18,
+          "category": "商品",
+          "query": "扫地机器人 推荐 性价比",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "【26...",
+              "url": "https://www.bilibili.com/video/BV1btfZBxEYB/",
+              "date": null
+            },
+            {
+              "title": "石头P20 Max vs... | 新浪网",
+              "url": "https://k.sina.com.cn/article_7879923199_1d5ae15ff06801jub0.html",
+              "date": null
+            },
+            {
+              "title": "扫地机哪个牌子好？ 求推荐一个性价比高的? - 知乎",
+              "url": "https://www.zhihu.com/tardis/jm/ans/2066203690583773200",
+              "date": null
+            },
+            {
+              "title": "追觅扫地机器人代理商怎么做-抖音",
+              "url": "https://www.douyin.com/shipin/7327854673904388159",
+              "date": null
+            },
+            {
+              "title": "扫地机器人推荐哪个好",
+              "url": "https://www.nodeseek.com/post-329183-2",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "【26...",
+              "url": "https://www.bilibili.com/video/BV1btfZBxEYB/",
+              "date": null
+            },
+            {
+              "title": "石头P20 Max vs... | 新浪网",
+              "url": "https://k.sina.com.cn/article_7879923199_1d5ae15ff06801jub0.html",
+              "date": null
+            },
+            {
+              "title": "扫地机哪个牌子好？ 求推荐一个性价比高的? - 知乎",
+              "url": "https://www.zhihu.com/tardis/jm/ans/2066203690583773200",
+              "date": null
+            },
+            {
+              "title": "追觅扫地机器人代理商怎么做-抖音",
+              "url": "https://www.douyin.com/shipin/7327854673904388159",
+              "date": null
+            },
+            {
+              "title": "扫地机器人推荐哪个好",
+              "url": "https://www.nodeseek.com/post-329183-2",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 19,
+          "category": "商品",
+          "query": "RTX 5090 benchmark 价格",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "PassMark - GeForce RTX 5090 - Price performance comparison",
+              "url": "https://www.videocardbenchmark.net/gpu.php?gpu=GeForce+RTX+5090&id=5725",
+              "date": null
+            },
+            {
+              "title": "GPU price tracking 2026 — Lowest price on every graphics card from Nvidia, AMD, and Intel today",
+              "url": "https://www.tomshardware.com/pc-components/gpus/lowest-gpu-prices-tracking",
+              "date": null
+            },
+            {
+              "title": "UserBenchmark: Nvidia RTX 5090",
+              "url": "https://gpu.userbenchmark.com/Nvidia-RTX-5090/Rating/4180",
+              "date": null
+            },
+            {
+              "title": "RTX 5090 - Amazon",
+              "url": "https://www.amazon.com/dp/B0F2PV42RL",
+              "date": null
+            },
+            {
+              "title": "RTX 5090 Benchmarks: 5090 vs 4090 vs Used 3090... | InsiderLLM",
+              "url": "https://insiderllm.com/guides/rtx-5090-local-ai-benchmarks/",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "PassMark - GeForce RTX 5090 - Price performance comparison",
+              "url": "https://www.videocardbenchmark.net/gpu.php?gpu=GeForce+RTX+5090&id=5725",
+              "date": null
+            },
+            {
+              "title": "GPU price tracking 2026 — Lowest price on every graphics card from Nvidia, AMD, and Intel today",
+              "url": "https://www.tomshardware.com/pc-components/gpus/lowest-gpu-prices-tracking",
+              "date": null
+            },
+            {
+              "title": "UserBenchmark: Nvidia RTX 5090",
+              "url": "https://gpu.userbenchmark.com/Nvidia-RTX-5090/Rating/4180",
+              "date": null
+            },
+            {
+              "title": "RTX 5090 - Amazon",
+              "url": "https://www.amazon.com/dp/B0F2PV42RL",
+              "date": null
+            },
+            {
+              "title": "RTX 5090 Benchmarks: 5090 vs 4090 vs Used 3090... | InsiderLLM",
+              "url": "https://insiderllm.com/guides/rtx-5090-local-ai-benchmarks/",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 20,
+          "category": "商品",
+          "query": "国产显卡 摩尔线程 最新型号",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "国产显卡品牌摩尔线程发新卡 单卡48GB显存_凤凰网",
+              "url": "https://i.ifeng.com/c/8VfiImHtDxn",
+              "date": null
+            },
+            {
+              "title": "摩尔线程MTTS70国产显卡售价及参数-硬件新闻-PHP中文网",
+              "url": "https://www.php.cn/faq/815531.html",
+              "date": null
+            },
+            {
+              "title": "MTTS70显卡多少钱_摩尔线程MTTS70国产显卡售价及参数-硬件之家",
+              "url": "https://www.yingjianzhijia.com/zhishi/76390.html",
+              "date": null
+            },
+            {
+              "title": "疑摩尔线程S90首曝！2年前的国产显卡 玩游戏竟然比RTX4060还厉害--快科技--科技....",
+              "url": "https://news.mydrivers.com/1/1064/1064120.htm",
+              "date": null
+            },
+            {
+              "title": "国产显卡厂商摩尔线程宣布完成 15 亿元 B 轮融资，加速多功能 GPU...",
+              "url": "https://m.ithome.com/html/663833.htm",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "国产显卡品牌摩尔线程发新卡 单卡48GB显存_凤凰网",
+              "url": "https://i.ifeng.com/c/8VfiImHtDxn",
+              "date": null
+            },
+            {
+              "title": "摩尔线程MTTS70国产显卡售价及参数-硬件新闻-PHP中文网",
+              "url": "https://www.php.cn/faq/815531.html",
+              "date": null
+            },
+            {
+              "title": "MTTS70显卡多少钱_摩尔线程MTTS70国产显卡售价及参数-硬件之家",
+              "url": "https://www.yingjianzhijia.com/zhishi/76390.html",
+              "date": null
+            },
+            {
+              "title": "疑摩尔线程S90首曝！2年前的国产显卡 玩游戏竟然比RTX4060还厉害--快科技--科技....",
+              "url": "https://news.mydrivers.com/1/1064/1064120.htm",
+              "date": null
+            },
+            {
+              "title": "国产显卡厂商摩尔线程宣布完成 15 亿元 B 轮融资，加速多功能 GPU...",
+              "url": "https://m.ithome.com/html/663833.htm",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        }
+      ],
+      "zh_news": [
+        {
+          "id": 1,
+          "query": "2026年9月 国内外重大新闻",
+          "rss_admitted": 2,
+          "before": {
+            "n": 5,
+            "fresh": 1
+          },
+          "after": {
+            "n": 5,
+            "fresh": 3
+          },
+          "rss_in_after": 2
+        },
+        {
+          "id": 2,
+          "query": "最近一周 AI 行业动态",
+          "rss_admitted": 0,
+          "before": {
+            "n": 3,
+            "fresh": 1
+          },
+          "after": {
+            "n": 3,
+            "fresh": 1
+          },
+          "rss_in_after": 0
+        },
+        {
+          "id": 3,
+          "query": "台风 最新消息 路径",
+          "rss_admitted": 0,
+          "before": {
+            "n": 5,
+            "fresh": 0
+          },
+          "after": {
+            "n": 5,
+            "fresh": 0
+          },
+          "rss_in_after": 0
+        },
+        {
+          "id": 4,
+          "query": "美国 关税 最新政策",
+          "rss_admitted": 0,
+          "before": {
+            "n": 5,
+            "fresh": 2
+          },
+          "after": {
+            "n": 5,
+            "fresh": 2
+          },
+          "rss_in_after": 0
+        },
+        {
+          "id": 5,
+          "query": "2026年 新能源汽车 补贴政策",
+          "rss_admitted": 0,
+          "before": {
+            "n": 5,
+            "fresh": 2
+          },
+          "after": {
+            "n": 5,
+            "fresh": 2
+          },
+          "rss_in_after": 0
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "queries": [
+        {
+          "id": 1,
+          "category": "新闻",
+          "query": "2026年9月 国内外重大新闻",
+          "rss_admitted": 2,
+          "top5_changed": true,
+          "before": [
+            {
+              "title": "SBS一周大事件（2026年9月18日）",
+              "url": "https://www.sbs.com.au/language/chinese/zh-hans/podcast-episode/weekly-news-wrap-20260918/qw26jpdga",
+              "date": "2026-09-18"
+            },
+            {
+              "title": "2026年9月22日外交部发言人郭嘉昆主持例行记者会_中华人民共和国驻大韩民国大....",
+              "url": "https://kr.china-embassy.gov.cn/fyrth/202609/t20260922_12028748.htm",
+              "date": "2026-09-22"
+            },
+            {
+              "title": "（经济观察）三个关键词透视中美经贸新动向_凤凰网",
+              "url": "https://news.ifeng.com/c/8woDNeS7SrX",
+              "date": null
+            },
+            {
+              "title": "2026年8月28日外交部发言人林剑主持例行记者会_中华人民共和国驻大韩民国大使....",
+              "url": "https://kr.china-embassy.gov.cn/fyrth/202608/t20260828_12012269.htm",
+              "date": "2026-08-28"
+            },
+            {
+              "title": "消息人士：美方认为中国2027年“武统”的可能性不大",
+              "url": "https://www.dw.com/zh/%E6%B6%88%E6%81%AF%E4%BA%BA%E5%A3%AB%E7%BE%8E%E6%96%B9%E8%AE%A4%E4%B8%BA%E4%B8%AD%E5%9B%BD2027%E5%B9%B4%E6%AD%A6%E7%BB%9F%E7%9A%84%E5%8F%AF%E8%83%BD%E6%80%A7%E4%B8%8D%E5%A4%A7/a-79498716",
+              "date": "2026-10-01T10:44:52"
+            }
+          ],
+          "after": [
+            {
+              "title": "SBS一周大事件（2026年9月18日）",
+              "url": "https://www.sbs.com.au/language/chinese/zh-hans/podcast-episode/weekly-news-wrap-20260918/qw26jpdga",
+              "date": "2026-09-18"
+            },
+            {
+              "title": "莆田2026年秋季文旅活动启幕",
+              "url": "https://www.chinanews.com.cn/sh/2026/10-02/10707211.shtml",
+              "date": "2026-10-02T09:50:26+00:00"
+            },
+            {
+              "title": "2026年9月22日外交部发言人郭嘉昆主持例行记者会_中华人民共和国驻大韩民国大....",
+              "url": "https://kr.china-embassy.gov.cn/fyrth/202609/t20260922_12028748.htm",
+              "date": "2026-09-22"
+            },
+            {
+              "title": "台胞李兴忠“冰城”哈尔滨创业 卤肉饭香飘两岸情",
+              "url": "https://www.chinanews.com.cn/tp/2026/10-02/10707172.shtml",
+              "date": "2026-10-02T07:57:43+00:00"
+            },
+            {
+              "title": "（经济观察）三个关键词透视中美经贸新动向_凤凰网",
+              "url": "https://news.ifeng.com/c/8woDNeS7SrX",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.2,
+          "after_fresh_share": 0.4
+        },
+        {
+          "id": 2,
+          "category": "新闻",
+          "query": "最近一周 AI 行业动态",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "创业板指(399006)_股票行情_走势图—东方财富网",
+              "url": "https://quote.eastmoney.com/zs399006.html",
+              "date": null
+            },
+            {
+              "title": "nocache - npm",
+              "url": "https://www.npmjs.com/package/nocache",
+              "date": null
+            },
+            {
+              "title": "regex - Adding ?nocache=1 to every url (including the assets like...",
+              "url": "https://stackoverflow.com/questions/38333569/adding-nocache-1-to-every-url-including-the-assets-like-stylesheet-behind-the",
+              "date": null
+            },
+            {
+              "title": "nocache/README at master · Feh/nocache · GitHub",
+              "url": "https://github.com/Feh/nocache/blob/master/README",
+              "date": null
+            },
+            {
+              "title": "nocache - Yarn",
+              "url": "https://classic.yarnpkg.com/en/package/nocache",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "创业板指(399006)_股票行情_走势图—东方财富网",
+              "url": "https://quote.eastmoney.com/zs399006.html",
+              "date": null
+            },
+            {
+              "title": "nocache - npm",
+              "url": "https://www.npmjs.com/package/nocache",
+              "date": null
+            },
+            {
+              "title": "regex - Adding ?nocache=1 to every url (including the assets like...",
+              "url": "https://stackoverflow.com/questions/38333569/adding-nocache-1-to-every-url-including-the-assets-like-stylesheet-behind-the",
+              "date": null
+            },
+            {
+              "title": "nocache/README at master · Feh/nocache · GitHub",
+              "url": "https://github.com/Feh/nocache/blob/master/README",
+              "date": null
+            },
+            {
+              "title": "nocache - Yarn",
+              "url": "https://classic.yarnpkg.com/en/package/nocache",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 3,
+          "category": "新闻",
+          "query": "latest news semiconductor export controls",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "Insight into the U.S. Semiconductor Export Controls Update",
+              "url": "https://www.csis.org/analysis/insight-us-semiconductor-export-controls-update",
+              "date": null
+            },
+            {
+              "title": "Trump's AI chip export controls could go either way for Korea - Korea JoongAng Daily ,Korean news in Engl....",
+              "url": "https://www.koreajoongangdaily.com/business/trumps-ai-chip-export-controls-could-go-either-way-for-korea/12444537",
+              "date": null
+            },
+            {
+              "title": "China Lashes Out at Latest US Export Controls on Chips - VOA",
+              "url": "https://www.voanews.com/a/china-lashes-out-at-latest-us-export-controls-on-chips/6781565.html",
+              "date": null
+            },
+            {
+              "title": "SIA Statement on New Export Controls - Semiconductor Industry Association",
+              "url": "http://www.semiconductors.org/sia-statement-on-new-export-controls-2/",
+              "date": null
+            },
+            {
+              "title": "US expands export controls for AI semiconductor chips to China",
+              "url": "https://cointelegraph.com/news/us-expands-export-controls-ai-chips-china",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "Insight into the U.S. Semiconductor Export Controls Update",
+              "url": "https://www.csis.org/analysis/insight-us-semiconductor-export-controls-update",
+              "date": null
+            },
+            {
+              "title": "Trump's AI chip export controls could go either way for Korea - Korea JoongAng Daily ,Korean news in Engl....",
+              "url": "https://www.koreajoongangdaily.com/business/trumps-ai-chip-export-controls-could-go-either-way-for-korea/12444537",
+              "date": null
+            },
+            {
+              "title": "China Lashes Out at Latest US Export Controls on Chips - VOA",
+              "url": "https://www.voanews.com/a/china-lashes-out-at-latest-us-export-controls-on-chips/6781565.html",
+              "date": null
+            },
+            {
+              "title": "SIA Statement on New Export Controls - Semiconductor Industry Association",
+              "url": "http://www.semiconductors.org/sia-statement-on-new-export-controls-2/",
+              "date": null
+            },
+            {
+              "title": "US expands export controls for AI semiconductor chips to China",
+              "url": "https://cointelegraph.com/news/us-expands-export-controls-ai-chips-china",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 4,
+          "category": "新闻",
+          "query": "台风 最新消息 路径",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "2026年第18号台风沙德尔最新消息路径实时更新- 杭州本地宝",
+              "url": "https://hz.bendibao.com/news/2026824/172472.shtm",
+              "date": null
+            },
+            {
+              "title": "刚刚！ 台风“丹娜丝”路径有变！ 或在福建浙江登陆",
+              "url": "https://c.m.163.com/news/a/K3NE3U0Q0550IMZX.html?spss=sps_sem",
+              "date": null
+            },
+            {
+              "title": "2026广州台风最新消息_广州台风实时路径|登陆时间地点-广州本地宝",
+              "url": "http://gz.bendibao.com/news/zhuantitaifeng/",
+              "date": null
+            },
+            {
+              "title": "台风路径预报",
+              "url": "https://m.nmc.cn/publish/typhoon/probability-img3.html",
+              "date": null
+            },
+            {
+              "title": "超强台风“巴威”即将进入福建警戒区！福州或迎强降雨_福视悦动 - 福州明珠 ....",
+              "url": "https://www.zohi.tv/p/415464.html",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "2026年第18号台风沙德尔最新消息路径实时更新- 杭州本地宝",
+              "url": "https://hz.bendibao.com/news/2026824/172472.shtm",
+              "date": null
+            },
+            {
+              "title": "刚刚！ 台风“丹娜丝”路径有变！ 或在福建浙江登陆",
+              "url": "https://c.m.163.com/news/a/K3NE3U0Q0550IMZX.html?spss=sps_sem",
+              "date": null
+            },
+            {
+              "title": "2026广州台风最新消息_广州台风实时路径|登陆时间地点-广州本地宝",
+              "url": "http://gz.bendibao.com/news/zhuantitaifeng/",
+              "date": null
+            },
+            {
+              "title": "台风路径预报",
+              "url": "https://m.nmc.cn/publish/typhoon/probability-img3.html",
+              "date": null
+            },
+            {
+              "title": "超强台风“巴威”即将进入福建警戒区！福州或迎强降雨_福视悦动 - 福州明珠 ....",
+              "url": "https://www.zohi.tv/p/415464.html",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 5,
+          "category": "新闻",
+          "query": "美国 关税 最新政策",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "外媒：关税或将致美国日用品全面涨价-运城晚报",
+              "url": "https://www.edurew.com/html/03c79099206.html",
+              "date": null
+            },
+            {
+              "title": "Temu 和 Shein...",
+              "url": "https://www.100ec.cn/detail--6648723.html",
+              "date": null
+            },
+            {
+              "title": "三年来首次下滑！关税政策正让美国经济经历“超出预期的糟糕” - 韩国最大的....",
+              "url": "https://chinese.joins.com/news/articleView.html?idxno=119620",
+              "date": null
+            },
+            {
+              "title": "美国对哪6个行业征收关税-抖音",
+              "url": "https://www.douyin.com/shipin/7611372891824965682",
+              "date": null
+            },
+            {
+              "title": "被重锤的东南亚，不敢“报复” - 华尔街见闻",
+              "url": "https://wallstreetcn.com/articles/3744646",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "外媒：关税或将致美国日用品全面涨价-运城晚报",
+              "url": "https://www.edurew.com/html/03c79099206.html",
+              "date": null
+            },
+            {
+              "title": "Temu 和 Shein...",
+              "url": "https://www.100ec.cn/detail--6648723.html",
+              "date": null
+            },
+            {
+              "title": "三年来首次下滑！关税政策正让美国经济经历“超出预期的糟糕” - 韩国最大的....",
+              "url": "https://chinese.joins.com/news/articleView.html?idxno=119620",
+              "date": null
+            },
+            {
+              "title": "美国对哪6个行业征收关税-抖音",
+              "url": "https://www.douyin.com/shipin/7611372891824965682",
+              "date": null
+            },
+            {
+              "title": "被重锤的东南亚，不敢“报复” - 华尔街见闻",
+              "url": "https://wallstreetcn.com/articles/3744646",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 6,
+          "category": "技术",
+          "query": "Python 3.13 新特性",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "好学编程：Python 3.13 这些新特性你一定要知道！ - 知乎",
+              "url": "https://zhuanlan.zhihu.com/p/12824443094",
+              "date": null
+            },
+            {
+              "title": "Python的新变化 — Python 3.13.15 文档",
+              "url": "https://docs.python.org/zh-cn/3.13/whatsnew/index.html",
+              "date": null
+            },
+            {
+              "title": "[アップデート] AWS Lambda で Python 3.13...",
+              "url": "https://dev.classmethod.jp/articles/aws_lambda_support_python313/",
+              "date": null
+            },
+            {
+              "title": "Python 3.13 Debuts With New Interactive Interpreter & Experimental JIT",
+              "url": "https://www.phoronix.com/news/Python-3.13-Released",
+              "date": null
+            },
+            {
+              "title": "The new REPL in Python 3.13 - Trey Hunner",
+              "url": "https://treyhunner.com/2024/05/my-favorite-python-3-dot-13-feature/",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "好学编程：Python 3.13 这些新特性你一定要知道！ - 知乎",
+              "url": "https://zhuanlan.zhihu.com/p/12824443094",
+              "date": null
+            },
+            {
+              "title": "Python的新变化 — Python 3.13.15 文档",
+              "url": "https://docs.python.org/zh-cn/3.13/whatsnew/index.html",
+              "date": null
+            },
+            {
+              "title": "[アップデート] AWS Lambda で Python 3.13...",
+              "url": "https://dev.classmethod.jp/articles/aws_lambda_support_python313/",
+              "date": null
+            },
+            {
+              "title": "Python 3.13 Debuts With New Interactive Interpreter & Experimental JIT",
+              "url": "https://www.phoronix.com/news/Python-3.13-Released",
+              "date": null
+            },
+            {
+              "title": "The new REPL in Python 3.13 - Trey Hunner",
+              "url": "https://treyhunner.com/2024/05/my-favorite-python-3-dot-13-feature/",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 7,
+          "category": "技术",
+          "query": "MCP protocol specification 2026",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "다음 MCP 스펙 릴리즈(2026-07-28)의 주요 내용: Stateless 전환 및 공식 확장 도입 예....",
+              "url": "https://discuss.pytorch.kr/t/mcp-2026-07-28-stateless/10387",
+              "date": null
+            },
+            {
+              "title": "MCP, 세션 지우고 HTTP 인프라 위로… 2026-07-28 spec 확정 - Insights",
+              "url": "https://insights.marvin-42.com/articles/mcp-http-2026-07-28-spec",
+              "date": null
+            },
+            {
+              "title": "The 2026-07-28 Specification | Model Context Protocol Blog",
+              "url": "https://blog.modelcontextprotocol.io/posts/2026-07-28/",
+              "date": null
+            },
+            {
+              "title": "The 2026-07-28 MCP Specification Release Candidate | Model Context Protocol Blog",
+              "url": "https://blog.modelcontextprotocol.io/posts/2026-07-28-release-candidate/",
+              "date": null
+            },
+            {
+              "title": "Vercel MCP Ships the 2026-07-28 Spec: The MCP... - Developers Digest",
+              "url": "https://www.developersdigest.tech/blog/vercel-mcp-2026-07-28-spec-support",
+              "date": "2026-10-01T11:54:11"
+            }
+          ],
+          "after": [
+            {
+              "title": "다음 MCP 스펙 릴리즈(2026-07-28)의 주요 내용: Stateless 전환 및 공식 확장 도입 예....",
+              "url": "https://discuss.pytorch.kr/t/mcp-2026-07-28-stateless/10387",
+              "date": null
+            },
+            {
+              "title": "MCP, 세션 지우고 HTTP 인프라 위로… 2026-07-28 spec 확정 - Insights",
+              "url": "https://insights.marvin-42.com/articles/mcp-http-2026-07-28-spec",
+              "date": null
+            },
+            {
+              "title": "The 2026-07-28 Specification | Model Context Protocol Blog",
+              "url": "https://blog.modelcontextprotocol.io/posts/2026-07-28/",
+              "date": null
+            },
+            {
+              "title": "The 2026-07-28 MCP Specification Release Candidate | Model Context Protocol Blog",
+              "url": "https://blog.modelcontextprotocol.io/posts/2026-07-28-release-candidate/",
+              "date": null
+            },
+            {
+              "title": "Vercel MCP Ships the 2026-07-28 Spec: The MCP... - Developers Digest",
+              "url": "https://www.developersdigest.tech/blog/vercel-mcp-2026-07-28-spec-support",
+              "date": "2026-10-01T11:54:11"
+            }
+          ],
+          "before_fresh_share": 0.2,
+          "after_fresh_share": 0.2
+        },
+        {
+          "id": 8,
+          "category": "技术",
+          "query": "FastAPI 与 Django 性能对比",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "fastapi与django异步的并发对比_faskapi 并发访问-CSDN博客",
+              "url": "https://blog.csdn.net/weixin_36179862/article/details/104857488",
+              "date": null
+            },
+            {
+              "title": "Django 与 FastAPI 架构对比：学习路径指南Django 与 FastAPI...",
+              "url": "https://juejin.cn/post/7565799761123786806",
+              "date": null
+            },
+            {
+              "title": "FastAPI 与 Django：2026 年最佳 Python 框架",
+              "url": "https://www.lastingdynamics.com/zh/blog/fastapi-vs-django/",
+              "date": null
+            },
+            {
+              "title": "Django框架：优缺点、实用场景及与Flask、FastAPI...",
+              "url": "https://cloud.tencent.com/developer/article/2294156",
+              "date": null
+            },
+            {
+              "title": "WEB框架对比——Django、Flask、FastAPI - ''竹先森゜ - 博客园",
+              "url": "https://www.cnblogs.com/zhuminghui/p/14741536.html",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "fastapi与django异步的并发对比_faskapi 并发访问-CSDN博客",
+              "url": "https://blog.csdn.net/weixin_36179862/article/details/104857488",
+              "date": null
+            },
+            {
+              "title": "Django 与 FastAPI 架构对比：学习路径指南Django 与 FastAPI...",
+              "url": "https://juejin.cn/post/7565799761123786806",
+              "date": null
+            },
+            {
+              "title": "FastAPI 与 Django：2026 年最佳 Python 框架",
+              "url": "https://www.lastingdynamics.com/zh/blog/fastapi-vs-django/",
+              "date": null
+            },
+            {
+              "title": "Django框架：优缺点、实用场景及与Flask、FastAPI...",
+              "url": "https://cloud.tencent.com/developer/article/2294156",
+              "date": null
+            },
+            {
+              "title": "WEB框架对比——Django、Flask、FastAPI - ''竹先森゜ - 博客园",
+              "url": "https://www.cnblogs.com/zhuminghui/p/14741536.html",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 9,
+          "category": "技术",
+          "query": "how does HTTP/3 QUIC work",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "[Illustration] How does HTTP/3 (HTTP over QUIC) work?... | SEの道標",
+              "url": "https://milestone-of-se.nesuke.com/en/l7protocol/http/http3-over-quic/",
+              "date": null
+            },
+            {
+              "title": "QUIC | HAProxy Technologies Glossary",
+              "url": "https://www.haproxy.com/glossary/what-is-quic",
+              "date": null
+            },
+            {
+              "title": "The Future of the Internet is here: QUIC Protocol and HTTP/3 | Medium",
+              "url": "https://medium.com/@luisrodri/the-future-of-the-internet-is-here-quic-protocol-and-http-3-d7061adf424f",
+              "date": null
+            },
+            {
+              "title": "How QUIC works | HTTP/3 explained",
+              "url": "https://http3-explained.haxx.se/en/quic",
+              "date": null
+            },
+            {
+              "title": "What Are QUIC and HTTP/3? | F5",
+              "url": "https://www.f5.com/glossary/quic-http3",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "[Illustration] How does HTTP/3 (HTTP over QUIC) work?... | SEの道標",
+              "url": "https://milestone-of-se.nesuke.com/en/l7protocol/http/http3-over-quic/",
+              "date": null
+            },
+            {
+              "title": "QUIC | HAProxy Technologies Glossary",
+              "url": "https://www.haproxy.com/glossary/what-is-quic",
+              "date": null
+            },
+            {
+              "title": "The Future of the Internet is here: QUIC Protocol and HTTP/3 | Medium",
+              "url": "https://medium.com/@luisrodri/the-future-of-the-internet-is-here-quic-protocol-and-http-3-d7061adf424f",
+              "date": null
+            },
+            {
+              "title": "How QUIC works | HTTP/3 explained",
+              "url": "https://http3-explained.haxx.se/en/quic",
+              "date": null
+            },
+            {
+              "title": "What Are QUIC and HTTP/3? | F5",
+              "url": "https://www.f5.com/glossary/quic-http3",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 10,
+          "category": "技术",
+          "query": "Rust async runtime tokio 原理",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "Tokio 运行时 - 深度解析",
+              "url": "https://atcfu.com/ai-articles/tokio-runtime/",
+              "date": null
+            },
+            {
+              "title": "理解tokio的核心(1): runtime - Rust入门秘籍",
+              "url": "https://rust-book.junmajinlong.com/ch100/01_understand_tokio_runtime.html",
+              "date": null
+            },
+            {
+              "title": "Why Tokio Isn’t Just an Async Runtime — It’s an Entire Concurrency Framework | by Aayush Tiwari",
+              "url": "https://medium.com/@aayush71727/why-tokio-isnt-just-an-async-runtime-it-s-an-entire-concurrency-framework-c4e8b505a627",
+              "date": null
+            },
+            {
+              "title": "Topics | Tokio - An asynchronous Rust runtime",
+              "url": "https://tokio.rs/tokio/topics?search=Rust+async+runtime+tokio+%E5%8E%9F%E7%90%86+site%3Atokio.rs&safe=0",
+              "date": null
+            },
+            {
+              "title": "Overview | CloudWeGo",
+              "url": "https://www.cloudwego.io/docs/monolake/overview/",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "Tokio 运行时 - 深度解析",
+              "url": "https://atcfu.com/ai-articles/tokio-runtime/",
+              "date": null
+            },
+            {
+              "title": "理解tokio的核心(1): runtime - Rust入门秘籍",
+              "url": "https://rust-book.junmajinlong.com/ch100/01_understand_tokio_runtime.html",
+              "date": null
+            },
+            {
+              "title": "Why Tokio Isn’t Just an Async Runtime — It’s an Entire Concurrency Framework | by Aayush Tiwari",
+              "url": "https://medium.com/@aayush71727/why-tokio-isnt-just-an-async-runtime-it-s-an-entire-concurrency-framework-c4e8b505a627",
+              "date": null
+            },
+            {
+              "title": "Topics | Tokio - An asynchronous Rust runtime",
+              "url": "https://tokio.rs/tokio/topics?search=Rust+async+runtime+tokio+%E5%8E%9F%E7%90%86+site%3Atokio.rs&safe=0",
+              "date": null
+            },
+            {
+              "title": "Overview | CloudWeGo",
+              "url": "https://www.cloudwego.io/docs/monolake/overview/",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 11,
+          "category": "政策",
+          "query": "2026年 新能源汽车 补贴政策",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "新能源汽车补贴退坡，是“精准扶持”还是“福利缩水”？ 1000+...",
+              "url": "https://post.smzdm.com/p/a82e37rn/",
+              "date": null
+            },
+            {
+              "title": "别光顾着过年，快来买车 625亿元“国补”已经发放 - OFweek新能源汽车网",
+              "url": "https://nev.ofweek.com/2026-02/ART-71000-8420-30681174.html",
+              "date": null
+            },
+            {
+              "title": "2026年陵水新能源汽车购车补贴金额及档次标准- 海口本地宝",
+              "url": "https://m.haikou.bendibao.com/news/84945.shtm",
+              "date": null
+            },
+            {
+              "title": "2026年4月汽车国补置换2万元申请全攻略：手把手教你领到国家补贴",
+              "url": "https://www.zhihu.com/tardis/jm/art/2033119484798616793",
+              "date": null
+            },
+            {
+              "title": "qdzb07b20260116C",
+              "url": "https://epaper.qingdaonews.com/qdzb/resfile/2026-01-16/A07/qdzb-20260116-A07.pdf",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "新能源汽车补贴退坡，是“精准扶持”还是“福利缩水”？ 1000+...",
+              "url": "https://post.smzdm.com/p/a82e37rn/",
+              "date": null
+            },
+            {
+              "title": "别光顾着过年，快来买车 625亿元“国补”已经发放 - OFweek新能源汽车网",
+              "url": "https://nev.ofweek.com/2026-02/ART-71000-8420-30681174.html",
+              "date": null
+            },
+            {
+              "title": "2026年陵水新能源汽车购车补贴金额及档次标准- 海口本地宝",
+              "url": "https://m.haikou.bendibao.com/news/84945.shtm",
+              "date": null
+            },
+            {
+              "title": "2026年4月汽车国补置换2万元申请全攻略：手把手教你领到国家补贴",
+              "url": "https://www.zhihu.com/tardis/jm/art/2033119484798616793",
+              "date": null
+            },
+            {
+              "title": "qdzb07b20260116C",
+              "url": "https://epaper.qingdaonews.com/qdzb/resfile/2026-01-16/A07/qdzb-20260116-A07.pdf",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 12,
+          "category": "政策",
+          "query": "数据出境安全评估办法 最新",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "解读数据出境安全评估办法：未通过评估企业或面临结构性影响",
+              "url": "https://m.mp.oeeee.com/a/BAAFRD000020220708701121.html",
+              "date": null
+            },
+            {
+              "title": "数据出境安全评估办法.docx - 墨天轮文档",
+              "url": "https://www.modb.pro/doc/70005",
+              "date": null
+            },
+            {
+              "title": "标题",
+              "url": "https://xuebao.zstu.edu.cn/oa/pdfdow.aspx?Sid=20251212",
+              "date": "2025-12-12"
+            },
+            {
+              "title": "国家互联网信息办公室公布《数据出境安全评估办法》",
+              "url": "https://www.cac.gov.cn/2022-07/07/c_1658811536594644.htm",
+              "date": "2022-07-07"
+            },
+            {
+              "title": "《数据出境安全评估办法》答记者问_中央网络安全和信息化委员会办公室",
+              "url": "https://www.cac.gov.cn/2022-07/07/c_1658811536800962.htm",
+              "date": "2022-07-07"
+            }
+          ],
+          "after": [
+            {
+              "title": "解读数据出境安全评估办法：未通过评估企业或面临结构性影响",
+              "url": "https://m.mp.oeeee.com/a/BAAFRD000020220708701121.html",
+              "date": null
+            },
+            {
+              "title": "数据出境安全评估办法.docx - 墨天轮文档",
+              "url": "https://www.modb.pro/doc/70005",
+              "date": null
+            },
+            {
+              "title": "标题",
+              "url": "https://xuebao.zstu.edu.cn/oa/pdfdow.aspx?Sid=20251212",
+              "date": "2025-12-12"
+            },
+            {
+              "title": "国家互联网信息办公室公布《数据出境安全评估办法》",
+              "url": "https://www.cac.gov.cn/2022-07/07/c_1658811536594644.htm",
+              "date": "2022-07-07"
+            },
+            {
+              "title": "《数据出境安全评估办法》答记者问_中央网络安全和信息化委员会办公室",
+              "url": "https://www.cac.gov.cn/2022-07/07/c_1658811536800962.htm",
+              "date": "2022-07-07"
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 13,
+          "category": "政策",
+          "query": "EU AI Act compliance requirements",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "EU AI Act Compliance | Microsoft Trust Center",
+              "url": "https://www.microsoft.com/en-au/trust-center/compliance/eu-ai-act",
+              "date": null
+            },
+            {
+              "title": "EU AI Act Compliance: What You Need to Know",
+              "url": "https://www.sai360.com/regulations/eu-ai-act",
+              "date": null
+            },
+            {
+              "title": "How different stakeholders are thinking about EU AI Act compliance | IAPP",
+              "url": "https://iapp.org/news/a/how-different-stakeholders-are-thinking-about-eu-ai-act-compliance",
+              "date": null
+            },
+            {
+              "title": "EU AI Act Compliance Guide | Sinaptic.AI",
+              "url": "https://sinaptic.ai/articles/eu-ai-act-compliance",
+              "date": null
+            },
+            {
+              "title": "The Complete Guide to EU AI Act Compliance: Deadlines, Requirements, and How to Prepare",
+              "url": "https://www.linkedin.com/pulse/complete-guide-eu-ai-act-compliance-deadlines-requirements-how-jhkcf",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "EU AI Act Compliance | Microsoft Trust Center",
+              "url": "https://www.microsoft.com/en-au/trust-center/compliance/eu-ai-act",
+              "date": null
+            },
+            {
+              "title": "EU AI Act Compliance: What You Need to Know",
+              "url": "https://www.sai360.com/regulations/eu-ai-act",
+              "date": null
+            },
+            {
+              "title": "How different stakeholders are thinking about EU AI Act compliance | IAPP",
+              "url": "https://iapp.org/news/a/how-different-stakeholders-are-thinking-about-eu-ai-act-compliance",
+              "date": null
+            },
+            {
+              "title": "EU AI Act Compliance Guide | Sinaptic.AI",
+              "url": "https://sinaptic.ai/articles/eu-ai-act-compliance",
+              "date": null
+            },
+            {
+              "title": "The Complete Guide to EU AI Act Compliance: Deadlines, Requirements, and How to Prepare",
+              "url": "https://www.linkedin.com/pulse/complete-guide-eu-ai-act-compliance-deadlines-requirements-how-jhkcf",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 14,
+          "category": "政策",
+          "query": "个人所得税 专项附加扣除 标准",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "你可能有一笔“退款”！ 马上截止，尽快确认",
+              "url": "https://m.gmw.cn/2025-12/28/content_1304282511.htm",
+              "date": null
+            },
+            {
+              "title": "国务院关于提高个人所得税有关专项附加扣除标准的通知_税务_中国政府网",
+              "url": "https://www.gov.cn/zhengce/content/202308/content_6901206.htm",
+              "date": null
+            },
+            {
+              "title": "事关你的钱袋子，今起确认！ | 每日经济新闻",
+              "url": "https://m.nbd.com.cn/articles/2025-12-01/4162702.html",
+              "date": null
+            },
+            {
+              "title": "本月记得办！ 事关收入，抓紧确认 -华龙网",
+              "url": "https://www.cqnews.net/1/detail/1445319691382108160/web/content_1445319691382108160.html",
+              "date": null
+            },
+            {
+              "title": "月底截止，事关收入！ 抓紧确认_腾讯新闻",
+              "url": "https://news.qq.com/rain/a/20241229A04S4300",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "你可能有一笔“退款”！ 马上截止，尽快确认",
+              "url": "https://m.gmw.cn/2025-12/28/content_1304282511.htm",
+              "date": null
+            },
+            {
+              "title": "国务院关于提高个人所得税有关专项附加扣除标准的通知_税务_中国政府网",
+              "url": "https://www.gov.cn/zhengce/content/202308/content_6901206.htm",
+              "date": null
+            },
+            {
+              "title": "事关你的钱袋子，今起确认！ | 每日经济新闻",
+              "url": "https://m.nbd.com.cn/articles/2025-12-01/4162702.html",
+              "date": null
+            },
+            {
+              "title": "本月记得办！ 事关收入，抓紧确认 -华龙网",
+              "url": "https://www.cqnews.net/1/detail/1445319691382108160/web/content_1445319691382108160.html",
+              "date": null
+            },
+            {
+              "title": "月底截止，事关收入！ 抓紧确认_腾讯新闻",
+              "url": "https://news.qq.com/rain/a/20241229A04S4300",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 15,
+          "category": "政策",
+          "query": "children privacy law COPPA update",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "Cheat Sheet: Children’s privacy law update adds pressure against Facebook’s Instagram for kids plan",
+              "url": "https://digiday.com/media/cheat-sheet-childrens-privacy-law-update-adds-pressure-against-facebooks-instagram-for-kids-plan/",
+              "date": null
+            },
+            {
+              "title": "Senator Says Federal Law Protecting Children Online Needs Updating",
+              "url": "https://www.wsj.com/livecoverage/facebook-hearing-live-updates/card/TwUpnUNNG7lhv25M7F8I",
+              "date": null
+            },
+            {
+              "title": "COPPA Compliance Guide: Children's Online... | Recording Law",
+              "url": "https://www.recordinglaw.com/us-laws/united-states-child-support-laws/coppa-compliance-guide/",
+              "date": null
+            },
+            {
+              "title": "Privacy Policy - The Wheeler School - N-12 Coed Day School in Providence RI",
+              "url": "https://www.wheelerschool.org/privacy-policy/",
+              "date": null
+            },
+            {
+              "title": "What is COPPA? The Children's Online Privacy Protection Act",
+              "url": "https://ed.link/community/coppa/",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "Cheat Sheet: Children’s privacy law update adds pressure against Facebook’s Instagram for kids plan",
+              "url": "https://digiday.com/media/cheat-sheet-childrens-privacy-law-update-adds-pressure-against-facebooks-instagram-for-kids-plan/",
+              "date": null
+            },
+            {
+              "title": "Senator Says Federal Law Protecting Children Online Needs Updating",
+              "url": "https://www.wsj.com/livecoverage/facebook-hearing-live-updates/card/TwUpnUNNG7lhv25M7F8I",
+              "date": null
+            },
+            {
+              "title": "COPPA Compliance Guide: Children's Online... | Recording Law",
+              "url": "https://www.recordinglaw.com/us-laws/united-states-child-support-laws/coppa-compliance-guide/",
+              "date": null
+            },
+            {
+              "title": "Privacy Policy - The Wheeler School - N-12 Coed Day School in Providence RI",
+              "url": "https://www.wheelerschool.org/privacy-policy/",
+              "date": null
+            },
+            {
+              "title": "What is COPPA? The Children's Online Privacy Protection Act",
+              "url": "https://ed.link/community/coppa/",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 16,
+          "category": "商品",
+          "query": "iPhone 17 Pro 价格 参数",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "淘宝数码网-数码百科知识与数码百科资讯平台",
+              "url": "https://shuma.taobao.com/",
+              "date": null
+            },
+            {
+              "title": "iPhone 17 Pro and 17 Pro Max online in Saudi Arabia",
+              "url": "https://redsea.com/en/iphone-17-pro",
+              "date": null
+            },
+            {
+              "title": "Apple unveils iPhone 17 Pro and iPhone 17 Pro Max - Apple",
+              "url": "https://www.apple.com/newsroom/2025/09/apple-unveils-iphone-17-pro-and-iphone-17-pro-max/",
+              "date": null
+            },
+            {
+              "title": "iPhone 17 Pro Case Collection - Spigen.com Official Site",
+              "url": "https://www.spigen.com/collections/iphone-17-pro-case-collection?sort_by=manual&filter.v.option.device=iPhone+17+Pro&current.device.choice=iPhone+17+Pro",
+              "date": null
+            },
+            {
+              "title": "Apple、iPhone 17 ProとiPhone 17 Pro Maxを発表 - Apple (日本)",
+              "url": "https://www.apple.com/jp/newsroom/2025/09/apple-unveils-iphone-17-pro-and-iphone-17-pro-max/",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "淘宝数码网-数码百科知识与数码百科资讯平台",
+              "url": "https://shuma.taobao.com/",
+              "date": null
+            },
+            {
+              "title": "iPhone 17 Pro and 17 Pro Max online in Saudi Arabia",
+              "url": "https://redsea.com/en/iphone-17-pro",
+              "date": null
+            },
+            {
+              "title": "Apple unveils iPhone 17 Pro and iPhone 17 Pro Max - Apple",
+              "url": "https://www.apple.com/newsroom/2025/09/apple-unveils-iphone-17-pro-and-iphone-17-pro-max/",
+              "date": null
+            },
+            {
+              "title": "iPhone 17 Pro Case Collection - Spigen.com Official Site",
+              "url": "https://www.spigen.com/collections/iphone-17-pro-case-collection?sort_by=manual&filter.v.option.device=iPhone+17+Pro&current.device.choice=iPhone+17+Pro",
+              "date": null
+            },
+            {
+              "title": "Apple、iPhone 17 ProとiPhone 17 Pro Maxを発表 - Apple (日本)",
+              "url": "https://www.apple.com/jp/newsroom/2025/09/apple-unveils-iphone-17-pro-and-iphone-17-pro-max/",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 17,
+          "category": "商品",
+          "query": "best noise cancelling headphones 2026 review",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "Best Noise Cancelling Headphones 2026 Review | TikTok",
+              "url": "https://www.tiktok.com/discover/best-noise-cancelling-headphones-2026-review",
+              "date": null
+            },
+            {
+              "title": "Best noise-cancelling headphones 2026 – tested by our in-house review experts |",
+              "url": "https://www.whathifi.com/best-buys/headphones/best-noise-cancelling-headphones",
+              "date": null
+            },
+            {
+              "title": "Best cheap noise-cancelling headphones 2026: expert-tested recommendations | Wha",
+              "url": "https://www.whathifi.com/best-buys/best-cheap-noise-cancelling-headphones",
+              "date": null
+            },
+            {
+              "title": "The 5 Best Noise Cancelling Headphones of 2026 - RTINGS.com",
+              "url": "https://www.rtings.com/headphones/reviews/best/by-feature/noise-cancelling",
+              "date": null
+            },
+            {
+              "title": "The best noise-canceling headphones of 2026: Tested and reviewed",
+              "url": "https://www.tomsguide.com/us/best-noise-cancelling-headphones,review-5566.html",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "Best Noise Cancelling Headphones 2026 Review | TikTok",
+              "url": "https://www.tiktok.com/discover/best-noise-cancelling-headphones-2026-review",
+              "date": null
+            },
+            {
+              "title": "Best noise-cancelling headphones 2026 – tested by our in-house review experts |",
+              "url": "https://www.whathifi.com/best-buys/headphones/best-noise-cancelling-headphones",
+              "date": null
+            },
+            {
+              "title": "Best cheap noise-cancelling headphones 2026: expert-tested recommendations | Wha",
+              "url": "https://www.whathifi.com/best-buys/best-cheap-noise-cancelling-headphones",
+              "date": null
+            },
+            {
+              "title": "The 5 Best Noise Cancelling Headphones of 2026 - RTINGS.com",
+              "url": "https://www.rtings.com/headphones/reviews/best/by-feature/noise-cancelling",
+              "date": null
+            },
+            {
+              "title": "The best noise-canceling headphones of 2026: Tested and reviewed",
+              "url": "https://www.tomsguide.com/us/best-noise-cancelling-headphones,review-5566.html",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 18,
+          "category": "商品",
+          "query": "扫地机器人 推荐 性价比",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "【26...",
+              "url": "https://www.bilibili.com/video/BV1btfZBxEYB/",
+              "date": null
+            },
+            {
+              "title": "石头P20 Max vs... | 新浪网",
+              "url": "https://k.sina.com.cn/article_7879923199_1d5ae15ff06801jub0.html",
+              "date": null
+            },
+            {
+              "title": "圣诞礼物扫地机器人推荐【聚会期保持家庭干净整洁】 | 美国好物推荐",
+              "url": "https://yycams.com/best-gift-robot-vacuum/",
+              "date": null
+            },
+            {
+              "title": "扫地机哪个牌子好？ 求推荐一个性价比高的? - 知乎",
+              "url": "https://www.zhihu.com/tardis/jm/ans/2066203690583773200",
+              "date": null
+            },
+            {
+              "title": "内蒙古扫地机推荐：性价比高、应用广泛-内蒙古永佳商贸有限责任公司",
+              "url": "http://www.nmgqj.cn/789/2324482.html",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "【26...",
+              "url": "https://www.bilibili.com/video/BV1btfZBxEYB/",
+              "date": null
+            },
+            {
+              "title": "石头P20 Max vs... | 新浪网",
+              "url": "https://k.sina.com.cn/article_7879923199_1d5ae15ff06801jub0.html",
+              "date": null
+            },
+            {
+              "title": "圣诞礼物扫地机器人推荐【聚会期保持家庭干净整洁】 | 美国好物推荐",
+              "url": "https://yycams.com/best-gift-robot-vacuum/",
+              "date": null
+            },
+            {
+              "title": "扫地机哪个牌子好？ 求推荐一个性价比高的? - 知乎",
+              "url": "https://www.zhihu.com/tardis/jm/ans/2066203690583773200",
+              "date": null
+            },
+            {
+              "title": "内蒙古扫地机推荐：性价比高、应用广泛-内蒙古永佳商贸有限责任公司",
+              "url": "http://www.nmgqj.cn/789/2324482.html",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 19,
+          "category": "商品",
+          "query": "RTX 5090 benchmark 价格",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "ASUS Details GeForce RTX 5090 and 5080 Pricing",
+              "url": "https://www.techporn.ph/asus-details-geforce-rtx-5090-and-5080-pricing/",
+              "date": null
+            },
+            {
+              "title": "PassMark - GeForce RTX 5090 - Price performance comparison",
+              "url": "https://www.videocardbenchmark.net/gpu.php?gpu=GeForce+RTX+5090&id=5725",
+              "date": null
+            },
+            {
+              "title": "GeForce RTX 5090 D [in 1 benchmark]",
+              "url": "https://technical.city/en/video/GeForce-RTX-5090-D",
+              "date": null
+            },
+            {
+              "title": "NVIDIA GeForce RTX 5090 Review: Pushing Boundaries with AI Acceleration - Storag",
+              "url": "https://www.storagereview.com/review/nvidia-geforce-rtx-5090-review-pushing-boundaries-with-ai-acceleration",
+              "date": null
+            },
+            {
+              "title": "GPU price tracking 2026 — Lowest price on every graphics card from Nvidia, AMD, and Intel today",
+              "url": "https://www.tomshardware.com/pc-components/gpus/lowest-gpu-prices-tracking",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "ASUS Details GeForce RTX 5090 and 5080 Pricing",
+              "url": "https://www.techporn.ph/asus-details-geforce-rtx-5090-and-5080-pricing/",
+              "date": null
+            },
+            {
+              "title": "PassMark - GeForce RTX 5090 - Price performance comparison",
+              "url": "https://www.videocardbenchmark.net/gpu.php?gpu=GeForce+RTX+5090&id=5725",
+              "date": null
+            },
+            {
+              "title": "GeForce RTX 5090 D [in 1 benchmark]",
+              "url": "https://technical.city/en/video/GeForce-RTX-5090-D",
+              "date": null
+            },
+            {
+              "title": "NVIDIA GeForce RTX 5090 Review: Pushing Boundaries with AI Acceleration - Storag",
+              "url": "https://www.storagereview.com/review/nvidia-geforce-rtx-5090-review-pushing-boundaries-with-ai-acceleration",
+              "date": null
+            },
+            {
+              "title": "GPU price tracking 2026 — Lowest price on every graphics card from Nvidia, AMD, and Intel today",
+              "url": "https://www.tomshardware.com/pc-components/gpus/lowest-gpu-prices-tracking",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 20,
+          "category": "商品",
+          "query": "国产显卡 摩尔线程 最新型号",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "国产显卡品牌摩尔线程发新卡 单卡48GB显存_凤凰网",
+              "url": "https://i.ifeng.com/c/8VfiImHtDxn",
+              "date": null
+            },
+            {
+              "title": "摩尔线程MTTS70国产显卡售价及参数-硬件新闻-PHP中文网",
+              "url": "https://www.php.cn/faq/815531.html",
+              "date": null
+            },
+            {
+              "title": "MTTS70显卡多少钱_摩尔线程MTTS70国产显卡售价及参数-硬件之家",
+              "url": "https://www.yingjianzhijia.com/zhishi/76390.html",
+              "date": null
+            },
+            {
+              "title": "疑摩尔线程S90首曝！2年前的国产显卡 玩游戏竟然比RTX4060还厉害--快科技--科技....",
+              "url": "https://news.mydrivers.com/1/1064/1064120.htm",
+              "date": null
+            },
+            {
+              "title": "国产显卡厂商摩尔线程宣布完成 15 亿元 B 轮融资，加速多功能 GPU...",
+              "url": "https://m.ithome.com/html/663833.htm",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "国产显卡品牌摩尔线程发新卡 单卡48GB显存_凤凰网",
+              "url": "https://i.ifeng.com/c/8VfiImHtDxn",
+              "date": null
+            },
+            {
+              "title": "摩尔线程MTTS70国产显卡售价及参数-硬件新闻-PHP中文网",
+              "url": "https://www.php.cn/faq/815531.html",
+              "date": null
+            },
+            {
+              "title": "MTTS70显卡多少钱_摩尔线程MTTS70国产显卡售价及参数-硬件之家",
+              "url": "https://www.yingjianzhijia.com/zhishi/76390.html",
+              "date": null
+            },
+            {
+              "title": "疑摩尔线程S90首曝！2年前的国产显卡 玩游戏竟然比RTX4060还厉害--快科技--科技....",
+              "url": "https://news.mydrivers.com/1/1064/1064120.htm",
+              "date": null
+            },
+            {
+              "title": "国产显卡厂商摩尔线程宣布完成 15 亿元 B 轮融资，加速多功能 GPU...",
+              "url": "https://m.ithome.com/html/663833.htm",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        }
+      ],
+      "zh_news": [
+        {
+          "id": 1,
+          "query": "2026年9月 国内外重大新闻",
+          "rss_admitted": 2,
+          "before": {
+            "n": 5,
+            "fresh": 1
+          },
+          "after": {
+            "n": 5,
+            "fresh": 3
+          },
+          "rss_in_after": 2
+        },
+        {
+          "id": 2,
+          "query": "最近一周 AI 行业动态",
+          "rss_admitted": 0,
+          "before": {
+            "n": 3,
+            "fresh": 1
+          },
+          "after": {
+            "n": 3,
+            "fresh": 1
+          },
+          "rss_in_after": 0
+        },
+        {
+          "id": 3,
+          "query": "台风 最新消息 路径",
+          "rss_admitted": 0,
+          "before": {
+            "n": 5,
+            "fresh": 1
+          },
+          "after": {
+            "n": 5,
+            "fresh": 1
+          },
+          "rss_in_after": 0
+        },
+        {
+          "id": 4,
+          "query": "美国 关税 最新政策",
+          "rss_admitted": 0,
+          "before": {
+            "n": 5,
+            "fresh": 2
+          },
+          "after": {
+            "n": 5,
+            "fresh": 2
+          },
+          "rss_in_after": 0
+        },
+        {
+          "id": 5,
+          "query": "2026年 新能源汽车 补贴政策",
+          "rss_admitted": 0,
+          "before": {
+            "n": 5,
+            "fresh": 2
+          },
+          "after": {
+            "n": 5,
+            "fresh": 2
+          },
+          "rss_in_after": 0
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "queries": [
+        {
+          "id": 1,
+          "category": "新闻",
+          "query": "2026年9月 国内外重大新闻",
+          "rss_admitted": 2,
+          "top5_changed": true,
+          "before": [
+            {
+              "title": "SBS一周大事件（2026年9月18日）",
+              "url": "https://www.sbs.com.au/language/chinese/zh-hans/podcast-episode/weekly-news-wrap-20260918/qw26jpdga",
+              "date": "2026-09-18"
+            },
+            {
+              "title": "2026年9月22日外交部发言人郭嘉昆主持例行记者会_中华人民共和国驻大韩民国大....",
+              "url": "https://kr.china-embassy.gov.cn/fyrth/202609/t20260922_12028748.htm",
+              "date": "2026-09-22"
+            },
+            {
+              "title": "（经济观察）三个关键词透视中美经贸新动向_凤凰网",
+              "url": "https://news.ifeng.com/c/8woDNeS7SrX",
+              "date": null
+            },
+            {
+              "title": "2026年8月28日外交部发言人林剑主持例行记者会_中华人民共和国驻大韩民国大使....",
+              "url": "https://kr.china-embassy.gov.cn/fyrth/202608/t20260828_12012269.htm",
+              "date": "2026-08-28"
+            },
+            {
+              "title": "消息人士：美方认为中国2027年“武统”的可能性不大",
+              "url": "https://www.dw.com/zh/%E6%B6%88%E6%81%AF%E4%BA%BA%E5%A3%AB%E7%BE%8E%E6%96%B9%E8%AE%A4%E4%B8%BA%E4%B8%AD%E5%9B%BD2027%E5%B9%B4%E6%AD%A6%E7%BB%9F%E7%9A%84%E5%8F%AF%E8%83%BD%E6%80%A7%E4%B8%8D%E5%A4%A7/a-79498716",
+              "date": "2026-10-01T10:44:52"
+            }
+          ],
+          "after": [
+            {
+              "title": "SBS一周大事件（2026年9月18日）",
+              "url": "https://www.sbs.com.au/language/chinese/zh-hans/podcast-episode/weekly-news-wrap-20260918/qw26jpdga",
+              "date": "2026-09-18"
+            },
+            {
+              "title": "莆田2026年秋季文旅活动启幕",
+              "url": "https://www.chinanews.com.cn/sh/2026/10-02/10707211.shtml",
+              "date": "2026-10-02T09:50:26+00:00"
+            },
+            {
+              "title": "2026年9月22日外交部发言人郭嘉昆主持例行记者会_中华人民共和国驻大韩民国大....",
+              "url": "https://kr.china-embassy.gov.cn/fyrth/202609/t20260922_12028748.htm",
+              "date": "2026-09-22"
+            },
+            {
+              "title": "台胞李兴忠“冰城”哈尔滨创业 卤肉饭香飘两岸情",
+              "url": "https://www.chinanews.com.cn/tp/2026/10-02/10707172.shtml",
+              "date": "2026-10-02T07:57:43+00:00"
+            },
+            {
+              "title": "（经济观察）三个关键词透视中美经贸新动向_凤凰网",
+              "url": "https://news.ifeng.com/c/8woDNeS7SrX",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.2,
+          "after_fresh_share": 0.4
+        },
+        {
+          "id": 2,
+          "category": "新闻",
+          "query": "最近一周 AI 行业动态",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "AI精英周刊 | 前沿AI洞察和深度分析 | AI精英学院出品",
+              "url": "https://www.axtonliu.ai/newsletters/ai-2",
+              "date": null
+            },
+            {
+              "title": "创业板指(399006)_股票行情_走势图—东方财富网",
+              "url": "https://quote.eastmoney.com/zs399006.html",
+              "date": null
+            },
+            {
+              "title": "MySQL - force not to use cache for testing speed of query",
+              "url": "https://stackoverflow.com/questions/181894/mysql-force-not-to-use-cache-for-testing-speed-of-query",
+              "date": null
+            },
+            {
+              "title": "How to force a web browser NOT to cache images - Stack Overflow",
+              "url": "https://stackoverflow.com/questions/126772/how-to-force-a-web-browser-not-to-cache-images",
+              "date": null
+            },
+            {
+              "title": "Como evitar el caché de los archivos css y js",
+              "url": "https://es.stackoverflow.com/questions/63716/como-evitar-el-cach%C3%A9-de-los-archivos-css-y-js",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "AI精英周刊 | 前沿AI洞察和深度分析 | AI精英学院出品",
+              "url": "https://www.axtonliu.ai/newsletters/ai-2",
+              "date": null
+            },
+            {
+              "title": "创业板指(399006)_股票行情_走势图—东方财富网",
+              "url": "https://quote.eastmoney.com/zs399006.html",
+              "date": null
+            },
+            {
+              "title": "MySQL - force not to use cache for testing speed of query",
+              "url": "https://stackoverflow.com/questions/181894/mysql-force-not-to-use-cache-for-testing-speed-of-query",
+              "date": null
+            },
+            {
+              "title": "How to force a web browser NOT to cache images - Stack Overflow",
+              "url": "https://stackoverflow.com/questions/126772/how-to-force-a-web-browser-not-to-cache-images",
+              "date": null
+            },
+            {
+              "title": "Como evitar el caché de los archivos css y js",
+              "url": "https://es.stackoverflow.com/questions/63716/como-evitar-el-cach%C3%A9-de-los-archivos-css-y-js",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 3,
+          "category": "新闻",
+          "query": "latest news semiconductor export controls",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "Biden’s Unprecedented Semiconductor Bet | Carnegie Endowment for...",
+              "url": "https://carnegieendowment.org/posts/2022/10/bidens-unprecedented-semiconductor-bet",
+              "date": null
+            },
+            {
+              "title": "Insight into the U.S. Semiconductor Export Controls Update",
+              "url": "https://www.csis.org/analysis/insight-us-semiconductor-export-controls-update",
+              "date": null
+            },
+            {
+              "title": "Trump's AI chip export controls could go either way for Korea - Korea JoongAng Daily ,Korean news in Engl....",
+              "url": "https://www.koreajoongangdaily.com/business/trumps-ai-chip-export-controls-could-go-either-way-for-korea/12444537",
+              "date": null
+            },
+            {
+              "title": "Korea's July exports jump 52.3% to record US$ 54.9 bil. on chip boom - NEWS",
+              "url": "https://www.arirang.com/news/view?id=298677&lang=en",
+              "date": null
+            },
+            {
+              "title": "China Lashes Out at Latest US Export Controls on Chips - VOA",
+              "url": "https://www.voanews.com/a/china-lashes-out-at-latest-us-export-controls-on-chips/6781565.html",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "Biden’s Unprecedented Semiconductor Bet | Carnegie Endowment for...",
+              "url": "https://carnegieendowment.org/posts/2022/10/bidens-unprecedented-semiconductor-bet",
+              "date": null
+            },
+            {
+              "title": "Insight into the U.S. Semiconductor Export Controls Update",
+              "url": "https://www.csis.org/analysis/insight-us-semiconductor-export-controls-update",
+              "date": null
+            },
+            {
+              "title": "Trump's AI chip export controls could go either way for Korea - Korea JoongAng Daily ,Korean news in Engl....",
+              "url": "https://www.koreajoongangdaily.com/business/trumps-ai-chip-export-controls-could-go-either-way-for-korea/12444537",
+              "date": null
+            },
+            {
+              "title": "Korea's July exports jump 52.3% to record US$ 54.9 bil. on chip boom - NEWS",
+              "url": "https://www.arirang.com/news/view?id=298677&lang=en",
+              "date": null
+            },
+            {
+              "title": "China Lashes Out at Latest US Export Controls on Chips - VOA",
+              "url": "https://www.voanews.com/a/china-lashes-out-at-latest-us-export-controls-on-chips/6781565.html",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 4,
+          "category": "新闻",
+          "query": "台风 最新消息 路径",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "2026年第18号台风沙德尔最新消息路径实时更新- 杭州本地宝",
+              "url": "https://hz.bendibao.com/news/2026824/172472.shtm",
+              "date": null
+            },
+            {
+              "title": "22号台风“艾涛”路径实时发布系统 2026台风“艾涛”最新消息-闽南网",
+              "url": "http://www.mnw.cn/news/world/3119216.html",
+              "date": null
+            },
+            {
+              "title": "2026广州台风最新消息_广州台风实时路径|登陆时间地点-广州本地宝",
+              "url": "http://gz.bendibao.com/news/zhuantitaifeng/",
+              "date": null
+            },
+            {
+              "title": "超强台风“巴威”即将进入福建警戒区！福州或迎强降雨_福视悦动 - 福州明珠 ....",
+              "url": "https://www.zohi.tv/p/415464.html",
+              "date": null
+            },
+            {
+              "title": "台风“红霞”已加强为台风级 最新路径公布",
+              "url": "https://m.bjnews.com.cn/detail/1784936223129140.html",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "2026年第18号台风沙德尔最新消息路径实时更新- 杭州本地宝",
+              "url": "https://hz.bendibao.com/news/2026824/172472.shtm",
+              "date": null
+            },
+            {
+              "title": "22号台风“艾涛”路径实时发布系统 2026台风“艾涛”最新消息-闽南网",
+              "url": "http://www.mnw.cn/news/world/3119216.html",
+              "date": null
+            },
+            {
+              "title": "2026广州台风最新消息_广州台风实时路径|登陆时间地点-广州本地宝",
+              "url": "http://gz.bendibao.com/news/zhuantitaifeng/",
+              "date": null
+            },
+            {
+              "title": "超强台风“巴威”即将进入福建警戒区！福州或迎强降雨_福视悦动 - 福州明珠 ....",
+              "url": "https://www.zohi.tv/p/415464.html",
+              "date": null
+            },
+            {
+              "title": "台风“红霞”已加强为台风级 最新路径公布",
+              "url": "https://m.bjnews.com.cn/detail/1784936223129140.html",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 5,
+          "category": "新闻",
+          "query": "美国 关税 最新政策",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "外媒：关税或将致美国日用品全面涨价-运城晚报",
+              "url": "https://www.edurew.com/html/03c79099206.html",
+              "date": null
+            },
+            {
+              "title": "Temu 和 Shein...",
+              "url": "https://www.100ec.cn/detail--6648723.html",
+              "date": null
+            },
+            {
+              "title": "三年来首次下滑！关税政策正让美国经济经历“超出预期的糟糕” - 韩国最大的....",
+              "url": "https://chinese.joins.com/news/articleView.html?idxno=119620",
+              "date": null
+            },
+            {
+              "title": "被重锤的东南亚，不敢“报复” - 华尔街见闻",
+              "url": "https://wallstreetcn.com/articles/3744646",
+              "date": null
+            },
+            {
+              "title": "美对东南亚太阳能产品加征高达3403%关税！_ 文章_GladCC",
+              "url": "https://www.gladcc.com/article/1914301813400313857",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "外媒：关税或将致美国日用品全面涨价-运城晚报",
+              "url": "https://www.edurew.com/html/03c79099206.html",
+              "date": null
+            },
+            {
+              "title": "Temu 和 Shein...",
+              "url": "https://www.100ec.cn/detail--6648723.html",
+              "date": null
+            },
+            {
+              "title": "三年来首次下滑！关税政策正让美国经济经历“超出预期的糟糕” - 韩国最大的....",
+              "url": "https://chinese.joins.com/news/articleView.html?idxno=119620",
+              "date": null
+            },
+            {
+              "title": "被重锤的东南亚，不敢“报复” - 华尔街见闻",
+              "url": "https://wallstreetcn.com/articles/3744646",
+              "date": null
+            },
+            {
+              "title": "美对东南亚太阳能产品加征高达3403%关税！_ 文章_GladCC",
+              "url": "https://www.gladcc.com/article/1914301813400313857",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 6,
+          "category": "技术",
+          "query": "Python 3.13 新特性",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "好学编程：Python 3.13 这些新特性你一定要知道！ - 知乎",
+              "url": "https://zhuanlan.zhihu.com/p/12824443094",
+              "date": null
+            },
+            {
+              "title": "Python的新变化 — Python 3.13.15 文档",
+              "url": "https://docs.python.org/zh-cn/3.13/whatsnew/index.html",
+              "date": null
+            },
+            {
+              "title": "python3.13是否移除了GIL的限制 - Angry_Panda - 博客园",
+              "url": "https://www.cnblogs.com/xyz/p/17604118.html",
+              "date": null
+            },
+            {
+              "title": "The new REPL in Python 3.13 - Trey Hunner",
+              "url": "https://treyhunner.com/2024/05/my-favorite-python-3-dot-13-feature/",
+              "date": null
+            },
+            {
+              "title": "Python 3.13 Debuts With New Interactive Interpreter & Experimental JIT",
+              "url": "https://www.phoronix.com/news/Python-3.13-Released",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "好学编程：Python 3.13 这些新特性你一定要知道！ - 知乎",
+              "url": "https://zhuanlan.zhihu.com/p/12824443094",
+              "date": null
+            },
+            {
+              "title": "Python的新变化 — Python 3.13.15 文档",
+              "url": "https://docs.python.org/zh-cn/3.13/whatsnew/index.html",
+              "date": null
+            },
+            {
+              "title": "python3.13是否移除了GIL的限制 - Angry_Panda - 博客园",
+              "url": "https://www.cnblogs.com/xyz/p/17604118.html",
+              "date": null
+            },
+            {
+              "title": "The new REPL in Python 3.13 - Trey Hunner",
+              "url": "https://treyhunner.com/2024/05/my-favorite-python-3-dot-13-feature/",
+              "date": null
+            },
+            {
+              "title": "Python 3.13 Debuts With New Interactive Interpreter & Experimental JIT",
+              "url": "https://www.phoronix.com/news/Python-3.13-Released",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 7,
+          "category": "技术",
+          "query": "MCP protocol specification 2026",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "Stateless Model Context Protocol: Building Scalable MCP 2026 Specification Servers (Technical Deepdive) |....",
+              "url": "https://medium.com/data-science-collective/building-scalable-stateless-mcp-2026-servers-a-technical-deep-dive-ecba7bb3b9c6",
+              "date": null
+            },
+            {
+              "title": "다음 MCP 스펙 릴리즈(2026-07-28)의 주요 내용: Stateless 전환 및 공식 확장 도입 예....",
+              "url": "https://discuss.pytorch.kr/t/mcp-2026-07-28-stateless/10387",
+              "date": null
+            },
+            {
+              "title": "Vercel MCP now supports the 2026-07-28 MCP specification",
+              "url": "https://vercel.com/changelog/vercel-mcp-now-supports-the-2026-07-28-mcp-specification",
+              "date": null
+            },
+            {
+              "title": "The 2026-07-28 Specification | Model Context Protocol Blog",
+              "url": "https://blog.modelcontextprotocol.io/posts/2026-07-28/",
+              "date": null
+            },
+            {
+              "title": "MCP, 세션 지우고 HTTP 인프라 위로… 2026-07-28 spec 확정 - Insights",
+              "url": "https://insights.marvin-42.com/articles/mcp-http-2026-07-28-spec",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "Stateless Model Context Protocol: Building Scalable MCP 2026 Specification Servers (Technical Deepdive) |....",
+              "url": "https://medium.com/data-science-collective/building-scalable-stateless-mcp-2026-servers-a-technical-deep-dive-ecba7bb3b9c6",
+              "date": null
+            },
+            {
+              "title": "다음 MCP 스펙 릴리즈(2026-07-28)의 주요 내용: Stateless 전환 및 공식 확장 도입 예....",
+              "url": "https://discuss.pytorch.kr/t/mcp-2026-07-28-stateless/10387",
+              "date": null
+            },
+            {
+              "title": "Vercel MCP now supports the 2026-07-28 MCP specification",
+              "url": "https://vercel.com/changelog/vercel-mcp-now-supports-the-2026-07-28-mcp-specification",
+              "date": null
+            },
+            {
+              "title": "The 2026-07-28 Specification | Model Context Protocol Blog",
+              "url": "https://blog.modelcontextprotocol.io/posts/2026-07-28/",
+              "date": null
+            },
+            {
+              "title": "MCP, 세션 지우고 HTTP 인프라 위로… 2026-07-28 spec 확정 - Insights",
+              "url": "https://insights.marvin-42.com/articles/mcp-http-2026-07-28-spec",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 8,
+          "category": "技术",
+          "query": "FastAPI 与 Django 性能对比",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "fastapi与django异步的并发对比_faskapi 并发访问-CSDN博客",
+              "url": "https://blog.csdn.net/weixin_36179862/article/details/104857488",
+              "date": null
+            },
+            {
+              "title": "Django 与 FastAPI 架构对比：学习路径指南Django 与 FastAPI...",
+              "url": "https://juejin.cn/post/7565799761123786806",
+              "date": null
+            },
+            {
+              "title": "FastAPI 与 Django：2026 年最佳 Python 框架",
+              "url": "https://www.lastingdynamics.com/zh/blog/fastapi-vs-django/",
+              "date": null
+            },
+            {
+              "title": "Django框架：优缺点、实用场景及与Flask、FastAPI...",
+              "url": "https://cloud.tencent.com/developer/article/2294156",
+              "date": null
+            },
+            {
+              "title": "2026年Django vs Flask vs FastAPI ： 该选哪个 | [ Mecanik Dev ]",
+              "url": "https://mecanik.dev/zh-cn/posts/python-web-framework-comparison-2026-django-vs-flask-vs-fastapi/",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "fastapi与django异步的并发对比_faskapi 并发访问-CSDN博客",
+              "url": "https://blog.csdn.net/weixin_36179862/article/details/104857488",
+              "date": null
+            },
+            {
+              "title": "Django 与 FastAPI 架构对比：学习路径指南Django 与 FastAPI...",
+              "url": "https://juejin.cn/post/7565799761123786806",
+              "date": null
+            },
+            {
+              "title": "FastAPI 与 Django：2026 年最佳 Python 框架",
+              "url": "https://www.lastingdynamics.com/zh/blog/fastapi-vs-django/",
+              "date": null
+            },
+            {
+              "title": "Django框架：优缺点、实用场景及与Flask、FastAPI...",
+              "url": "https://cloud.tencent.com/developer/article/2294156",
+              "date": null
+            },
+            {
+              "title": "2026年Django vs Flask vs FastAPI ： 该选哪个 | [ Mecanik Dev ]",
+              "url": "https://mecanik.dev/zh-cn/posts/python-web-framework-comparison-2026-django-vs-flask-vs-fastapi/",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 9,
+          "category": "技术",
+          "query": "how does HTTP/3 QUIC work",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "HTTP/3 Maintains a Consistent Connection ID",
+              "url": "https://www.pubnub.com/blog/http3-and-quic-the-connection-id/",
+              "date": null
+            },
+            {
+              "title": "HTTP/3 and QUIC, what do they mean for the web? | Human Level",
+              "url": "https://www.humanlevel.com/en/blog/seo/http3-and-quic",
+              "date": null
+            },
+            {
+              "title": "[Illustration] How does HTTP/3 (HTTP over QUIC) work?... | SEの道標",
+              "url": "https://milestone-of-se.nesuke.com/en/l7protocol/http/http3-over-quic/",
+              "date": null
+            },
+            {
+              "title": "QUIC | HAProxy Technologies Glossary",
+              "url": "https://www.haproxy.com/glossary/what-is-quic",
+              "date": null
+            },
+            {
+              "title": "The Future of the Internet is here: QUIC Protocol and HTTP/3 | Medium",
+              "url": "https://medium.com/@luisrodri/the-future-of-the-internet-is-here-quic-protocol-and-http-3-d7061adf424f",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "HTTP/3 Maintains a Consistent Connection ID",
+              "url": "https://www.pubnub.com/blog/http3-and-quic-the-connection-id/",
+              "date": null
+            },
+            {
+              "title": "HTTP/3 and QUIC, what do they mean for the web? | Human Level",
+              "url": "https://www.humanlevel.com/en/blog/seo/http3-and-quic",
+              "date": null
+            },
+            {
+              "title": "[Illustration] How does HTTP/3 (HTTP over QUIC) work?... | SEの道標",
+              "url": "https://milestone-of-se.nesuke.com/en/l7protocol/http/http3-over-quic/",
+              "date": null
+            },
+            {
+              "title": "QUIC | HAProxy Technologies Glossary",
+              "url": "https://www.haproxy.com/glossary/what-is-quic",
+              "date": null
+            },
+            {
+              "title": "The Future of the Internet is here: QUIC Protocol and HTTP/3 | Medium",
+              "url": "https://medium.com/@luisrodri/the-future-of-the-internet-is-here-quic-protocol-and-http-3-d7061adf424f",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 10,
+          "category": "技术",
+          "query": "Rust async runtime tokio 原理",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "Tokio 运行时 - 深度解析",
+              "url": "https://atcfu.com/ai-articles/tokio-runtime/",
+              "date": null
+            },
+            {
+              "title": "Rust Async + Tokio 入門：非同步 Rust vs Python asyncio · 每日拍拍",
+              "url": "https://dailypypy.org/learn/rust-async-tokio/",
+              "date": null
+            },
+            {
+              "title": "理解tokio的核心(1): runtime - Rust入门秘籍",
+              "url": "https://rust-book.junmajinlong.com/ch100/01_understand_tokio_runtime.html",
+              "date": null
+            },
+            {
+              "title": "Why Tokio Isn’t Just an Async Runtime — It’s an Entire Concurrency Framework | by Aayush Tiwari",
+              "url": "https://medium.com/@aayush71727/why-tokio-isnt-just-an-async-runtime-it-s-an-entire-concurrency-framework-c4e8b505a627",
+              "date": null
+            },
+            {
+              "title": "Topics | Tokio - An asynchronous Rust runtime",
+              "url": "https://tokio.rs/tokio/topics?search=Rust+async+runtime+tokio+%E5%8E%9F%E7%90%86+site%3Atokio.rs&safe=0",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "Tokio 运行时 - 深度解析",
+              "url": "https://atcfu.com/ai-articles/tokio-runtime/",
+              "date": null
+            },
+            {
+              "title": "Rust Async + Tokio 入門：非同步 Rust vs Python asyncio · 每日拍拍",
+              "url": "https://dailypypy.org/learn/rust-async-tokio/",
+              "date": null
+            },
+            {
+              "title": "理解tokio的核心(1): runtime - Rust入门秘籍",
+              "url": "https://rust-book.junmajinlong.com/ch100/01_understand_tokio_runtime.html",
+              "date": null
+            },
+            {
+              "title": "Why Tokio Isn’t Just an Async Runtime — It’s an Entire Concurrency Framework | by Aayush Tiwari",
+              "url": "https://medium.com/@aayush71727/why-tokio-isnt-just-an-async-runtime-it-s-an-entire-concurrency-framework-c4e8b505a627",
+              "date": null
+            },
+            {
+              "title": "Topics | Tokio - An asynchronous Rust runtime",
+              "url": "https://tokio.rs/tokio/topics?search=Rust+async+runtime+tokio+%E5%8E%9F%E7%90%86+site%3Atokio.rs&safe=0",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 11,
+          "category": "政策",
+          "query": "2026年 新能源汽车 补贴政策",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "新能源汽车补贴退坡，是“精准扶持”还是“福利缩水”？ 1000+...",
+              "url": "https://post.smzdm.com/p/a82e37rn/",
+              "date": null
+            },
+            {
+              "title": "别光顾着过年，快来买车 625亿元“国补”已经发放 - OFweek新能源汽车网",
+              "url": "https://nev.ofweek.com/2026-02/ART-71000-8420-30681174.html",
+              "date": null
+            },
+            {
+              "title": "2026年4月汽车国补置换2万元申请全攻略：手把手教你领到国家补贴",
+              "url": "https://www.zhihu.com/tardis/jm/art/2033119484798616793",
+              "date": null
+            },
+            {
+              "title": "qdzb07b20260116C",
+              "url": "https://epaper.qingdaonews.com/qdzb/resfile/2026-01-16/A07/qdzb-20260116-A07.pdf",
+              "date": null
+            },
+            {
+              "title": "2026...",
+              "url": "https://youjia-pc.bdstatic.com/article/9148568339333871413.html",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "新能源汽车补贴退坡，是“精准扶持”还是“福利缩水”？ 1000+...",
+              "url": "https://post.smzdm.com/p/a82e37rn/",
+              "date": null
+            },
+            {
+              "title": "别光顾着过年，快来买车 625亿元“国补”已经发放 - OFweek新能源汽车网",
+              "url": "https://nev.ofweek.com/2026-02/ART-71000-8420-30681174.html",
+              "date": null
+            },
+            {
+              "title": "2026年4月汽车国补置换2万元申请全攻略：手把手教你领到国家补贴",
+              "url": "https://www.zhihu.com/tardis/jm/art/2033119484798616793",
+              "date": null
+            },
+            {
+              "title": "qdzb07b20260116C",
+              "url": "https://epaper.qingdaonews.com/qdzb/resfile/2026-01-16/A07/qdzb-20260116-A07.pdf",
+              "date": null
+            },
+            {
+              "title": "2026...",
+              "url": "https://youjia-pc.bdstatic.com/article/9148568339333871413.html",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 12,
+          "category": "政策",
+          "query": "数据出境安全评估办法 最新",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "数据出境安全评估办法.docx - 墨天轮文档",
+              "url": "https://www.modb.pro/doc/70005",
+              "date": null
+            },
+            {
+              "title": "标题",
+              "url": "https://xuebao.zstu.edu.cn/oa/pdfdow.aspx?Sid=20251212",
+              "date": "2025-12-12"
+            },
+            {
+              "title": "国家互联网信息办公室公布《数据出境安全评估办法》",
+              "url": "https://www.cac.gov.cn/2022-07/07/c_1658811536594644.htm",
+              "date": "2022-07-07"
+            },
+            {
+              "title": "《数据出境安全评估办法》答记者问_中央网络安全和信息化委员会办公室",
+              "url": "https://www.cac.gov.cn/2022-07/07/c_1658811536800962.htm",
+              "date": "2022-07-07"
+            },
+            {
+              "title": "中国网络安全审查“组合拳”学者:全面管制时代来临 - 美国之音中文网 您可靠....",
+              "url": "https://www.voachinese.com/a/china-launches-security-review-on-cnki-the-country-s-leading-academic-research-database-0722222/6666367.html",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "数据出境安全评估办法.docx - 墨天轮文档",
+              "url": "https://www.modb.pro/doc/70005",
+              "date": null
+            },
+            {
+              "title": "标题",
+              "url": "https://xuebao.zstu.edu.cn/oa/pdfdow.aspx?Sid=20251212",
+              "date": "2025-12-12"
+            },
+            {
+              "title": "国家互联网信息办公室公布《数据出境安全评估办法》",
+              "url": "https://www.cac.gov.cn/2022-07/07/c_1658811536594644.htm",
+              "date": "2022-07-07"
+            },
+            {
+              "title": "《数据出境安全评估办法》答记者问_中央网络安全和信息化委员会办公室",
+              "url": "https://www.cac.gov.cn/2022-07/07/c_1658811536800962.htm",
+              "date": "2022-07-07"
+            },
+            {
+              "title": "中国网络安全审查“组合拳”学者:全面管制时代来临 - 美国之音中文网 您可靠....",
+              "url": "https://www.voachinese.com/a/china-launches-security-review-on-cnki-the-country-s-leading-academic-research-database-0722222/6666367.html",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 13,
+          "category": "政策",
+          "query": "EU AI Act compliance requirements",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "EU AI Act Compliance | Microsoft Trust Center",
+              "url": "https://www.microsoft.com/en-au/trust-center/compliance/eu-ai-act",
+              "date": null
+            },
+            {
+              "title": "EU AI Act Compliance: What You Need to Know",
+              "url": "https://www.sai360.com/regulations/eu-ai-act",
+              "date": null
+            },
+            {
+              "title": "EU AI Act Compliance Guide | Aona AI",
+              "url": "https://aona.ai/compliance/regulations/eu-ai-act/",
+              "date": null
+            },
+            {
+              "title": "How different stakeholders are thinking about EU AI Act compliance | IAPP",
+              "url": "https://iapp.org/news/a/how-different-stakeholders-are-thinking-about-eu-ai-act-compliance",
+              "date": null
+            },
+            {
+              "title": "EU AI Act Compliance Guide | Sinaptic.AI",
+              "url": "https://sinaptic.ai/articles/eu-ai-act-compliance",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "EU AI Act Compliance | Microsoft Trust Center",
+              "url": "https://www.microsoft.com/en-au/trust-center/compliance/eu-ai-act",
+              "date": null
+            },
+            {
+              "title": "EU AI Act Compliance: What You Need to Know",
+              "url": "https://www.sai360.com/regulations/eu-ai-act",
+              "date": null
+            },
+            {
+              "title": "EU AI Act Compliance Guide | Aona AI",
+              "url": "https://aona.ai/compliance/regulations/eu-ai-act/",
+              "date": null
+            },
+            {
+              "title": "How different stakeholders are thinking about EU AI Act compliance | IAPP",
+              "url": "https://iapp.org/news/a/how-different-stakeholders-are-thinking-about-eu-ai-act-compliance",
+              "date": null
+            },
+            {
+              "title": "EU AI Act Compliance Guide | Sinaptic.AI",
+              "url": "https://sinaptic.ai/articles/eu-ai-act-compliance",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 14,
+          "category": "政策",
+          "query": "个人所得税 专项附加扣除 标准",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "国务院关于提高个人所得税有关专项附加扣除标准的通知_税务_中国政府网",
+              "url": "https://www.gov.cn/zhengce/content/202308/content_6901206.htm",
+              "date": null
+            },
+            {
+              "title": "事关你的钱袋子，今起确认！ | 每日经济新闻",
+              "url": "https://m.nbd.com.cn/articles/2025-12-01/4162702.html",
+              "date": null
+            },
+            {
+              "title": "你可能有一笔“退款”！ 马上截止，尽快确认",
+              "url": "https://m.gmw.cn/2025-12/28/content_1304282511.htm",
+              "date": null
+            },
+            {
+              "title": "本月记得办！ 事关收入，抓紧确认 -华龙网",
+              "url": "https://www.cqnews.net/1/detail/1445319691382108160/web/content_1445319691382108160.html",
+              "date": null
+            },
+            {
+              "title": "国务院印发《个人所得税专项附加扣除暂行办法》 - 市财政局",
+              "url": "https://www.huaihua.gov.cn/czj/c100738/201812/3209b912c78742bc934904841c4c89eb.shtml",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "国务院关于提高个人所得税有关专项附加扣除标准的通知_税务_中国政府网",
+              "url": "https://www.gov.cn/zhengce/content/202308/content_6901206.htm",
+              "date": null
+            },
+            {
+              "title": "事关你的钱袋子，今起确认！ | 每日经济新闻",
+              "url": "https://m.nbd.com.cn/articles/2025-12-01/4162702.html",
+              "date": null
+            },
+            {
+              "title": "你可能有一笔“退款”！ 马上截止，尽快确认",
+              "url": "https://m.gmw.cn/2025-12/28/content_1304282511.htm",
+              "date": null
+            },
+            {
+              "title": "本月记得办！ 事关收入，抓紧确认 -华龙网",
+              "url": "https://www.cqnews.net/1/detail/1445319691382108160/web/content_1445319691382108160.html",
+              "date": null
+            },
+            {
+              "title": "国务院印发《个人所得税专项附加扣除暂行办法》 - 市财政局",
+              "url": "https://www.huaihua.gov.cn/czj/c100738/201812/3209b912c78742bc934904841c4c89eb.shtml",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 15,
+          "category": "政策",
+          "query": "children privacy law COPPA update",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "Cheat Sheet: Children’s privacy law update adds pressure against Facebook’s Instagram for kids plan",
+              "url": "https://digiday.com/media/cheat-sheet-childrens-privacy-law-update-adds-pressure-against-facebooks-instagram-for-kids-plan/",
+              "date": null
+            },
+            {
+              "title": "Children and Teens' Online Privacy Protection Act (COPPA 2.0)",
+              "url": "https://www.termsfeed.com/blog/coppa-2-children-teens-online-privacy-protection-act/",
+              "date": null
+            },
+            {
+              "title": "Senator Says Federal Law Protecting Children Online Needs Updating",
+              "url": "https://www.wsj.com/livecoverage/facebook-hearing-live-updates/card/TwUpnUNNG7lhv25M7F8I",
+              "date": null
+            },
+            {
+              "title": "Privacy Policy - The Wheeler School - N-12 Coed Day School in Providence RI",
+              "url": "https://www.wheelerschool.org/privacy-policy/",
+              "date": null
+            },
+            {
+              "title": "What is COPPA? The Children's Online Privacy Protection Act",
+              "url": "https://ed.link/community/coppa/",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "Cheat Sheet: Children’s privacy law update adds pressure against Facebook’s Instagram for kids plan",
+              "url": "https://digiday.com/media/cheat-sheet-childrens-privacy-law-update-adds-pressure-against-facebooks-instagram-for-kids-plan/",
+              "date": null
+            },
+            {
+              "title": "Children and Teens' Online Privacy Protection Act (COPPA 2.0)",
+              "url": "https://www.termsfeed.com/blog/coppa-2-children-teens-online-privacy-protection-act/",
+              "date": null
+            },
+            {
+              "title": "Senator Says Federal Law Protecting Children Online Needs Updating",
+              "url": "https://www.wsj.com/livecoverage/facebook-hearing-live-updates/card/TwUpnUNNG7lhv25M7F8I",
+              "date": null
+            },
+            {
+              "title": "Privacy Policy - The Wheeler School - N-12 Coed Day School in Providence RI",
+              "url": "https://www.wheelerschool.org/privacy-policy/",
+              "date": null
+            },
+            {
+              "title": "What is COPPA? The Children's Online Privacy Protection Act",
+              "url": "https://ed.link/community/coppa/",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 16,
+          "category": "商品",
+          "query": "iPhone 17 Pro 价格 参数",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "Apple、iPhone 17 ProとiPhone 17 Pro Maxを発表 - Apple (日本)",
+              "url": "https://www.apple.com/jp/newsroom/2025/09/apple-unveils-iphone-17-pro-and-iphone-17-pro-max/",
+              "date": null
+            },
+            {
+              "title": "淘宝数码网-数码百科知识与数码百科资讯平台",
+              "url": "https://shuma.taobao.com/",
+              "date": null
+            },
+            {
+              "title": "iPhone 17 Pro and 17 Pro Max online in Saudi Arabia",
+              "url": "https://redsea.com/en/iphone-17-pro",
+              "date": null
+            },
+            {
+              "title": "Apple unveils iPhone 17 Pro and iPhone 17 Pro Max - Apple",
+              "url": "https://www.apple.com/newsroom/2025/09/apple-unveils-iphone-17-pro-and-iphone-17-pro-max/",
+              "date": null
+            },
+            {
+              "title": "iPhone 17 Pro Case Collection - Spigen.com Official Site",
+              "url": "https://www.spigen.com/collections/iphone-17-pro-case-collection?sort_by=manual&filter.v.option.device=iPhone+17+Pro&current.device.choice=iPhone+17+Pro",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "Apple、iPhone 17 ProとiPhone 17 Pro Maxを発表 - Apple (日本)",
+              "url": "https://www.apple.com/jp/newsroom/2025/09/apple-unveils-iphone-17-pro-and-iphone-17-pro-max/",
+              "date": null
+            },
+            {
+              "title": "淘宝数码网-数码百科知识与数码百科资讯平台",
+              "url": "https://shuma.taobao.com/",
+              "date": null
+            },
+            {
+              "title": "iPhone 17 Pro and 17 Pro Max online in Saudi Arabia",
+              "url": "https://redsea.com/en/iphone-17-pro",
+              "date": null
+            },
+            {
+              "title": "Apple unveils iPhone 17 Pro and iPhone 17 Pro Max - Apple",
+              "url": "https://www.apple.com/newsroom/2025/09/apple-unveils-iphone-17-pro-and-iphone-17-pro-max/",
+              "date": null
+            },
+            {
+              "title": "iPhone 17 Pro Case Collection - Spigen.com Official Site",
+              "url": "https://www.spigen.com/collections/iphone-17-pro-case-collection?sort_by=manual&filter.v.option.device=iPhone+17+Pro&current.device.choice=iPhone+17+Pro",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 17,
+          "category": "商品",
+          "query": "best noise cancelling headphones 2026 review",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "Best Noise Cancelling Headphones 2026 Review | TikTok",
+              "url": "https://www.tiktok.com/discover/best-noise-cancelling-headphones-2026-review",
+              "date": null
+            },
+            {
+              "title": "Best noise-cancelling headphones 2026 – tested by our in-house review experts |",
+              "url": "https://www.whathifi.com/best-buys/headphones/best-noise-cancelling-headphones",
+              "date": null
+            },
+            {
+              "title": "Best cheap noise-cancelling headphones 2026: expert-tested recommendations | Wha",
+              "url": "https://www.whathifi.com/best-buys/best-cheap-noise-cancelling-headphones",
+              "date": null
+            },
+            {
+              "title": "The 5 Best Noise Cancelling Headphones of 2026 - RTINGS.com",
+              "url": "https://www.rtings.com/headphones/reviews/best/by-feature/noise-cancelling",
+              "date": null
+            },
+            {
+              "title": "The best noise-canceling headphones of 2026: Tested and reviewed",
+              "url": "https://www.tomsguide.com/us/best-noise-cancelling-headphones,review-5566.html",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "Best Noise Cancelling Headphones 2026 Review | TikTok",
+              "url": "https://www.tiktok.com/discover/best-noise-cancelling-headphones-2026-review",
+              "date": null
+            },
+            {
+              "title": "Best noise-cancelling headphones 2026 – tested by our in-house review experts |",
+              "url": "https://www.whathifi.com/best-buys/headphones/best-noise-cancelling-headphones",
+              "date": null
+            },
+            {
+              "title": "Best cheap noise-cancelling headphones 2026: expert-tested recommendations | Wha",
+              "url": "https://www.whathifi.com/best-buys/best-cheap-noise-cancelling-headphones",
+              "date": null
+            },
+            {
+              "title": "The 5 Best Noise Cancelling Headphones of 2026 - RTINGS.com",
+              "url": "https://www.rtings.com/headphones/reviews/best/by-feature/noise-cancelling",
+              "date": null
+            },
+            {
+              "title": "The best noise-canceling headphones of 2026: Tested and reviewed",
+              "url": "https://www.tomsguide.com/us/best-noise-cancelling-headphones,review-5566.html",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 18,
+          "category": "商品",
+          "query": "扫地机器人 推荐 性价比",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "【26...",
+              "url": "https://www.bilibili.com/video/BV1btfZBxEYB/",
+              "date": null
+            },
+            {
+              "title": "石头P20 Max vs... | 新浪网",
+              "url": "https://k.sina.com.cn/article_7879923199_1d5ae15ff06801jub0.html",
+              "date": null
+            },
+            {
+              "title": "闲鱼小米扫地机器人很便宜-抖音",
+              "url": "https://www.douyin.com/shipin/7349852712957413391",
+              "date": null
+            },
+            {
+              "title": "圣诞礼物扫地机器人推荐【聚会期保持家庭干净整洁】 | 美国好物推荐",
+              "url": "https://yycams.com/best-gift-robot-vacuum/",
+              "date": null
+            },
+            {
+              "title": "扫地机哪个牌子好？ 求推荐一个性价比高的? - 知乎",
+              "url": "https://www.zhihu.com/tardis/jm/ans/2066203690583773200",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "【26...",
+              "url": "https://www.bilibili.com/video/BV1btfZBxEYB/",
+              "date": null
+            },
+            {
+              "title": "石头P20 Max vs... | 新浪网",
+              "url": "https://k.sina.com.cn/article_7879923199_1d5ae15ff06801jub0.html",
+              "date": null
+            },
+            {
+              "title": "闲鱼小米扫地机器人很便宜-抖音",
+              "url": "https://www.douyin.com/shipin/7349852712957413391",
+              "date": null
+            },
+            {
+              "title": "圣诞礼物扫地机器人推荐【聚会期保持家庭干净整洁】 | 美国好物推荐",
+              "url": "https://yycams.com/best-gift-robot-vacuum/",
+              "date": null
+            },
+            {
+              "title": "扫地机哪个牌子好？ 求推荐一个性价比高的? - 知乎",
+              "url": "https://www.zhihu.com/tardis/jm/ans/2066203690583773200",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 19,
+          "category": "商品",
+          "query": "RTX 5090 benchmark 价格",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "ASUS Details GeForce RTX 5090 and 5080 Pricing",
+              "url": "https://www.techporn.ph/asus-details-geforce-rtx-5090-and-5080-pricing/",
+              "date": null
+            },
+            {
+              "title": "NVIDIA GeForce RTX 5090 Review: Pushing Boundaries with AI Acceleration - Storag",
+              "url": "https://www.storagereview.com/review/nvidia-geforce-rtx-5090-review-pushing-boundaries-with-ai-acceleration",
+              "date": null
+            },
+            {
+              "title": "PassMark - GeForce RTX 5090 - Price performance comparison",
+              "url": "https://www.videocardbenchmark.net/gpu.php?gpu=GeForce+RTX+5090&id=5725",
+              "date": null
+            },
+            {
+              "title": "GeForce RTX 5090 D [in 1 benchmark]",
+              "url": "https://technical.city/en/video/GeForce-RTX-5090-D",
+              "date": null
+            },
+            {
+              "title": "GPU price tracking 2026 — Lowest price on every graphics card from Nvidia, AMD, and Intel today",
+              "url": "https://www.tomshardware.com/pc-components/gpus/lowest-gpu-prices-tracking",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "ASUS Details GeForce RTX 5090 and 5080 Pricing",
+              "url": "https://www.techporn.ph/asus-details-geforce-rtx-5090-and-5080-pricing/",
+              "date": null
+            },
+            {
+              "title": "NVIDIA GeForce RTX 5090 Review: Pushing Boundaries with AI Acceleration - Storag",
+              "url": "https://www.storagereview.com/review/nvidia-geforce-rtx-5090-review-pushing-boundaries-with-ai-acceleration",
+              "date": null
+            },
+            {
+              "title": "PassMark - GeForce RTX 5090 - Price performance comparison",
+              "url": "https://www.videocardbenchmark.net/gpu.php?gpu=GeForce+RTX+5090&id=5725",
+              "date": null
+            },
+            {
+              "title": "GeForce RTX 5090 D [in 1 benchmark]",
+              "url": "https://technical.city/en/video/GeForce-RTX-5090-D",
+              "date": null
+            },
+            {
+              "title": "GPU price tracking 2026 — Lowest price on every graphics card from Nvidia, AMD, and Intel today",
+              "url": "https://www.tomshardware.com/pc-components/gpus/lowest-gpu-prices-tracking",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        },
+        {
+          "id": 20,
+          "category": "商品",
+          "query": "国产显卡 摩尔线程 最新型号",
+          "rss_admitted": 0,
+          "top5_changed": false,
+          "before": [
+            {
+              "title": "国产显卡品牌摩尔线程发新卡 单卡48GB显存_凤凰网",
+              "url": "https://i.ifeng.com/c/8VfiImHtDxn",
+              "date": null
+            },
+            {
+              "title": "摩尔线程MTTS70国产显卡售价及参数-硬件新闻-PHP中文网",
+              "url": "https://www.php.cn/faq/815531.html",
+              "date": null
+            },
+            {
+              "title": "MTTS70显卡多少钱_摩尔线程MTTS70国产显卡售价及参数-硬件之家",
+              "url": "https://www.yingjianzhijia.com/zhishi/76390.html",
+              "date": null
+            },
+            {
+              "title": "疑摩尔线程S90首曝！2年前的国产显卡 玩游戏竟然比RTX4060还厉害--快科技--科技....",
+              "url": "https://news.mydrivers.com/1/1064/1064120.htm",
+              "date": null
+            },
+            {
+              "title": "摩尔线程显卡能玩什么游戏-抖音",
+              "url": "https://www.douyin.com/shipin/7587973921086736399",
+              "date": null
+            }
+          ],
+          "after": [
+            {
+              "title": "国产显卡品牌摩尔线程发新卡 单卡48GB显存_凤凰网",
+              "url": "https://i.ifeng.com/c/8VfiImHtDxn",
+              "date": null
+            },
+            {
+              "title": "摩尔线程MTTS70国产显卡售价及参数-硬件新闻-PHP中文网",
+              "url": "https://www.php.cn/faq/815531.html",
+              "date": null
+            },
+            {
+              "title": "MTTS70显卡多少钱_摩尔线程MTTS70国产显卡售价及参数-硬件之家",
+              "url": "https://www.yingjianzhijia.com/zhishi/76390.html",
+              "date": null
+            },
+            {
+              "title": "疑摩尔线程S90首曝！2年前的国产显卡 玩游戏竟然比RTX4060还厉害--快科技--科技....",
+              "url": "https://news.mydrivers.com/1/1064/1064120.htm",
+              "date": null
+            },
+            {
+              "title": "摩尔线程显卡能玩什么游戏-抖音",
+              "url": "https://www.douyin.com/shipin/7587973921086736399",
+              "date": null
+            }
+          ],
+          "before_fresh_share": 0.0,
+          "after_fresh_share": 0.0
+        }
+      ],
+      "zh_news": [
+        {
+          "id": 1,
+          "query": "2026年9月 国内外重大新闻",
+          "rss_admitted": 2,
+          "before": {
+            "n": 5,
+            "fresh": 1
+          },
+          "after": {
+            "n": 5,
+            "fresh": 3
+          },
+          "rss_in_after": 2
+        },
+        {
+          "id": 2,
+          "query": "最近一周 AI 行业动态",
+          "rss_admitted": 0,
+          "before": {
+            "n": 5,
+            "fresh": 2
+          },
+          "after": {
+            "n": 5,
+            "fresh": 2
+          },
+          "rss_in_after": 0
+        },
+        {
+          "id": 3,
+          "query": "台风 最新消息 路径",
+          "rss_admitted": 0,
+          "before": {
+            "n": 5,
+            "fresh": 0
+          },
+          "after": {
+            "n": 5,
+            "fresh": 0
+          },
+          "rss_in_after": 0
+        },
+        {
+          "id": 4,
+          "query": "美国 关税 最新政策",
+          "rss_admitted": 0,
+          "before": {
+            "n": 5,
+            "fresh": 2
+          },
+          "after": {
+            "n": 5,
+            "fresh": 2
+          },
+          "rss_in_after": 0
+        },
+        {
+          "id": 5,
+          "query": "2026年 新能源汽车 补贴政策",
+          "rss_admitted": 0,
+          "before": {
+            "n": 5,
+            "fresh": 2
+          },
+          "after": {
+            "n": 5,
+            "fresh": 2
+          },
+          "rss_in_after": 0
+        }
+      ]
+    }
+  ]
+}
