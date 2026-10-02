@@ -777,3 +777,67 @@ def test_content_farm_marker_without_video_tail_dropped() -> None:
     # 反例：只谈「短剧」但没有成人/视频站形态的页面不受影响
     legit = _r("2026年短剧市场研究报告", "https://example.com/report/short-drama", "短剧市场规模")
     assert is_content_farm(legit, "最近一周 AI 行业动态") is False
+
+
+# ---------------------------------------------------------------- J) registry 路径/标题形态（2026-10-02 T15）
+_MIRROR = _r(
+    "docker.io/python:3.13.9-slim - 镜像下载 | docker.io",
+    "https://docker.aityp.com/image/docker.io/python:3.13.9-slim",
+    "sed -i 's#python:3.13.9-slim#swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/python:3.13.9-slim#' deployment.yaml.",
+)
+
+
+def test_registry_mirror_page_by_path_form_dropped() -> None:
+    """T15：docker.aityp.com 这类镜像页（路径 /image/… + 标题「镜像下载」+ 版本号）→ 非主题页。"""
+    assert looks_like_offtopic_index_page(_MIRROR) is True
+    assert has_substantive_content(_MIRROR) is False
+    assert is_offtopic_index_page(_MIRROR) is True
+
+
+def test_registry_form_keeps_substantive_page() -> None:
+    """口径不变：路径/标题形态命中但**正文有实质内容** → 保留。"""
+    tutorial = _r(
+        "Python 3.13.9 下载与安装完整教程",
+        "https://example.com/downloads/python-3139-guide",
+        _LONG,
+    )
+    assert looks_like_offtopic_index_page(tutorial) is True  # 形态命中（/downloads/ + 版本号）
+    assert is_offtopic_index_page(tutorial) is False         # 但有实质内容 → 不剔除
+
+
+def test_registry_form_requires_version_token() -> None:
+    """负例：只有 /download/ 路径、没有版本号 token → 不算镜像/包索引形态。"""
+    page = _r("公司资料下载中心", "https://example.com/downloads/", "请选择要下载的文件")
+    assert looks_like_offtopic_index_page(page) is False
+
+
+def test_registry_mirror_dropped_when_candidates_sufficient() -> None:
+    """候选充足时剔除镜像页；同一批里正常内容不受影响。"""
+    results = [
+        _MIRROR,
+        _r("好学编程：Python 3.13 这些新特性你一定要知道！", "https://zhuanlan.zhihu.com/p/1", _LONG),
+        _r("Python 的新变化 — Python 3.13.15 文档", "https://docs.python.org/zh-cn/3.13/whatsnew/", _LONG),
+        _r("The new REPL in Python 3.13", "https://treyhunner.com/2024/05/repl/", _LONG),
+    ]
+    kept, stats = apply_rank_filters(
+        results, query="Python 3.13 新特性", max_results=3, min_query_coverage=0.0
+    )
+    assert "docker.aityp.com" not in " ".join(r.url for r in kept)
+    assert stats["offtopic_page"] == 1
+
+
+async def test_registry_mirror_refill_marks_index_page_unverified(settings, tmp_path) -> None:
+    """候选不足时镜像页被补回 → 响应标 `index_page_unverified`（REST/MCP 同一字段）。"""
+    from utf8_search.providers.base import SearchHit
+
+    hit = SearchHit(
+        title="docker.io/python:3.13.9-slim - 镜像下载 | docker.io",
+        url="https://docker.aityp.com/image/docker.io/python:3.13.9-slim",
+        engine="brave",
+        snippet=_MIRROR.content,
+    )
+    pipeline = await _pipeline(settings, tmp_path, [_JunkSearxng([hit])])
+    response = await pipeline.search(SearchRequest(query="Python 3.13 新特性", max_results=5, depth="basic"))
+    reasons = (response.degraded_reason or "").split(",")
+    assert "index_page_unverified" in reasons
+    await pipeline.close()

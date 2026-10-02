@@ -16,11 +16,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
+# 代码版本切换（2026-10-02 T15 修正）：脚本默认用**自己所在仓库**的 `src`，
+# 因此"改前/改后对拍"必须显式指定 `REPLAY_SRC=<另一个 worktree>/src`，
+# 不能只靠 `PYTHONPATH` —— 早期用它做过对拍，两侧其实都加载了同一份代码（结论无效，已在 T15 报告更正）。
 REPO = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPO / "src"))
+_SRC = Path(os.environ.get("REPLAY_SRC", str(REPO / "src")))
+sys.path.insert(0, str(_SRC))
 sys.path.insert(0, str(REPO / "scripts"))
 
 from relevance import QUERIES  # noqa: E402

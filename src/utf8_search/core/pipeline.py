@@ -224,6 +224,9 @@ class SearchPipeline:
         # 新闻/动态意图下非内容页形态被补回（T11）：候选不足，只能保留门户页/日期活动页
         if rank_stats.get("news_non_content_refilled"):
             degraded_reason = merge_degraded_reason(degraded_reason, "news_structure_unverified")
+        # 包索引/镜像页被补回（T15）：候选不足，只能保留这类非主题页
+        if rank_stats.get("offtopic_page_refilled"):
+            degraded_reason = merge_degraded_reason(degraded_reason, "index_page_unverified")
 
         # 3) 深度模式：并发抓取正文（受总预算约束）
         pages_read = 0
