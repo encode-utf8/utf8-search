@@ -1,142 +1,136 @@
 # utf8-search
 
-面向 LLM 的**免费、高速**联网搜索服务（MCP Server + REST API），目标是在不购买任何商业搜索 API 的前提下，达到接近 Tavily 的使用效果。
+> 面向 LLM / Agent 的**免费**联网检索服务：MCP Server + Tavily-compatible REST。
+> 单栈自托管（Docker Compose），无付费搜索 API 依赖。
 
-## 核心思路
+## TL;DR
 
-- **搜索聚合**：自建 SearXNG 聚合 **13 个免费通用引擎**（`resulthunter` / `google` / `yandex` / `naver` / `privacywall` / `zapmeta` / `yahoo` / `fynd` / `360search` + 机会型 `reloado` / `yep` / `brave` / `quark`），单次查询可拿 80+ 条原始结果，完全免费、可自托管
-- **质量与多样性过滤**：向上游要**候选池**（默认 24 条，SearXNG 一次就返回整批，零额外请求、零额外延迟），
-  再按客观信号处理：同站限流（同域最多 2 条）、聚合页/标签页识别（首页、`/tags/`、`/topic/`）、
-  非中文脚本剔除（俄/阿/韩文标题）、查询词覆盖度下限。**候选不足时按「缺陷轻重」分级补回，绝不把结果掏空**。
-  `topic=news` 只做同站与脚本这两项结构性过滤（实测全套过滤会把「当天更新的日报页」连同日期一起剔除，
-  时效性 39/40 → 32/40，详见 `docs/reports/m5-5.3-verification-20260924.md`）
-- **新闻时效性**：`topic=news` 走 3 个免费新闻源（`duckduckgo news` / `sogou wechat` / `google news`），并用通用引擎的 `time_range` 过滤补最新候选；发布日期缺失时先读 URL 内嵌日期、再抓页面用 `htmldate` 回补
-- **引擎健康度自适应**：把每个引擎的失败按原因分级冷却（CAPTCHA 30 分钟 / 拒绝访问 15 分钟 /
-  限流 3 分钟 / 超时 90 秒），连续失败指数退避、到期自动恢复；被挂掉的引擎不再进入查询，
-  实测同一批查询的上游「不可用引擎」报告次数从 142 降到 0，而结果条数不变。
-  快照见 `GET /health` 的 `engines` 字段（`engine_health_enabled=false` 可完全关闭）
-- **兜底源**：SearXNG 返回 0 条时自动切换 Bing HTML 直取 Provider
-- **正文抽取**：本地并发抓取 + trafilatura 正文提取，失败时降级到 Jina Reader
-- **融合重排**：RRF 多路融合 + URL 归一化去重 + BM25 重排 + 中文二元组分词 + 低质结果过滤（无标题 / 裸域名标题）
-- **时效性处理**：新闻结果按「新鲜 > 过期 > 无日期」分层稳定排序，剔除已知过期结果；通用主题命中
-  「最新/最近/latest」等时间词时，用 URL 内嵌日期 + 标题里的跨年年份（零网络开销）做「新鲜 > 无日期 > 过期」
-  重排 —— 2-9 抽检里「台风 最新消息 路径」把 2021 年旧闻排在第 1 位的问题由此修复
-- **`time_range` / `days` 是「强偏好」而不是硬过滤**：`topic=news` 下丢弃阈值取
-  `max(time_range 对应天数, news_fresh_days)`（默认 7 天）。原因是免费源给不出足够的当天结果，
-  若拿 1 天当硬阈值会把 2-7 天的近期新闻丢掉、再用「无日期」结果补位（实测反而更差）。
-  实际新鲜度请以每条结果的 `published_date` 为准，不要假定 `time_range=day` 就一定是当天内容。
-- **速度优化**：连接池、单页硬超时与提前返回、解析线程池调优（GIL 限制）、三级缓存
-- **双协议接入**：MCP（stdio / Streamable HTTP）与 REST，兼容 Claude Desktop、Codex、Cursor、Cherry Studio、Dify、n8n 及自研 Agent
-- **鉴权与限流**：API Key（Bearer / X-API-Key / body）+ 按 Key 滑动窗口限流
-- **SSRF 防护**：抓取前校验协议与目标地址，拒绝内网 / 保留网段 / 云元数据（逐跳复检重定向，防 302 绕过）
+| 面 | 现状（2026-10-03） |
+| --- | --- |
+| 协议 | MCP：`stdio` / Streamable HTTP（`/mcp`，JSON-RPC + SSE）；REST：`/v1/search`、`/v1/extract`（别名 `/search`、`/extract`） |
+| 检索栈 | SearXNG 聚合 **12 通用 + 4 新闻**免费引擎 → RRF 融合 + URL 归一化去重 + BM25 重排（中文 bigram） |
+| 质量 | 候选池 24；同域限流 / 聚合页 / 内容农场 / 非主题页过滤；spec-token（版本·型号）匹配；`degraded_reason` 如实降级 |
+| 时效 | news 源 + `time_range` + 日期回补（htmldate）；中文时效不足时返回 `freshness_unverified`（不伪造新鲜度） |
+| 稳定性 | upstream gate `3 / 12 / 4.0s / 1.0s`；引擎健康冷却（CAPTCHA/429/timeout）；过载 429 + `Retry-After` |
+| 安全 | API key（`Authorization: Bearer` / `X-API-Key` / body `api_key`）；RPM 60/key；SSRF 防护；Caddy TLS（ACME） |
+| 验收 | 2-9 线上 **19/19/19**（median 19 / min 19）；`mcp_selfcheck` **24/24**；8 需求 **7 ✅ / 1 ⚠️ / 0 ❌** |
+| 说明站 | `https://<host>/guide/` — 分点目录 + 全文搜索 + 节点探测 + REST/MCP 调试台（纯前端） |
+
+## 架构
+
+```text
+Client (LLM / Agent)
+  ├─ MCP stdio ─────────────┐
+  ├─ MCP HTTP  /mcp ────────┤
+  └─ REST      /v1/search ──┤
+                            ▼
+                    utf8-search (FastAPI)
+                      ├─ rank: RRF / BM25 / filters
+                      ├─ cache: SQLite (3-level)
+                      ├─ extract: trafilatura
+                      └─ fallback: Bing HTML
+                            │
+                            ▼
+                        SearXNG ──▶ free engines
+
+Caddy (TLS/ACME, 80/443) ──▶ utf8-search:8000
+                          └─▶ docs:80  (/guide/*)
+```
+
+* Services：`searxng` / `utf8-search` / `caddy` / `docs`（均 `restart: unless-stopped`，日志轮转 10MB×3）
+* Runtime：Python ≥3.10、FastAPI + uvicorn、httpx、MCP SDK；缓存 SQLite；TLS 由 Caddy 自动签发/续期
+* Ports：公网仅 Caddy `80/443`；app `127.0.0.1:8000`、SearXNG `127.0.0.1:8888`、docs `127.0.0.1:8080`
 
 ## 快速开始
 
-```powershell
-# 1) 起 SearXNG（首次查询需 20–60 秒加载引擎）
-docker compose up -d searxng
+### Docker（推荐）
 
-# ⚠ 中国大陆网络：google.com / duckduckgo.com 直连不可达（ConnectTimeout），
-# SearXNG 出口不读 HTTP_PROXY 环境变量，必须切到带代理的配置：
-#   在 .env 里写 SEARXNG_SETTINGS_FILE=./searxng/settings.local.yml 后重新 up -d searxng
-# 海外服务器直连可达，用默认 settings.yml 即可。
-
-# 2) 安装依赖
-.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
-
-# 3A) 以 stdio 方式跑 MCP（给桌面客户端用）
-utf8-search
-
-# 3B) 或起 HTTP 服务（REST + MCP over HTTP）
-$env:UTF8SEARCH_API_KEYS="test123"
-utf8-search serve --host 0.0.0.0 --port 8000
+```bash
+cp .env.example .env
+# 必改：UTF8SEARCH_API_KEYS / UTF8SEARCH_MCP_ALLOWED_HOSTS
+docker compose up -d
+curl -s http://127.0.0.1:8000/health | jq .
+.venv/bin/python scripts/mcp_selfcheck.py --base-url http://127.0.0.1:8000 --api-key "$KEY"
 ```
 
-验证：
+### 本地开发
 
-```powershell
-curl.exe http://127.0.0.1:8000/health
-curl.exe -X POST http://127.0.0.1:8000/v1/search -H "Content-Type: application/json" `
-  -H "X-API-Key: test123" --data-binary '{"query":"2026年 人工智能 政策","search_depth":"deep"}'
+```bash
+python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
+.venv/bin/pytest -q -m "not net"        # 389 passed / 4 deselected
+utf8-search                             # MCP stdio
+utf8-search serve --host 127.0.0.1 --port 8000
 ```
 
-## 实测性能（冷启动，美国出口 IP）
+> 本机 `.venv` 是 editable 安装、指向主仓库 `src/`：复测必须**在主仓库切分支**运行，勿用 `git worktree`。
 
-| 模式 | P50 | P95 | 平均读页 |
-| --- | --- | --- | --- |
-| basic | 1048 ms | 1095 ms | 0 |
-| advanced | 3775 ms | 3914 ms | 3.0 |
-| deep | 9234 ms | 9492 ms | 16.2（14–19 页） |
-| basic（`topic=news`，`time_range=day`） | 1060–1270 ms | — | 0 |
+### 中国大陆网络
 
-基准脚本：`.\.venv\Scripts\python.exe scripts\bench.py --n 5 --fresh`
+SearXNG 出口**不读**宿主机代理环境变量；需 `SEARXNG_SETTINGS_FILE=./searxng/settings.local.yml`（含代理）后重启 searxng。
 
-> 各里程碑的验收报告（含前后对比数据与复现命令）留痕在 `docs/reports/`，索引见 `docs/reports/README.md`。
+## .env 速查
 
-## 测试
+| Key | 默认 | 说明 |
+| --- | --- | --- |
+| `UTF8SEARCH_API_KEYS` | 空 | 逗号分隔；空 = 关闭鉴权（`/health` 恒免鉴权） |
+| `UTF8SEARCH_MCP_ALLOWED_HOSTS` | 空 | MCP DNS-rebinding 白名单（Host 精确匹配，未命中 421） |
+| `UTF8SEARCH_SEARXNG_URL` | `http://127.0.0.1:8888` | 容器内为 `http://searxng:8080` |
+| `UTF8SEARCH_DEFAULT_ENGINES` | 12 个通用引擎 | `resulthunter,yandex,naver,privacywall,google,zapmeta,yahoo,fynd,reloado,yep,brave,quark` |
+| `UTF8SEARCH_NEWS_ENGINES` | 4 个新闻引擎 | `duckduckgo news,google news,chinaso news,tiger news` |
+| `UTF8SEARCH_RATE_LIMIT_RPM` | `60` | 每 Key 每分钟请求数；`0` = 不限 |
+| `UTF8SEARCH_CACHE_QUERY_TTL` | `600` | 查询缓存 TTL（秒）；复测须绕缓存 |
+| `UTF8SEARCH_UPSTREAM_MAX_CONCURRENCY/QUEUE_LIMIT/MAX_WAIT/OPTIONAL_WAIT` | `3/12/4.0/1.0` | 上游并发闸门（**禁止多 worker**，否则限流失效） |
 
-```powershell
-.\.venv\Scripts\python.exe -m pytest -q -m "not net"   # 213 项离线测试（含 MCP stdio 握手回归）
-.\.venv\Scripts\python.exe -m pytest -q -m net         # 4 项联网冒烟测试（需 SearXNG + 可出网）
-```
+完整键表：`docs/05-服务器部署手册.md` §4；容器注入策略：`docs/reports/m6-env-wiring-plan-20260930.md`。
 
-## 验收脚本
+## API 摘要
 
-```powershell
-# 客户端联调自检（M4-4.3）：stdio / Streamable HTTP / REST 三条通道 24 项检查，输出 Markdown 报告
-#   --mode 可选 stdio / stdio-raw / http-mcp（别名 http）/ rest / ratelimit / all
-#   已有服务在跑时可加 --base-url http://127.0.0.1:8000 --api-key <key> 复用，跳过临时实例
-.\.venv\Scripts\python.exe -u scripts\mcp_selfcheck.py --out data\selfcheck43.md
+| Endpoint | 方法 | 说明 |
+| --- | --- | --- |
+| `/v1/search`、`/search` | POST | Tavily-compatible 搜索；`query/max_results/search_depth/topic/time_range/days/engines/...` |
+| `/v1/extract`、`/extract` | POST | URL → Markdown/text（`urls[]` ≤10） |
+| `/mcp` | POST | MCP Streamable HTTP：`initialize → notifications/initialized → tools/call` |
+| `/health` | GET | 服务与引擎快照（`engines.active/cooling`）；免鉴权 |
+| `/metrics` | GET | Prometheus 文本（闸门/上游延迟直方图）；需鉴权 |
 
-# 并发压测（先起服务；压测期间建议 UTF8SEARCH_RATE_LIMIT_RPM=0 关闭限流）
-.\.venv\Scripts\python.exe scripts\loadtest.py --concurrency 10 --n 50 --api-key test123
+* Auth：`Authorization: Bearer <key>` ≡ `X-API-Key: <key>` ≡ body `api_key`（仅 REST）
+* `degraded_reason`（逗号分隔、可多值）：`freshness_unverified` / `no_relevant_results` / `spec_unverified` / `fallback_low_relevance` / `news_structure_unverified` / `index_page_unverified` / `upstream_overloaded`
+* `topic=news` 的 `time_range/days` 是**强偏好**而非硬过滤；以每条结果的 `published_date` 为准
 
-# 24h 长稳（定时查询，逐行记录成功率与 RSS）
-.\.venv\Scripts\python.exe scripts\soak.py --duration-hours 24 --interval 300
-#   挂机期间/之后不用猜 PID：--status 看存活与进度，--summarize 从明细 CSV 复算结论（强杀也不丢结论）
-.\.venv\Scripts\python.exe scripts\soak.py --status --out data\soak-24h.csv
-.\.venv\Scripts\python.exe scripts\soak.py --summarize --out data\soak-24h.csv --json data\soak-24h.json
+## 质量 / 稳定性（实测）
 
-# 相关性抽检（生成 20 条中英查询的 top5 明细与打分模板，填好后用 --score-file 判定）
-.\.venv\Scripts\python.exe scripts\relevance.py --depth basic
-.\.venv\Scripts\python.exe scripts\relevance.py --compare-hygiene data\rel-before.json data\rel-after.json
+* **服务契约**：@≤5 并发 → 100% 成功 / 0 降级 / P95 ≤5.2s；@10 → ≥95% / P95 ≤6.5s；过载快速 429（`Retry-After`）
+* **2-9 相关性**：登记口径（固定 commit + 20 条 + `--no-cache` + 单并发 + ≥3 轮取中位）= **19/19/19**；agent 初评 + 校准集 + 盲评，敏感性口径（严格判）同时披露
+* **长稳**：24h / 6h / 1h soak 可用率 **100%**；6h（镜像 `3a521d3e6f9d`）P50 **1052ms** / P95 **2113ms**；
+  现网镜像（`258749c7a318`）1h P50 1353ms / P95 2598ms
+* **引擎**：冷却分级（CAPTCHA 30min / denied 15min / rate-limit 3min / timeout 90s）+ 指数退避；`/health.engines.cooling` 可观测
+* **候选池实验**：SearXNG 整批返回 31–47 条，池 24→40 覆盖率 0.832→0.843、零额外网络成本；默认保持 **24** 未改
 
-# 排序改动受控 A/B（先采候选快照，再用同一批候选比较「改动前 / 改动后」，
-# 避免把上游漂移误判成改动效果 —— 免费引擎每次返回的候选差异很大）
-.\.venv\Scripts\python.exe scripts\rank_ab.py --snapshot-out data\rank-ab-candidates.json
-.\.venv\Scripts\python.exe scripts\rank_ab.py --snapshot-in data\rank-ab-candidates.json --out data\rank-ab.md
+## 工程脚本
 
-# 引擎健康度自适应 A/B 基准（对比静态名单与自适应：覆盖率 / 延迟 / 上游异常次数）
-.\.venv\Scripts\python.exe scripts\bench_engines.py --rounds 3 --out data\bench-engines.md
+| 脚本 | 用途 |
+| --- | --- |
+| `scripts/mcp_selfcheck.py` | stdio / HTTP-MCP / REST / ratelimit 全通道自检（24 项） |
+| `scripts/soak.py` | 长稳（`--status` / `--summarize`，强杀不丢结论） |
+| `scripts/loadtest.py` | 并发压测（429/降级/延迟分布） |
+| `scripts/relevance.py` | 2-9 抽检采集/判定（`--score-file`、`--compare-hygiene`） |
+| `scripts/replay_pool.py` | 固定候选池受控回放（改前/改后归因；支持 `REPLAY_SRC`） |
+| `scripts/ops_check.py` | 巡检：health / metrics / 证书 / 备份 / 磁盘 + 指标快照 CSV（cron 每 5min） |
+| `scripts/backup.sh` | 加密备份（`BACKUP_PASSPHRASE`；`SHA256SUMS`；保留策略） |
+| `scripts/check_refs.py` | 非忽略文件引用完整性（CI/离线套件）；`scripts/build_docs_site.py` 生成 `/guide` 站点（`--check`） |
 
-# 时效性验收（topic=news + time_range=day，输出逐条时效统计与 Markdown 报告）
-.\.venv\Scripts\python.exe scripts\news_check.py --time-range day --max-results 5 --no-cache --out data\news-check.md
+## 已知限制
 
-# 时效性配对 A/B（逐条交替「开/关质量过滤」，用于确认质量过滤没有挤掉新鲜结果）
-.\.venv\Scripts\python.exe scripts\news_check.py --ab --time-range day --max-results 5 --no-cache --out data\news-check-ab.md
-```
+* **中文新闻时效**：免费中文新鲜源不可得（评估结论）；返回 `freshness_unverified`，不伪造日期
+* **Q2 类主题查询**：上游池无切题候选时返回 `no_relevant_results`（不硬凑）
+* **Tavily 兼容差异**（有意保留）：`answer` 恒 `null`、图片字段恒空、`score` 量纲不同、`usage.credits` 恒 0
+* **免费源无 SLA**：CAPTCHA / 限流为常态，靠健康冷却 + 兜底 + 缓存吸收
+* 待触发项：闸门上限自适应（等坏日样本）、TLS 证书续期核对（2026-11-24 前后）
 
-实测结论（2026-09-24，详见 `checklist.md` 第 9 节）：
+## 文档索引
 
-- 并发压测 10 并发 × 50 请求：**无 5xx、无超时**；但冷查询 P50 约 12 s，瓶颈在上游 SearXNG 聚合能力（约 1.3-2.0 req/s），建议并发 ≤ 3。
-- 相关性抽检 20 条：达标 15/20（75%），平均相关 4.25 条；短板在中文商品类与强时效类，已转入 M5 优化。
-- 时效性验收（2026-09-24，详见 `checklist.md` 第 10 节）：8 条中英新闻查询在 `topic=news` +
-  `time_range=day` 下连续 4 轮 **95–100% 带 7 日内日期**（门槛 ≥ 80%），端到端 1.06–1.27s。
-
-## 文档
-
-- `docs/01-前期调研与可行性分析.md`：同类产品调研、免费搜索源与引擎级实测、性能瓶颈分析、实测延迟
-- `docs/02-技术方案与开发计划.md`：分层架构、MCP 接口设计、速度策略、里程碑与验收指标
-- `docs/03-客户端接入指南.md`：Claude Desktop / Codex / Cursor / Cherry Studio / Dify / n8n / 自研 Agent 接入示例
-- `docs/04-后续路线图.md`：M4 上线就绪（SSRF 防护 / 云部署 / 客户端联调）、M5 质量与时效、M6 能力扩展
-- `checklist.md`：各阶段可勾选的验收清单与实测记录
-- `docs/reports/`：各里程碑验收报告留痕（含 M4-4.3 客户端自检报告），索引见 `docs/reports/README.md`
-
-## 当前状态
-
-**M1 / M2 已完成并通过实测验收**，M3 主体完成（10 并发压测通过、24 h 长稳待补）；
-M4-4.1 SSRF 防护、M4-4.3 真实客户端联调（自动化部分）、M5-5.1 引擎健康度自适应、M5-5.2 时效性增强、M5-5.3 中文源与查询质量均已完成。
-M4-4.3 的人工联调清单见 `docs/03` 第 10.2 节，待逐客户端点一次；下一步：4.4 的 24h 长稳复跑、4.2 云部署（需公网 VPS）。
-
-已知限制：免费搜索引擎会被上游限流，需配合缓存与兜底源使用；中文商品类查询的相关性（2-9 抽检 5 条未达标）仍待 5.3 处理；
-中国大陆网络下 SearXNG 需走 `searxng/settings.local.yml` 的代理配置才能访问 Google / DuckDuckGo。
+* 客户端接入：`docs/03-客户端接入指南.md`（MCP / REST / 7 类客户端 / 故障对照）
+* 部署运维：`docs/05-服务器部署手册.md`（架构 / .env / 证书 / 备份 / 回滚）
+* 路线图与遗留：`docs/04-后续路线图.md`、`checklist.md`（§8 工作记录）
+* 验收报告索引：`docs/reports/README.md`（报告类链接统一经此索引）
+* 在线说明站（含测试台）：`https://43.106.104.49.sslip.io/guide/`
