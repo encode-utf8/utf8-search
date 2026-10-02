@@ -1,4 +1,6 @@
 # 容器 env 接线实施（让 `.env` 真正对容器生效）（2026-09-30）
+<!-- refs-policy: cleaned-2026-10-02 -->
+> ⚠️ 引用提示：本文提到的部分过程明细已在 2026-10-02 仓库瘦身中清理（清单：`docs/reports/cleaned-files-20261002.txt`）；这些路径不是现存文件，需要时用 `git log --diff-filter=D -- <path>` 取回；规则见 `docs/reports/README.md`。
 
 > 本轮改 `docker-compose.yml`（接线）+ 重建 app 容器；**未改 `src/`、未动闸门参数、未动 `settings.yml`、未碰人工项 3-9**。
 > 方案依据：`docs/reports/m6-env-wiring-plan-20260930.md`（A/B/C 三分类）。

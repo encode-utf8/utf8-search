@@ -1,4 +1,6 @@
 # 仓库清理：docs/reports 与 data/ 瘦身（2026-10-02）
+<!-- refs-policy: cleaned-2026-10-02 -->
+> ⚠️ 引用提示：本文提到的部分过程明细已在 2026-10-02 仓库瘦身中清理（清单：`docs/reports/cleaned-files-20261002.txt`）；这些路径不是现存文件，需要时用 `git log --diff-filter=D -- <path>` 取回；规则见 `docs/reports/README.md`。
 
 > 分支 `chore/repo-cleanup-20261002`；口径 = **只留开发结果验证 / 方案设计 / 反馈 / 日志**，测试与实验的过程明细一律清掉。
 
@@ -78,6 +80,7 @@
 - `20261002-t12-merge-deploy-q2-closeout.md`
 - `20261002-t19-merge-deploy.md`
 - `20261002-tls-renewal-assessment.md`
+
 - `20261002-topic-relevance-gate-t10.md`
 - `20261002-topic-relevance-gate-t11.md`
 - `20261002-zh-rss-pool-benefit.md`
@@ -136,3 +139,24 @@
 - `soak-t8-1h.json`
 - `tavily-official-search-20260928.md`
 - `tavily-search-response-example-20260928.json`
+
+## 7. 后续修正（2026-10-03）：引用完整性加固
+
+瘦身合并后的复查发现一个**副作用**：当时的"引用完整性"只扫了 Markdown 链接 `](path)`，
+而 `checklist.md §8` 与 24 份报告里还有 **127 处纯文本/反引号引用**指向 **173 个已清理文件**（其中不少是
+"被引用"口径本应保留的过程明细）——这些引用既不是链接、也不可核实。
+
+处置原则：**不恢复 173 个过程文件**（那等于把瘦身撤销 85%），改为把"历史引用"显式化并机器校验：
+
+1. `docs/reports/cleaned-files-20261002.txt` —— 204 个已清理文件的机器可读清单；
+2. 仍引用它们的 **25 个文件**文首统一加标记 `<!-- refs-policy: cleaned-2026-10-02 -->`
+   （表示：文中这些路径是历史记录，不是现存文件；原件从 git 历史取回）；
+3. 新增 `scripts/check_refs.py`（扫描全部非 gitignore 文件：Markdown 链接必须可解析；
+   `docs/reports/...` 与带扩展名路径必须现存、或命中已清理清单且带标记）+ `tests/test_check_refs.py`
+   （把"0 违规"固化进离线套件）；
+4. 顺手修掉 5 处**真实错引用**：`docs/03` 与 `scripts/clients_sim.py` / `scripts/rank_ab.py` 的示例输出路径、
+   `searxng/settings{,.local}.yml` 里引擎替换报告的日期（`…20260928` → 实际存在的 `m6-engine-swap-20260929.md`，仅注释）。
+
+T19 的 `data/selfcheck-t19.md` 已重生成并归档为 `docs/reports/selfcheck-t19-20261003.md`；
+`data/soak-t19-1h.*` 不可恢复（`data/` 被 gitignore），数字保留在 `20261002-t19-merge-deploy.md` §4.3。
+复扫：`scripts/check_refs.py` → **0 违规**（见 `checklist.md §8` 2026-10-03 记录）。

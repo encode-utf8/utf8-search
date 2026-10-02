@@ -1,4 +1,6 @@
 # 2-9 采样口径登记 + 结项总表诚实修正（2026-10-01）
+<!-- refs-policy: cleaned-2026-10-02 -->
+> ⚠️ 引用提示：本文提到的部分过程明细已在 2026-10-02 仓库瘦身中清理（清单：`docs/reports/cleaned-files-20261002.txt`）；这些路径不是现存文件，需要时用 `git log --diff-filter=D -- <path>` 取回；规则见 `docs/reports/README.md`。
 
 > 依据：上一轮实测 `docs/reports/m2-9-sampling-variance-20261001.md`
 > （固定 commit `c59b9d6`、20 条固定查询、单并发 + `--no-cache`，96 秒内 5 次采样：

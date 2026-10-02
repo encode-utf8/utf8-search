@@ -1,4 +1,6 @@
 # 中文新鲜源增强评估：「报刊 RSS 当最新新闻池」的收益上限（T17，失败结案）
+<!-- refs-policy: cleaned-2026-10-02 -->
+> ⚠️ 引用提示：本文提到的部分过程明细已在 2026-10-02 仓库瘦身中清理（清单：`docs/reports/cleaned-files-20261002.txt`）；这些路径不是现存文件，需要时用 `git log --diff-filter=D -- <path>` 取回；规则见 `docs/reports/README.md`。
 
 > 分支 `feat/zh-rss-pool-eval-20261002`（基于 main `7fe8b80`）；**已于 2026-10-02 经 T19 `--no-ff` 合并进 main（merge `079699d`）**，失败结案生效（不实现 provider）。
 > 只测不判为原则的测量轮：**不写实现、不改 `.env`/`settings.yml`/闸门参数、不重启容器**。

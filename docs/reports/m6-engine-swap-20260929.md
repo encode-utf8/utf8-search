@@ -1,4 +1,6 @@
 # M6 引擎集合优化 阶段 2：替换实施与验收（2026-09-29）
+<!-- refs-policy: cleaned-2026-10-02 -->
+> ⚠️ 引用提示：本文提到的部分过程明细已在 2026-10-02 仓库瘦身中清理（清单：`docs/reports/cleaned-files-20261002.txt`）；这些路径不是现存文件，需要时用 `git log --diff-filter=D -- <path>` 取回；规则见 `docs/reports/README.md`。
 
 > **范围**：只改 `searxng/settings.yml`（单文件可回滚），**未动 `src/`**、未改闸门参数、未改排序逻辑、
 > 未加 `sina` / `bilibili`。分支 `fix/m6-engine-swap-20260928`。

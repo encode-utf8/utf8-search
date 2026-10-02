@@ -1,4 +1,6 @@
 # 引擎列表落地到产品路径（.env）与复验（2026-09-30）
+<!-- refs-policy: cleaned-2026-10-02 -->
+> ⚠️ 引用提示：本文提到的部分过程明细已在 2026-10-02 仓库瘦身中清理（清单：`docs/reports/cleaned-files-20261002.txt`）；这些路径不是现存文件，需要时用 `git log --diff-filter=D -- <path>` 取回；规则见 `docs/reports/README.md`。
 
 > **本轮只动部署与配置**：`src/` 未改、闸门参数未改、`searxng/settings.yml` 未动、人工项 3-9 未动。
 > 改动面：服务器 `.env`（引擎列表）、仓库 `docker-compose.yml`（**接线缺口的最小修复**）、仓库 `.env.example`（口径说明）、

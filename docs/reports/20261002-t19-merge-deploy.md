@@ -1,4 +1,6 @@
 # T19：四分支合并上线 + 线上复验 + 结项快照（2026-10-02）
+<!-- refs-policy: cleaned-2026-10-02 -->
+> ⚠️ 引用提示：本文提到的部分过程明细已在 2026-10-02 仓库瘦身中清理（清单：`docs/reports/cleaned-files-20261002.txt`）；这些路径不是现存文件，需要时用 `git log --diff-filter=D -- <path>` 取回；规则见 `docs/reports/README.md`。
 
 > 本轮按用户拍板执行：**T15 → T16 → T17 → T18 依序 `--no-ff` 合并进 main**（每条合完即跑离线套件），
 > 随后**只重建 app 容器**（searxng / caddy 不动）把 T15 的 rank 层修复上线，做线上复验与结项快照。
@@ -71,7 +73,7 @@ searxng/caddy: 未重启（容器 uptime 保持 2d / 3d）
 
 | 检查 | 结果 | 证据 |
 | --- | --- | --- |
-| `mcp_selfcheck.py` | **24/24 通过、exit 0** | `data/selfcheck-t19.md` |
+| `mcp_selfcheck.py` | **24/24 通过、exit 0** | `docs/reports/selfcheck-t19-20261003.md`（2026-10-03 重生成留档；2026-10-02 的 `data/` 运行产物已在清理轮删除） |
 | 鉴权 | 无 Key **401** / 错 Key **401** / 对 Key **200** | 本轮实测（3 条请求） |
 | `/metrics` | `upstream_requests_total{result="ok"}=67`（推进中）、`error`=0、`rejected_total`=0 | 本轮实测 |
 | `ops_check.py` | `[OK] health=200 error=0.0 rejected=0 冷却引擎=[brave, resulthunter, privacywall, yep, google, google news]`，**exit 0** | `data/ops-check.log` |
@@ -138,7 +140,10 @@ run2/run3 上游池漂移到 `nocache` 工具页（0 条切题）但**如实降�
 
 ## 7. 产物
 
-* 本报告；2-9 三轮明细/模板/判定：`m29-t19-20261002-run{1..3}-{brief.md,meta.json,scores.csv,scores-judge.md}`；
-* 自检报告 `data/selfcheck-t19.md`（运行产物，不入库）；1h 长稳 `data/soak-t19-1h.{csv,json,meta.json}`；
+* 本报告；2-9 三轮明细/模板/判定：`m29-t19-20261002-run{1..3}-{brief.md,meta.json,scores.csv,scores-judge.md}`
+  （过程明细已按 2026-10-02 清理轮删除，数字保留在本报告；清单见 `docs/reports/cleaned-files-20261002.txt`）；
+* 自检报告 `docs/reports/selfcheck-t19-20261003.md`（2026-10-03 重生成，24/24）；
+  1h 长稳原始文件 `data/soak-t19-1h.{csv,json,meta.json}` 已在清理轮删除（`data/` 不入库、不可恢复），
+  结论（可用率 100%、P50 1353ms / P95 2598ms、429=0）保留在 §4.3；
 * `checklist.md` §8 工作记录 + 顶部最终状态快照；总表 §0/§2 已同步。
 * 约束：未改 `.env` / `settings.yml` / 闸门参数默认值；未用 worktree；searxng / caddy 未重启。

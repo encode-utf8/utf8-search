@@ -1,4 +1,6 @@
 # T15：registry/包索引判据扩展为「路径+标题形态」（治 docker mirror 页）
+<!-- refs-policy: cleaned-2026-10-02 -->
+> ⚠️ 引用提示：本文提到的部分过程明细已在 2026-10-02 仓库瘦身中清理（清单：`docs/reports/cleaned-files-20261002.txt`）；这些路径不是现存文件，需要时用 `git log --diff-filter=D -- <path>` 取回；规则见 `docs/reports/README.md`。
 
 > 分支 `fix/registry-form-20261002`（代码 `8f4fd1b` + 工具修正 `3b1dd0a`）；**已于 2026-10-02 经 T19 `--no-ff` 合并进 main（merge `bb34b19`）并部署上线（镜像 `258749c7a318`；线上 Q6 5/5/5）**。
 > 依据：`docs/04` §8 第 16 条 ③、T11 报告 §3.3、总表 §2 遗留 #9。

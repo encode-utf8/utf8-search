@@ -18,7 +18,7 @@ Dify(REST) / n8n(REST) / 自研 Agent(MCP HTTP、REST) / 已有 Tavily 代码(RE
 用法
 ----
     python scripts/clients_sim.py --base-url http://127.0.0.1:8000 --api-key <Key>
-    python scripts/clients_sim.py --base-url http://127.0.0.1:8000 --api-key <Key> --out docs/reports/xxx.md
+    python scripts/clients_sim.py --base-url http://127.0.0.1:8000 --api-key <Key> --out docs/reports/<日期>-clients-sim.md
     python scripts/clients_sim.py --only Cursor        # 只跑名字里含 Cursor 的客户端
     python scripts/clients_sim.py --no-search          # 只握手不真搜（省上游配额）
 
