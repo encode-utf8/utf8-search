@@ -49,7 +49,7 @@ def test_generated_site_is_fresh_and_offline():
     assert "const INDEX = [" in content
     assert 'id="page-clients"' in content and 'id="page-deploy"' in content
     assert 'id="page-tester"' in content
-    for marker in ('id="t-base"', 'id="t-probe"', 'id="t-transport"', 'id="t-body"', 'id="t-send"'):
+    for marker in ('id="t-base"', 'id="t-check-key"', 'id="t-probe"', 'id="t-transport"', 'id="t-body"', 'id="t-send"'):
         assert marker in content
     # 左侧目录：分点 TOC + 当前页高亮所需的标记
     assert 'class="nav-page"' in content

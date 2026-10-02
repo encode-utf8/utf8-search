@@ -23,10 +23,31 @@
 .t-body-edit{width:100%;min-height:150px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg)}
 </style>
 
+<h2 id="page-tester--api-key">API Key 是什么？</h2>
+
+<ul>
+  <li><strong>它是什么</strong>：本搜索服务的访问凭证，由<strong>部署者</strong>在服务端配置
+    <code>UTF8SEARCH_API_KEYS=key1,key2</code>（逗号分隔、可多个；留空 = 关闭鉴权）。
+    <strong>说明站本身是静态页面，不需要 Key</strong>——Key 只用于直连搜索 API。</li>
+  <li><strong>什么时候要</strong>：<code>GET /health</code> 返回 <code>auth_enabled=true</code> 时必须带 Key，否则 401；
+    MCP 的本地 <code>stdio</code> 通道免 Key（本机可信），HTTP/HTTPS 通道与 REST 一样要带。</li>
+  <li><strong>去哪里拿</strong>：自己部署 → 看服务器的 <code>.env</code>（<code>UTF8SEARCH_API_KEYS</code>，或部署时你自己设的值）；
+    用别人的服务 → 找服务提供者申请。本站不保存、不展示任何 Key。</li>
+  <li><strong>怎么传（三选一）</strong>：<code>Authorization: Bearer &lt;key&gt;</code>（推荐，MCP/REST 通用）、
+    <code>X-API-Key: &lt;key&gt;</code>、请求体 <code>{"api_key": "&lt;key&gt;"}</code>（仅 REST）。MCP 只支持前两种请求头。</li>
+  <li><strong>报错怎么读</strong>：401 = Key 缺失/错误；429 = 触发限流（默认每 Key <strong>60 次/分钟</strong>），
+    看 <code>Retry-After</code> 等几秒再试；<code>/health</code> 不需要 Key，可先用它确认服务是否开了鉴权。</li>
+  <li><strong>安全</strong>：Key 等同密码，别提交进仓库或贴到公开页面；测试台的「记住」只写本标签页
+    <code>sessionStorage</code>，关掉标签页即失效。</li>
+</ul>
+
+<p class="t-hint">还没把握？在下面填入 Key，点「<strong>验证 Key</strong>」会先查 <code>/health</code> 的鉴权状态，
+再发一条最小搜索请求，直接告诉你 200 / 401 / 429。</p>
+
 <h2 id="page-tester--node-status">节点状态：逐引擎探测</h2>
 
 <p>直接从你的浏览器请求服务端（同源，经 Caddy）：先读 <code>/health</code> 获取当前活跃 / 冷却引擎，
-再对每个引擎各发一条最小搜索请求，展示**延迟、HTTP 状态、真实命中数**。
+再对每个引擎各发一条最小搜索请求，展示<strong>延迟、HTTP 状态、真实命中数</strong>。
 会显式标出「回退」：若请求的引擎失败、结果来自其它源（例如冷却中的 <code>brave</code> 被 Bing 兜底），不会当成绿灯。</p>
 
 <div class="tester">
@@ -34,7 +55,9 @@
     <label>API 基地址<input id="t-base" size="34"></label>
     <label>API Key（密码框，只留在本机浏览器）<input id="t-key" type="password" autocomplete="off" placeholder="Bearer Key"></label>
     <label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="t-remember"> 记住到本标签页</label>
+    <button id="t-check-key">验证 Key</button>
   </div>
+  <div id="t-key-status" class="t-hint"></div>
   <div class="t-hint" id="t-base-hint"></div>
   <div class="t-row">
     <button id="t-health">① 读取 /health</button>
@@ -150,6 +173,30 @@ if (typeof document !== 'undefined') {
       return { status: resp.status, ms, text, json };
     }
     const fmtMs = ms => (ms >= 1000 ? (ms / 1000).toFixed(2) + 's' : ms + 'ms');
+
+    $('t-check-key').onclick = async () => {
+      const out = $('t-key-status');
+      out.textContent = '检查中…';
+      try {
+        const health = await fetch(base() + '/health');
+        const hd = await health.json();
+        if (!hd.auth_enabled) {
+          out.innerHTML = '<span class="chip ok">服务未开鉴权</span> auth_enabled=false：无需 Key 即可调用。';
+          return;
+        }
+        if (!keyInput.value) {
+          out.innerHTML = '<span class="chip err">请先填入 Key</span> 服务已开鉴权（auth_enabled=true）。';
+          return;
+        }
+        const r = await postJSON('/v1/search', { query: 'key check', max_results: 1, search_depth: 'basic' });
+        if (r.status === 200) out.innerHTML = '<span class="chip ok">Key 有效</span> HTTP 200 · ' + fmtMs(r.ms);
+        else if (r.status === 401) out.innerHTML = '<span class="chip err">Key 被拒</span> HTTP 401：Key 错误或未启用。';
+        else if (r.status === 429) out.innerHTML = '<span class="chip fallback">触发限流</span> HTTP 429：等 Retry-After 后重试。';
+        else out.innerHTML = '<span class="chip err">HTTP ' + r.status + '</span> ' + (r.text || '').slice(0, 160);
+      } catch (e) {
+        out.innerHTML = '<span class="chip err">请求失败</span> ' + e.message + '（检查基地址 / CORS）';
+      }
+    };
 
     // ---------- 节点状态 ----------
     let enginesCache = { active: [], cooling: [] };

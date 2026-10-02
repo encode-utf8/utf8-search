@@ -32,6 +32,9 @@ results = client.search("Python 3.13 新特性", max_results=5)
 2. `X-API-Key: <Key>`（自定义头）；
 3. 请求体字段 `"api_key": "<Key>"`（仅 REST `/v1/search`、`/search` 支持；MCP 不适用）。
 
+> 不知道 Key 从哪来、怎么确认 Key 有效？见「服务测试台」页的
+> [API Key 是什么](#page-tester--api-key)——含来源说明与一键「验证 Key」。
+
 > 公网访问还必须带**白名单内的 Host**（例如 `43.106.104.49.sslip.io`），否则会被 DNS 重绑定防护拒绝（421）。
 
 ## 按场景查找

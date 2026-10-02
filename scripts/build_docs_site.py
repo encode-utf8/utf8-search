@@ -58,6 +58,8 @@ def link_map() -> dict[str, str]:
 def resolve_href(url: str, page_id: str, links: dict[str, str], src_dir: Path) -> str | None:
     if url.startswith(("http://", "https://", "mailto:")):
         return url
+    if url.startswith("#page-"):
+        return url
     if url.startswith("#"):
         return f"#page-{page_id}--{slugify(url[1:])}"
     target = (src_dir / url).resolve()
