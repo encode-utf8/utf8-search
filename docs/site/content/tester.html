@@ -107,7 +107,7 @@ MCP 走 Streamable HTTP：<code>initialize → notifications/initialized → too
 </div>
 
 <p class="t-warn">⚠️ Key 只在你的浏览器里用于直连 API，不会经过说明站服务器；请勿在公共电脑勾选「记住」。
-从公网 <code>/guide/</code> 访问时 API 与页面同源，可直接用；若从本机 8080 打开并指向 8000，浏览器可能因 CORS 拦截——这是预期行为，请改用公网入口。</p>
+从 <code>https://&lt;你的域名&gt;/guide/</code> 访问时 API 与页面同源，可直接用；若从本机 8080 打开并指向 8000，浏览器可能因 CORS 拦截（预期行为），请改用你部署的 Caddy 入口。</p>
 
 <script>
 const T = (typeof module !== 'undefined' && module.exports) ? module.exports : (window.__tester = {});
@@ -147,7 +147,7 @@ if (typeof document !== 'undefined') {
     const localOpen = location.port === '8080' || location.protocol === 'file:';
     baseInput.value = localOpen ? 'http://127.0.0.1:8000' : rawBase;
     $('t-base-hint').textContent = localOpen
-      ? '当前从本机直开：默认指向 http://127.0.0.1:8000；若浏览器报 CORS，请改用公网 /guide/ 入口。'
+      ? '当前从本机直开：默认指向 http://127.0.0.1:8000；若浏览器报 CORS，请改用你部署的 Caddy 入口（https://<你的域名>/guide/）。'
       : '当前与 API 同源（' + rawBase + '），可直接测试。';
     try {
       const saved = sessionStorage.getItem('utf8search-tester-key');

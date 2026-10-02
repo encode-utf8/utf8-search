@@ -35,7 +35,7 @@ results = client.search("Python 3.13 新特性", max_results=5)
 > 不知道 Key 从哪来、怎么确认 Key 有效？见「服务测试台」页的
 > [API Key 是什么](#page-tester--api-key)——含来源说明与一键「验证 Key」。
 
-> 公网访问还必须带**白名单内的 Host**（例如 `43.106.104.49.sslip.io`），否则会被 DNS 重绑定防护拒绝（421）。
+> 公网访问还必须带**白名单内的 Host**（例如 `your-domain.example`，写成你实际部署的域名），否则会被 DNS 重绑定防护拒绝（421）。
 
 ## 按场景查找
 
@@ -52,5 +52,5 @@ results = client.search("Python 3.13 新特性", max_results=5)
 | 场景 | 地址 |
 | --- | --- |
 | 本机默认 | `http://127.0.0.1:8000`（REST）；`http://127.0.0.1:8000/mcp`（Streamable HTTP） |
-| 公网（示例部署） | `https://43.106.104.49.sslip.io`（需要 Key + Host 白名单） |
-| 说明站本页 | 由项目内 `docs` 静态服务提供，默认 `http://127.0.0.1:8080/` |
+| 公网（你自己的部署） | `https://<你的域名>`（需要 Key + Host 白名单） |
+| 自托管控制台（本页） | 随项目 `docs` 服务启动：本机 `http://localhost:8080/`；用自带 Caddy 部署时为 `https://<你的域名>/guide/` |

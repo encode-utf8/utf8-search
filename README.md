@@ -14,7 +14,7 @@
 | 稳定性 | upstream gate `3 / 12 / 4.0s / 1.0s`；引擎健康冷却（CAPTCHA/429/timeout）；过载 429 + `Retry-After` |
 | 安全 | API key（`Authorization: Bearer` / `X-API-Key` / body `api_key`）；RPM 60/key；SSRF 防护；Caddy TLS（ACME） |
 | 验收 | 2-9 线上 **19/19/19**（median 19 / min 19）；`mcp_selfcheck` **24/24**；8 需求 **7 ✅ / 1 ⚠️ / 0 ❌** |
-| 说明站 | `https://<host>/guide/` — 分点目录 + 全文搜索 + 节点探测 + REST/MCP 调试台（纯前端） |
+| 自托管控制台 | Docs + 测试台，随栈启动：本机 `http://localhost:8080/`；自部署可经自带 Caddy 走 `https://<你的域名>/guide/`（纯前端） |
 
 ## 架构
 
@@ -133,4 +133,4 @@ SearXNG 出口**不读**宿主机代理环境变量；需 `SEARXNG_SETTINGS_FILE
 * 部署运维：`docs/05-服务器部署手册.md`（架构 / .env / 证书 / 备份 / 回滚）
 * 路线图与遗留：`docs/04-后续路线图.md`、`checklist.md`（§8 工作记录）
 * 验收报告索引：`docs/reports/README.md`（报告类链接统一经此索引）
-* 在线说明站（含测试台）：`https://43.106.104.49.sslip.io/guide/`
+* 自托管控制台（说明 + 测试台）：本机 `http://localhost:8080/`；自部署时也可经 Caddy `https://<你的域名>/guide/`
