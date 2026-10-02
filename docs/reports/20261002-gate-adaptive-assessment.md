@@ -88,5 +88,5 @@ docs/04 §4.4 记录的 19s 级也是压测场景），**没有一次自然观�
 
 ## 5. 本轮约束与产物
 
-* 未改 `.env` 默认值 / `settings.yml` / 闸门参数；未重启现网容器；离线套件 **380 passed / 4 deselected**（纯文档轮）；
+* 未改 `.env` 默认值 / `settings.yml` / 闸门参数；未重启现网容器；离线套件 **375 passed / 4 deselected**（本分支基于 main，未含 T15 的 5 条新单测；纯文档轮不改数字）；
 * 本轮产物：本文 + `checklist.md` §8 工作记录；分支 `fix/gate-adaptive-assessment-20261002`（**未合并 main**）。
