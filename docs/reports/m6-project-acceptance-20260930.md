@@ -109,12 +109,12 @@
 | 1 | ~~3-9 真实客户端人工联调~~ | ✅ **已闭环（2026-10-02 用户裁决：按自动化仿真结案）** | `docs/reports/20261002-clients-sim.md`：对线上 **45/45** 通过（每个客户端用各自配置格式跑通，含 REST 与 Streamable HTTP）；界面粘贴属机械操作、无测试价值 |
 | 2 | **闸门上限对上游健康度自适应**（坏日样本不足，本轮不做） | 需更多坏日数据 | `docs/04` §8；`m5-concurrency-gate-20260927.md` |
 | 3 | ~~排序层对"含实质内容的首页/栏目页"轻微降权~~ | ✅ **已闭环（P1，2026-09-30；P7 补幂等）**：`COLUMN_PAGE_SCORE_MULTIPLIER = 0.95` + `apply_form_penalty()`（与过滤层共用 `looks_like_column` 判据；P7 起只用于排序 key、重复调用幂等，不改对外 `score` 语义） | `20260930-p1-ranking-form-downrank.md`、`20260930-p7-ranking-followups.md` |
-| 4 | **中文新鲜源不可得**（结论）+ 「报刊 RSS 当最新新闻池」可选低价值增强 | 结论 + 可选实现 | `m6-zh-fresh-source-20260930.md` §3.4 |
+| 4 | ~~中文新鲜源不可得（结论）+「报刊 RSS 当最新新闻池」可选低价值增强~~ | ✅ **已结案（T17，2026-10-02 失败结论）**：固定候选池回放 3 轮 —— **有改善的查询 = 0 条**（抓取当天 RSS 全 30 条里只有 Q1 有 2 条过 `coverage ≥0.34` 准入，且让 Q1 变差）、中文 news 时效 **28.2% → 36.6%（+8.5pp，<10pp）** ⇒ **两条硬性停用判据同时触发**；**不新增 provider / 不新增开关**，中文时效维持「已知限制 + `freshness_unverified` 降级信号」，不得回退 | `20261002-zh-rss-pool-benefit.md`（明细 `zh-rss-pool-benefit-20261002-detail.md`、`zh-rss-pool-benefit-20261002.json`）；`m6-news-freshness-decision-20260930.md` |
 | 5 | ~~证书续期依赖 80/443 长期放行~~ | ✅ **已结案（2026-10-02 评估）→ 降为运维常识项**：Caddy 自动续期已实测排程（ARI 窗口 **2026-11-23 → 11-25 UTC**，约到期前 30 天；全量日志 `certificate renewed` 0 次 = 首次续期尚未发生）；安全组 22/80/443 保持长期放行，`ops_check` 到期前 30 天起报 ALERT（告警分支实测 `--cert-min-days 100` → **exit=1**）；仅留 2026-11-24 前后一次只读核对 | `20261002-tls-renewal-assessment.md`；`m4-4.2-deploy-20260925.md`；`docs/05` §5.4 |
 | 6 | 长稳最终结论回填 | ✅ **已闭环（T8 回填，2026-10-01）**：跨镜像 6h = 73 行/71 计入、可用率 **100%**、P50 2362ms/P95 2584ms（**内存不可比**：12:00 rebuild 后容器 PID 失效）；干净 6h = 71 计入、可用率 **100%**、P50 1256ms/P95 2550ms；24h 稳定期 = 287 计入/100%/P50 1331ms；结论已回填 checklist §22/§24/§27 与本文 §2.1 | checklist §22/§24/§27；`docs/reports/soak-6h-{envwiring,freshness}.{csv,json}` |
 | 7 | ~~Q16 混杂型号页修复待部署~~ | ✅ **已闭环**：镜像 `fe0252b06803`（回滚锚点 `pre-closeout-20260930` = `40f87e4a5f9d`），复验见需求 4 备注 | `m6-zh-fresh-source-20260930.md` §2/§4 |
 | 8 | ~~2-9 召回质量未达 90%~~ | ✅ **已闭环（T8 达标 / T12 结案，2026-10-02）**：需求 4 按 2026-10-01 登记的采样口径线上 3 轮 **19/19/19（中位 19、最低 19）** ⇒ 达标；**Q2 属已知上游限制** —— 无料时返回 `degraded_reason="no_relevant_results"`（线上 REST 与 MCP 均已验），有料时的换位收益经受控对拍验证；该立项已关闭 | checklist 2-9 行；`20261002-t12-merge-deploy-q2-closeout.md` |
-| 9 | **registry 判据从域名白名单扩展为路径/标题形态**（治 `docker.aityp.com` 这类 mirror 页 → Q6） | 需下一轮质量项 | `docs/04` §8 第 16 条；`20261002-topic-relevance-gate-t11.md` §3.3 |
+| 9 | ~~registry 判据从域名白名单扩展为路径/标题形态~~ | ✅ **已闭环（T15，2026-10-02；T19 部署上线）**：`looks_like_offtopic_index_page` 判据扩展为**路径 + 标题形态**（不做站点黑名单、不做查询特判）；固定池对拍 Q6 的 `docker.aityp.com/image/...` mirror 页 before→after 被剔除，Q6 从 4/5 → 5/5；合并后离线 **380 passed / 4 deselected**。线上复验见 T19 报告 | `20261002-registry-form-t15.md`、`t15-paired-q6-{before,after}-20261002.json`；`docs/04` §8 第 16 条 |
 
 ## 2.1 结项稳定期 24h 长稳（结项后的长期证据）
 
