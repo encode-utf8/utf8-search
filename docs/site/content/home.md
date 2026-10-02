@@ -53,4 +53,8 @@ results = client.search("Python 3.13 新特性", max_results=5)
 | --- | --- |
 | 本机默认 | `http://127.0.0.1:8000`（REST）；`http://127.0.0.1:8000/mcp`（Streamable HTTP） |
 | 公网（你自己的部署） | `https://<你的域名>`（需要 Key + Host 白名单） |
-| 自托管控制台（本页） | 随项目 `docs` 服务启动：本机 `http://localhost:8080/`；用自带 Caddy 部署时为 `https://<你的域名>/guide/` |
+| 自托管控制台（本页） | **服务器本机** `http://localhost:8080/`（只绑回环）；远程 `https://<你的域名>/guide/`（如 `<你的IP>.sslip.io`；**裸 IP 访问不了**） |
+
+> **远程访问说明**：`docs` 服务只监听服务器回环地址，`localhost:8080` 只在**服务器上**（或 SSH 隧道）有效；
+> 从你自己的电脑访问请用 Caddy 域名 —— 无自有域名时用 sslip.io 形式 `<你的IP>.sslip.io`（Let's Encrypt 会签发受信证书）。
+> 裸 IP 既拿不到受信证书，也没有匹配的 SNI 站点，浏览器会直接报 TLS 错误。

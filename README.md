@@ -14,7 +14,7 @@
 | 稳定性 | upstream gate `3 / 12 / 4.0s / 1.0s`；引擎健康冷却（CAPTCHA/429/timeout）；过载 429 + `Retry-After` |
 | 安全 | API key（`Authorization: Bearer` / `X-API-Key` / body `api_key`）；RPM 60/key；SSRF 防护；Caddy TLS（ACME） |
 | 验收 | 2-9 线上 **19/19/19**（median 19 / min 19）；`mcp_selfcheck` **24/24**；8 需求 **7 ✅ / 1 ⚠️ / 0 ❌** |
-| 自托管控制台 | Docs + 测试台，随栈启动：本机 `http://localhost:8080/`；自部署可经自带 Caddy 走 `https://<你的域名>/guide/`（纯前端） |
+| 自托管控制台 | Docs + 测试台，随栈启动：**服务器本机** `http://localhost:8080/`（只绑回环）；远程用 **Caddy 域名** `https://<你的域名>/guide/` —— 域名 = `.env` 的 `UTF8SEARCH_DOMAIN`（无自有域名时用 `<你的IP>.sslip.io`；**裸 IP 不可用**，TLS 需要域名） |
 
 ## 架构
 
@@ -133,4 +133,5 @@ SearXNG 出口**不读**宿主机代理环境变量；需 `SEARXNG_SETTINGS_FILE
 * 部署运维：`docs/05-服务器部署手册.md`（架构 / .env / 证书 / 备份 / 回滚）
 * 路线图与遗留：`docs/04-后续路线图.md`、`checklist.md`（§8 工作记录）
 * 验收报告索引：`docs/reports/README.md`（报告类链接统一经此索引）
-* 自托管控制台（说明 + 测试台）：本机 `http://localhost:8080/`；自部署时也可经 Caddy `https://<你的域名>/guide/`
+* 自托管控制台（说明 + 测试台）：服务器本机 `http://localhost:8080/`（或 SSH 隧道）；远程经 Caddy
+  `https://<你的域名>/guide/`（域名 = `UTF8SEARCH_DOMAIN`，如 `<你的IP>.sslip.io`；**裸 IP 无证书、无 SNI 站点，访问不到**）
