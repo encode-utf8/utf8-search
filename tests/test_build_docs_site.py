@@ -3,7 +3,12 @@
 from __future__ import annotations
 
 import sys
+import re
+import shutil
+import subprocess
 from pathlib import Path
+
+import pytest
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "scripts"))
@@ -43,7 +48,35 @@ def test_generated_site_is_fresh_and_offline():
     assert "url(http" not in content
     assert "const INDEX = [" in content
     assert 'id="page-clients"' in content and 'id="page-deploy"' in content
+    assert 'id="page-tester"' in content
+    for marker in ('id="t-base"', 'id="t-probe"', 'id="t-transport"', 'id="t-body"', 'id="t-send"'):
+        assert marker in content
     # 左侧目录：分点 TOC + 当前页高亮所需的标记
     assert 'class="nav-page"' in content
     assert content.count('class="toc-link') > 50
     assert "nav-page.active" in content
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node 不可用，跳过 JS 逻辑校验")
+def test_tester_javascript_logic(tmp_path):
+    """把测试台的 JS 抽出来做语法检查 + 纯函数单测（parseSSE / classifyProbe / 请求体构造）。"""
+    frag = (REPO / "docs/site/content/tester.html").read_text(encoding="utf-8")
+    script = re.search(r"<script>(.*?)</script>", frag, re.S).group(1)
+    js = tmp_path / "tester.js"
+    js.write_text(script, encoding="utf-8")
+    syntax = subprocess.run([shutil.which("node"), "--check", str(js)], capture_output=True, text=True)
+    assert syntax.returncode == 0, syntax.stderr
+    probe = (
+        "const assert=require('assert');"
+        "const T=require(process.env.TESTER_JS);"
+        "assert.deepStrictEqual(T.parseSSE('data: {\"a\":1}\\n\\ndata: bad\\n'),[{a:1},{raw:'bad'}]);"
+        "assert.strictEqual(T.classifyProbe(200,{results:[{engine:'yandex'}]},'yandex').state,'ok');"
+        "assert.strictEqual(T.classifyProbe(200,{results:[{engine:'bing'}],failed_engines:['brave']},'brave').state,'fallback');"
+        "assert.strictEqual(T.classifyProbe(200,{results:[],failed_engines:['x']},'x').state,'err');"
+        "assert.strictEqual(T.classifyProbe(429,{},'x').state,'err');"
+        "assert.strictEqual(T.buildMcpCall('q',2).params.arguments.max_results,2);"
+        "console.log('ok');"
+    )
+    env = {"TESTER_JS": str(js), "PATH": "/usr/bin:/bin"}
+    run = subprocess.run([shutil.which("node"), "-e", probe], capture_output=True, text=True, env=env)
+    assert run.returncode == 0, run.stdout + run.stderr

@@ -30,6 +30,8 @@ PAGES = [
     {"id": "client-pack", "title": "客户端配置包（复制即用）", "group": "接入",
      "source": "docs/reports/20260930-p4-3-9-client-config-pack.md"},
     {"id": "deploy", "title": "自部署与运维", "group": "自部署", "source": "docs/05-服务器部署手册.md"},
+    {"id": "tester", "title": "服务测试台（节点 / 调试）", "group": "测试",
+     "fragment": "docs/site/content/tester.html"},
     {"id": "about", "title": "关于与已知限制", "group": "关于", "source": "docs/site/content/about.md"},
 ]
 
@@ -50,7 +52,7 @@ def slugify(text: str) -> str:
 
 
 def link_map() -> dict[str, str]:
-    return {str((REPO / p["source"]).resolve()): f"#page-{p['id']}" for p in PAGES}
+    return {str((REPO / p["source"]).resolve()): f"#page-{p['id']}" for p in PAGES if "source" in p}
 
 
 def resolve_href(url: str, page_id: str, links: dict[str, str], src_dir: Path) -> str | None:
@@ -235,6 +237,7 @@ def _strip_tags(fragment: str) -> str:
 
 
 def build_search_index(page_id: str, page_title: str, body: str) -> list[dict]:
+    body = re.sub(r"<(script|style)[^>]*>.*?</\1>", " ", body, flags=re.S | re.I)
     entries = []
     chunks = re.split(r"(?=<h[23] )", body)
     first = chunks[0]
@@ -256,8 +259,14 @@ def build_site() -> str:
     sections: list[str] = []
     search_index: list[dict] = []
     for p in PAGES:
-        src = REPO / p["source"]
-        body, toc = md_to_html(src.read_text(encoding="utf-8"), p["id"], links, src.parent)
+        if "fragment" in p:
+            src = REPO / p["fragment"]
+            body = src.read_text(encoding="utf-8")
+            toc = [(m.group(2), _strip_tags(m.group(3)), int(m.group(1)))
+                   for m in re.finditer(r'<h([23])\s+id="([^"]+)"[^>]*>(.*?)</h\1>', body, re.S)]
+        else:
+            src = REPO / p["source"]
+            body, toc = md_to_html(src.read_text(encoding="utf-8"), p["id"], links, src.parent)
         sections.append(f'<section class="page" id="page-{p["id"]}">\n'
                         f'<h1>{html.escape(p["title"])}</h1>\n{body}\n</section>')
         search_index.extend(build_search_index(p["id"], p["title"], body))

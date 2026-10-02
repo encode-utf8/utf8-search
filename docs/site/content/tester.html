@@ -1,0 +1,294 @@
+<style>
+.tester{border:1px solid var(--line);border-radius:10px;padding:14px;margin:14px 0;background:var(--bg)}
+.t-row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:10px}
+.t-row label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.t-row input,.t-row select{padding:6px 9px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg);font-size:14px}
+.t-row input[type=password]{min-width:220px}
+.tester button{padding:7px 14px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg);cursor:pointer;font-size:14px}
+.tester button:hover{border-color:var(--accent);color:var(--accent)}
+.tester button[disabled]{opacity:.5;cursor:not-allowed}
+.t-hint{color:var(--muted);font-size:13px;margin:6px 0}
+.t-warn{color:#b45309;font-size:13px}
+.t-engines{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 0;font-size:14px}
+.t-engines label{display:flex;gap:5px;align-items:center}
+.t-engines .cool{color:var(--muted);text-decoration:line-through}
+.t-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.t-table th,.t-table td{border:1px solid var(--line);padding:5px 8px;text-align:left}
+.chip{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;border:1px solid var(--line)}
+.chip.ok{color:#15803d;border-color:#15803d}
+.chip.fallback{color:#b45309;border-color:#b45309}
+.chip.err{color:#b91c1c;border-color:#b91c1c}
+.t-log{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px}
+.t-resp{white-space:pre-wrap;word-break:break-word;max-height:420px;overflow:auto;background:var(--code);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:13px}
+.t-body-edit{width:100%;min-height:150px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg)}
+</style>
+
+<h2 id="page-tester--node-status">节点状态：逐引擎探测</h2>
+
+<p>直接从你的浏览器请求服务端（同源，经 Caddy）：先读 <code>/health</code> 获取当前活跃 / 冷却引擎，
+再对每个引擎各发一条最小搜索请求，展示**延迟、HTTP 状态、真实命中数**。
+会显式标出「回退」：若请求的引擎失败、结果来自其它源（例如冷却中的 <code>brave</code> 被 Bing 兜底），不会当成绿灯。</p>
+
+<div class="tester">
+  <div class="t-row">
+    <label>API 基地址<input id="t-base" size="34"></label>
+    <label>API Key（密码框，只留在本机浏览器）<input id="t-key" type="password" autocomplete="off" placeholder="Bearer Key"></label>
+    <label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="t-remember"> 记住到本标签页</label>
+  </div>
+  <div class="t-hint" id="t-base-hint"></div>
+  <div class="t-row">
+    <button id="t-health">① 读取 /health</button>
+    <button id="t-probe">② 逐引擎探测</button>
+    <button id="t-stop" disabled>停止</button>
+    <label>探测查询<input id="t-probe-query" value="最新 AI 新闻" size="24"></label>
+    <label>每引擎取<input id="t-probe-max" type="number" value="3" min="1" max="5" style="width:64px"></label>
+    <span id="t-progress" class="t-hint"></span>
+  </div>
+  <div id="t-health-out" class="t-hint">尚未读取 /health。</div>
+  <div id="t-engines" class="t-engines"></div>
+  <div id="t-probe-out"></div>
+</div>
+
+<h2 id="page-tester--api-console">请求仿真：REST / MCP 调试台</h2>
+
+<p>像 Postman 一样改参数、发请求、看原始返回。默认就是「最小可用请求」；REST 走 <code>POST /v1/search</code>，
+MCP 走 Streamable HTTP：<code>initialize → notifications/initialized → tools/call web_search</code>，
+最终把结果内容展示出来（MCP 的返回是 SSE，本页会自动解析 <code>data:</code> 行）。</p>
+
+<div class="tester">
+  <div class="t-row">
+    <label>传输
+      <select id="t-transport">
+        <option value="rest">REST · POST /v1/search</option>
+        <option value="mcp">MCP · tools/call web_search</option>
+      </select>
+    </label>
+    <label>查询<input id="t-console-query" value="Python 3.13 新特性" size="28"></label>
+    <label>max_results<input id="t-console-max" type="number" value="3" min="1" max="20" style="width:70px"></label>
+    <label>depth
+      <select id="t-console-depth"><option>basic</option><option>advanced</option><option>deep</option></select>
+    </label>
+    <label>topic
+      <select id="t-console-topic"><option>general</option><option>news</option></select>
+    </label>
+    <button id="t-preset">重置为最小请求</button>
+    <button id="t-send">发送</button>
+  </div>
+  <div class="t-hint">MCP 调试台会自动完成三次握手并展示每步耗时；下方文本框可手改 JSON（REST 为请求体，MCP 为 <code>tools/call</code> 参数体）。</div>
+  <textarea id="t-body" class="t-body-edit" spellcheck="false"></textarea>
+  <div class="t-row" style="margin-top:10px">
+    <span id="t-console-progress" class="t-hint"></span>
+  </div>
+  <div id="t-resp-meta" class="t-hint"></div>
+  <div id="t-resp-body" class="t-resp">尚未发送请求。</div>
+</div>
+
+<p class="t-warn">⚠️ Key 只在你的浏览器里用于直连 API，不会经过说明站服务器；请勿在公共电脑勾选「记住」。
+从公网 <code>/guide/</code> 访问时 API 与页面同源，可直接用；若从本机 8080 打开并指向 8000，浏览器可能因 CORS 拦截——这是预期行为，请改用公网入口。</p>
+
+<script>
+const T = (typeof module !== 'undefined' && module.exports) ? module.exports : (window.__tester = {});
+
+T.parseSSE = function (text) {
+  return text.split(/\r?\n/).filter(l => l.startsWith('data:')).map(l => l.slice(5).trim())
+    .filter(Boolean).map(s => { try { return JSON.parse(s); } catch (e) { return { raw: s }; } });
+};
+
+T.buildRestBody = function (q, max, depth, topic) {
+  return { query: q, max_results: max, search_depth: depth, topic: topic };
+};
+
+T.buildMcpCall = function (q, max) {
+  return { jsonrpc: '2.0', id: 2, method: 'tools/call',
+    params: { name: 'web_search', arguments: { query: q, max_results: max } } };
+};
+
+// 逐引擎探测的判定：failed_engines / 每条结果的 engine 字段都要核对，避免「回退结果」被当成绿灯。
+T.classifyProbe = function (httpStatus, payload, engine) {
+  if (httpStatus !== 200 || !payload) return { state: 'err', label: 'HTTP ' + httpStatus };
+  const results = payload.results || [];
+  const failed = (payload.failed_engines || []).includes(engine);
+  const hits = results.filter(r => r.engine === engine).length;
+  if (failed && results.length > 0) return { state: 'fallback', label: '回退（' + results.length + ' 条来自其它源）' };
+  if (failed) return { state: 'err', label: '失败' };
+  if (hits > 0) return { state: 'ok', label: '正常' };
+  if (results.length > 0) return { state: 'fallback', label: '无本引擎命中（' + results.length + ' 条来自其它源）' };
+  return { state: 'err', label: '无结果' };
+};
+
+if (typeof document !== 'undefined') {
+  (function () {
+    const $ = id => document.getElementById(id);
+    const keyInput = $('t-key'), baseInput = $('t-base'), remember = $('t-remember');
+    const rawBase = location.origin;
+    const localOpen = location.port === '8080' || location.protocol === 'file:';
+    baseInput.value = localOpen ? 'http://127.0.0.1:8000' : rawBase;
+    $('t-base-hint').textContent = localOpen
+      ? '当前从本机直开：默认指向 http://127.0.0.1:8000；若浏览器报 CORS，请改用公网 /guide/ 入口。'
+      : '当前与 API 同源（' + rawBase + '），可直接测试。';
+    try {
+      const saved = sessionStorage.getItem('utf8search-tester-key');
+      if (saved) { keyInput.value = saved; remember.checked = true; }
+    } catch (e) {}
+    remember.addEventListener('change', () => {
+      try { remember.checked ? sessionStorage.setItem('utf8search-tester-key', keyInput.value) : sessionStorage.removeItem('utf8search-tester-key'); } catch (e) {}
+    });
+
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const base = () => baseInput.value.replace(/\/+$/, '');
+    const authHeaders = () => {
+      const h = { 'Content-Type': 'application/json' };
+      if (keyInput.value) h.Authorization = 'Bearer ' + keyInput.value;
+      return h;
+    };
+    async function postJSON(path, body) {
+      const t0 = performance.now();
+      const resp = await fetch(base() + path, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) });
+      const text = await resp.text();
+      const ms = Math.round(performance.now() - t0);
+      let json = null; try { json = JSON.parse(text); } catch (e) {}
+      return { status: resp.status, ms, text, json };
+    }
+    const fmtMs = ms => (ms >= 1000 ? (ms / 1000).toFixed(2) + 's' : ms + 'ms');
+
+    // ---------- 节点状态 ----------
+    let enginesCache = { active: [], cooling: [] };
+    let stopFlag = false;
+    $('t-health').onclick = async () => {
+      $('t-health-out').textContent = '读取中…';
+      try {
+        const t0 = performance.now();
+        const resp = await fetch(base() + '/health');
+        const data = await resp.json();
+        const ms = Math.round(performance.now() - t0);
+        const eng = data.engines || {};
+        enginesCache = { active: eng.active || [], cooling: (eng.cooling || []).map(c => c.engine) };
+        $('t-health-out').innerHTML = 'HTTP ' + resp.status + ' · ' + fmtMs(ms) +
+          ' · status=' + data.status + ' · searxng=' + data.searxng + ' · version=' + data.version +
+          ' · 活跃 ' + enginesCache.active.length + ' / 冷却 ' + enginesCache.cooling.length +
+          (eng.cooling && eng.cooling.length ? '<br>冷却：' + eng.cooling.map(c => c.engine + '（' + c.reason + '，' + Math.round(c.retry_after) + 's）').join('；') : '');
+        $('t-engines').innerHTML = enginesCache.active.map(e =>
+          '<label><input type="checkbox" class="t-eng" value="' + e + '" checked> ' + e + '</label>').join('') +
+          enginesCache.cooling.map(e => '<label class="cool"><input type="checkbox" disabled> ' + e + '（冷却）</label>').join('');
+      } catch (e) {
+        $('t-health-out').innerHTML = '<span class="chip err">失败</span> ' + e.message + '（检查基地址 / Key / CORS）';
+      }
+    };
+    $('t-stop').onclick = () => { stopFlag = true; };
+    $('t-probe').onclick = async () => {
+      const picked = [...document.querySelectorAll('.t-eng')].filter(c => c.checked).map(c => c.value);
+      if (!picked.length) { $('t-progress').textContent = '先点「读取 /health」并勾选引擎'; return; }
+      stopFlag = false; $('t-stop').disabled = false;
+      const q = $('t-probe-query').value || 'test';
+      const max = Math.max(1, Math.min(5, parseInt($('t-probe-max').value || '3', 10)));
+      const rows = [];
+      const render = () => {
+        $('t-probe-out').innerHTML = '<table class="t-table"><thead><tr><th>引擎</th><th>状态</th><th>耗时</th><th>结果数</th><th>真实命中</th><th>备注</th></tr></thead><tbody>' +
+          rows.map(r => '<tr><td>' + r.engine + '</td><td><span class="chip ' + r.cls + '">' + r.label + '</span></td><td>' + (r.ms != null ? fmtMs(r.ms) : '—') + '</td><td>' + (r.total != null ? r.total : '—') + '</td><td>' + (r.hits != null ? r.hits : '—') + '</td><td class="t-log">' + (r.note || '') + '</td></tr>').join('') +
+          '</tbody></table>';
+      };
+      for (let i = 0; i < picked.length; i++) {
+        if (stopFlag) { $('t-progress').textContent = '已停止（' + i + '/' + picked.length + '）'; break; }
+        const engine = picked[i];
+        $('t-progress').textContent = '探测中 ' + (i + 1) + '/' + picked.length + '：' + engine;
+        const row = { engine: engine };
+        try {
+          const body = T.buildRestBody(q, max, 'basic', 'general');
+          body.engines = [engine];
+          const r = await postJSON('/v1/search', body);
+          const verdict = T.classifyProbe(r.status, r.json, engine);
+          row.cls = verdict.state === 'ok' ? 'ok' : (verdict.state === 'fallback' ? 'fallback' : 'err');
+          row.label = verdict.label; row.ms = r.ms;
+          const results = (r.json && r.json.results) || [];
+          row.total = results.length;
+          row.hits = results.filter(x => x.engine === engine).length;
+          row.note = (r.json && r.json.degraded_reason) ? ('degraded: ' + r.json.degraded_reason) : '';
+          if (r.status !== 200) row.note = r.text.slice(0, 120);
+        } catch (e) {
+          row.cls = 'err'; row.label = '请求失败'; row.note = e.message;
+        }
+        rows.push(row); render();
+        await sleep(250);
+      }
+      if (!stopFlag) $('t-progress').textContent = '完成：' + picked.length + ' 个引擎';
+      $('t-stop').disabled = true;
+    };
+
+    // ---------- 请求仿真 ----------
+    const transport = $('t-transport'), bodyEdit = $('t-body');
+    function refreshPreset() {
+      const q = $('t-console-query').value || 'Python 3.13 新特性';
+      const max = Math.max(1, parseInt($('t-console-max').value || '3', 10));
+      bodyEdit.value = JSON.stringify(transport.value === 'mcp'
+        ? T.buildMcpCall(q, max)
+        : T.buildRestBody(q, max, $('t-console-depth').value, $('t-console-topic').value), null, 2);
+    }
+    transport.onchange = refreshPreset;
+    $('t-preset').onclick = refreshPreset;
+    ['t-console-query', 't-console-max', 't-console-depth', 't-console-topic'].forEach(id => $(id).addEventListener('change', refreshPreset));
+    refreshPreset();
+
+    function renderResp(status, ms, headers, text) {
+      let pretty = text;
+      try { pretty = JSON.stringify(JSON.parse(text), null, 2); } catch (e) {}
+      $('t-resp-meta').innerHTML = '<span class="chip ' + (status && status < 400 ? 'ok' : 'err') + '">HTTP ' + status + '</span> ' + fmtMs(ms) +
+        (headers ? '<br><span class="t-log">' + headers + '</span>' : '');
+      $('t-resp-body').textContent = pretty;
+    }
+    async function sendREST(payload) {
+      const r = await postJSON('/v1/search', payload);
+      renderResp(r.status, r.ms, '', r.text);
+    }
+    async function sendMCP(callBody) {
+      const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json, text/event-stream' };
+      if (keyInput.value) headers.Authorization = 'Bearer ' + keyInput.value;
+      const steps = [];
+      let t0 = performance.now();
+      let init;
+      try {
+        init = await fetch(base() + '/mcp', { method: 'POST', headers: headers, body: JSON.stringify({
+          jsonrpc: '2.0', id: 1, method: 'initialize',
+          params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'docs-tester', version: '1.0' } } }) });
+      } catch (e) {
+        $('t-console-progress').textContent = 'initialize 请求失败：' + e.message;
+        return;
+      }
+      const initText = await init.text();
+      steps.push('initialize HTTP ' + init.status + ' · ' + fmtMs(Math.round(performance.now() - t0)));
+      const sid = init.headers.get('mcp-session-id') || '';
+      headers['Mcp-Session-Id'] = sid;
+      t0 = performance.now();
+      try {
+        const note = await fetch(base() + '/mcp', { method: 'POST', headers: headers,
+          body: JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) });
+        steps.push('initialized HTTP ' + note.status + ' · ' + fmtMs(Math.round(performance.now() - t0)));
+      } catch (e) { steps.push('initialized 失败：' + e.message); }
+      t0 = performance.now();
+      const call = await fetch(base() + '/mcp', { method: 'POST', headers: headers, body: JSON.stringify(callBody) });
+      const callText = await call.text();
+      const callMs = Math.round(performance.now() - t0);
+      const msgs = T.parseSSE(callText);
+      let shown = callText;
+      if (msgs.length && msgs[0].result && msgs[0].result.content && msgs[0].result.content[0] && msgs[0].result.content[0].text) {
+        shown = msgs[0].result.content[0].text;
+        try { shown = JSON.stringify(JSON.parse(shown), null, 2); } catch (e) {}
+      }
+      $('t-console-progress').textContent = steps.join('　→　') + '　→　tools/call HTTP ' + call.status + ' · ' + fmtMs(callMs) + (sid ? '（session ' + sid.slice(0, 8) + '…）' : '');
+      renderResp(call.status, callMs, '', shown);
+    }
+    $('t-send').onclick = async () => {
+      let payload;
+      try { payload = JSON.parse(bodyEdit.value); } catch (e) { $('t-resp-meta').innerHTML = '<span class="chip err">JSON 解析失败</span> ' + e.message; return; }
+      $('t-send').disabled = true; $('t-console-progress').textContent = '发送中…';
+      try {
+        if (transport.value === 'mcp') { await sendMCP(payload); }
+        else { await sendREST(payload); }
+      } catch (e) {
+        renderResp(0, 0, '', '请求失败：' + e.message + '\n（检查基地址 / Key / CORS / 网络）');
+      } finally {
+        $('t-send').disabled = false;
+      }
+    };
+  })();
+}
+</script>
