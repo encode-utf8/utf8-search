@@ -121,8 +121,8 @@ def _render_list(items: list[tuple[int, bool, str]], page_id: str,
     return "".join(out)
 
 
-def md_to_html(md: str, page_id: str, links: dict[str, str], src_dir: Path) -> tuple[str, list[tuple[str, str]]]:
-    """返回 (body_html, headings[(anchor, title)])。支持仓库文档用到的 Markdown 子集。"""
+def md_to_html(md: str, page_id: str, links: dict[str, str], src_dir: Path) -> tuple[str, list[tuple[str, str, int]]]:
+    """返回 (body_html, headings[(anchor, title, level)])。支持仓库文档用到的 Markdown 子集。"""
     lines = md.replace("\r\n", "\n").split("\n")
     # 去掉源文件的一级标题（页面标题由清单提供）
     idx = 0
@@ -132,7 +132,7 @@ def md_to_html(md: str, page_id: str, links: dict[str, str], src_dir: Path) -> t
         lines = lines[idx + 1:]
 
     out: list[str] = []
-    headings: list[tuple[str, str]] = []
+    headings: list[tuple[str, str, int]] = []
     used: dict[str, int] = {}
     i = 0
     while i < len(lines):
@@ -161,7 +161,7 @@ def md_to_html(md: str, page_id: str, links: dict[str, str], src_dir: Path) -> t
             n = used.get(slug, 0)
             used[slug] = n + 1
             anchor = f"page-{page_id}--{slug}" + (f"-{n}" if n else "")
-            headings.append((anchor, title))
+            headings.append((anchor, title, level))
             out.append(f'<h{level} id="{anchor}">' + render_inline(title, page_id, links, src_dir) + f"</h{level}>")
             i += 1
             continue
@@ -252,22 +252,32 @@ def build_search_index(page_id: str, page_title: str, body: str) -> list[dict]:
 
 def build_site() -> str:
     links = link_map()
-    nav_groups: dict[str, list[dict]] = {}
+    nav_groups: dict[str, list[tuple[dict, list[tuple[str, str, int]]]]] = {}
     sections: list[str] = []
     search_index: list[dict] = []
     for p in PAGES:
         src = REPO / p["source"]
-        body, _ = md_to_html(src.read_text(encoding="utf-8"), p["id"], links, src.parent)
+        body, toc = md_to_html(src.read_text(encoding="utf-8"), p["id"], links, src.parent)
         sections.append(f'<section class="page" id="page-{p["id"]}">\n'
                         f'<h1>{html.escape(p["title"])}</h1>\n{body}\n</section>')
         search_index.extend(build_search_index(p["id"], p["title"], body))
-        nav_groups.setdefault(p["group"], []).append(p)
+        nav_groups.setdefault(p["group"], []).append((p, toc))
 
-    nav = "".join(
-        f'<div class="nav-group"><div class="nav-title">{html.escape(g)}</div>'
-        + "".join(f'<a class="nav-link" href="#page-{p["id"]}">{html.escape(p["title"])}</a>' for p in items)
-        + "</div>"
-        for g, items in nav_groups.items())
+    nav_parts: list[str] = []
+    for group, items in nav_groups.items():
+        nav_parts.append(f'<div class="nav-group"><div class="nav-title">{html.escape(group)}</div>')
+        for page, toc in items:
+            nav_parts.append(f'<div class="nav-page" data-page="{page["id"]}">'
+                             f'<a class="nav-link" href="#page-{page["id"]}">{html.escape(page["title"])}</a>')
+            if toc:
+                nav_parts.append('<div class="toc">')
+                for anchor, title, level in toc:
+                    plain = re.sub(r"[`*]", "", title)
+                    nav_parts.append(f'<a class="toc-link lvl{level}" href="#{anchor}">{html.escape(plain)}</a>')
+                nav_parts.append("</div>")
+            nav_parts.append("</div>")
+        nav_parts.append("</div>")
+    nav = "".join(nav_parts)
 
     index_json = json.dumps(search_index, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     return TEMPLATE.replace("__NAV__", nav).replace("__CONTENT__", "\n".join(sections)) \
@@ -299,6 +309,14 @@ nav{position:sticky;top:64px;align-self:start;max-height:calc(100vh - 90px);over
 .nav-title{font-size:12px;color:var(--muted);margin:14px 0 4px;letter-spacing:.08em}
 .nav-link{display:block;padding:6px 10px;border-radius:6px;color:var(--fg);text-decoration:none;font-size:14px}
 .nav-link:hover{background:var(--card)}
+.nav-page .toc{display:none;margin:2px 0 8px 8px;padding-left:10px;border-left:1px solid var(--line)}
+.nav-page.active .toc{display:block}
+.toc-link{display:block;padding:3px 6px;color:var(--muted);text-decoration:none;font-size:13px;line-height:1.45;border-radius:4px}
+.toc-link:hover{color:var(--fg);background:var(--card)}
+.toc-link.lvl3{padding-left:16px}
+.toc-link.lvl4{padding-left:26px}
+.toc-link.current{color:var(--accent);font-weight:600}
+html{scroll-behavior:smooth}
 main{min-width:0}
 .page{display:none;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:28px 30px}
 .page.active{display:block}
@@ -337,6 +355,7 @@ const INDEX = __INDEX__;
 const pages = [...document.querySelectorAll('.page')];
 function show(id){
   pages.forEach(p=>p.classList.toggle('active', p.id===id));
+  document.querySelectorAll('.nav-page').forEach(n=>n.classList.toggle('active', 'page-'+n.dataset.page===id));
   const el=document.getElementById(id); if(el){el.scrollIntoView({block:'start'});}
 }
 function route(){
@@ -361,6 +380,13 @@ document.querySelectorAll('pre').forEach(pre=>{
   b.onclick=()=>{navigator.clipboard.writeText(pre.querySelector('code').innerText).then(()=>{b.textContent='已复制';setTimeout(()=>b.textContent='复制',1200);});};
   pre.appendChild(b);
 });
+const spy=new IntersectionObserver(es=>{
+  es.forEach(e=>{ if(!e.isIntersecting) return;
+    document.querySelectorAll('.toc-link.current').forEach(a=>a.classList.remove('current'));
+    const a=document.querySelector('.toc-link[href="#'+e.target.id+'"]'); if(a){a.classList.add('current');}
+  });
+},{rootMargin:'-5% 0px -85% 0px'});
+document.querySelectorAll('main h2,main h3,main h4').forEach(h=>spy.observe(h));
 route();
 </script>
 </body>
