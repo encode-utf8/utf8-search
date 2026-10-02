@@ -1,6 +1,6 @@
 # T15：registry/包索引判据扩展为「路径+标题形态」（治 docker mirror 页）
 
-> 分支 `fix/registry-form-20261002`（代码 `8f4fd1b` + 工具修正 `3b1dd0a`）；**未合并 main**（等确认）。
+> 分支 `fix/registry-form-20261002`（代码 `8f4fd1b` + 工具修正 `3b1dd0a`）；**已于 2026-10-02 经 T19 `--no-ff` 合并进 main（merge `bb34b19`）并部署上线（镜像 `258749c7a318`；线上 Q6 5/5/5）**。
 > 依据：`docs/04` §8 第 16 条 ③、T11 报告 §3.3、总表 §2 遗留 #9。
 > 约束：只动 rank 层与响应字段；未改闸门参数 / `settings.yml` / `.env`；未碰人工项。
 

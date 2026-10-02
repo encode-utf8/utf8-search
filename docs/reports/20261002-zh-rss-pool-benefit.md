@@ -1,6 +1,6 @@
 # 中文新鲜源增强评估：「报刊 RSS 当最新新闻池」的收益上限（T17，失败结案）
 
-> 分支 `feat/zh-rss-pool-eval-20261002`（基于 main `7fe8b80`）；**未合并 main，等确认**。
+> 分支 `feat/zh-rss-pool-eval-20261002`（基于 main `7fe8b80`）；**已于 2026-10-02 经 T19 `--no-ff` 合并进 main（merge `079699d`）**，失败结案生效（不实现 provider）。
 > 只测不判为原则的测量轮：**不写实现、不改 `.env`/`settings.yml`/闸门参数、不重启容器**。
 > 依据：`m6-zh-fresh-source-20260930.md` §3、`m6-news-freshness-decision-20260930.md`（中文时效 = 已知限制 + `freshness_unverified`）。
 
