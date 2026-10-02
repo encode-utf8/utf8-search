@@ -40,7 +40,21 @@
 `data/` 被 `.gitignore` 整体忽略（0 个受版本控制文件）⇒ 删除**不可由 git 恢复**；已逐项确认删除的都是测量产物与运行时缓存（缓存会按 `CACHE_QUERY_TTL` 自动重建），与运行/使用无关。
 唯一保留 `data/searxng-default.yml` = Stock SearXNG 默认配置基线（便于与 `searxng/settings.yml` 做差异对照）；如认为无用可再删。
 
-## 5. 保留清单（80 个）
+## 5. 服务器 `data/` 同步清理（同一口径）
+
+对 `root@43.106.104.49:/root/utf8-search/data/` 按同一口径清理（脚本**先打印清单再删**，并逐条校验目标路径必须落在 `/root/utf8-search/data/` 内）：
+
+| 项 | 清理前 | 清理后 |
+| --- | --- | --- |
+| 文件数 | 158 | **9** |
+| 占用 | 19 MB | 16 MB |
+
+- **保留（9）**：`cache.db` / `cache.db-shm` / `cache.db-wal`（`./data:/app/data` 绑定挂载，运行中的容器在用）、`ops-check.log` / `ops-check.cron.log` / `ops-check-state.json` / `ops-metrics-snapshot.csv` / `backup.cron.log`（5 分钟巡检与每日备份 cron 正在写；其中 `ops-metrics-snapshot.csv` 是**闸门自适应立项的在采数据源**）、`caddy-local-root.crt`（客户端信任本地 CA 用）。
+- **删除**：`data/measure/**`（14 个子目录的测量证据）、`data/plan/**`、全部 `soak-*`（历史长稳明细；结论已入 `docs/reports/soak-*`）、`selfcheck-t19.md`、`recall-ab.json`、`final-s2-ow1.0-n10.json`。
+- **删后自检**：三容器 `healthy`（app / caddy / searxng），`http://127.0.0.1:8000/health` = **200**；磁盘 15G/59G（27%）不变。
+- ⚠️ 与本地同理：服务器 `data/` 不在 git 中 ⇒ 删除**同样不可由 git 恢复**；`soak-t19-1h.*` 与 `selfcheck-t19.md`（T19 上线复验证据）已随本轮删除，其数字保留在 `docs/reports/20261002-t19-merge-deploy.md`。Caddy 证书在命名卷 `caddy_data` 中，**未触碰**。
+
+## 6. 保留清单（80 个）
 
 - `20260930-ops-check-fix.md`
 - `20260930-ops-check-plus.md`
