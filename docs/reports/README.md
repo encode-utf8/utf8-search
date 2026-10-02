@@ -11,6 +11,8 @@
   细节见 [`20261002-repo-cleanup.md`](20261002-repo-cleanup.md)。
 - **历史正文里的旧文件名**：`checklist.md §8` 与部分报告正文仍以纯文本提到已删文件（共 108 处 / 23 个文件）——它们是**过程记录**，
   **不可当作链接使用**；需要原始文件时从 git 历史取回：`git log --diff-filter=D -- docs/reports/<文件名>` 或 `git show <commit>:docs/reports/<文件名>`。
+- **`data/` 路径规则**：报告里出现的 `data/...` 是当时的**工作副本路径**，`data/` 不入 git ⇒ **默认不可用**；只有被本索引收录的 `docs/reports/` 文件才是留档证据。
+- **不可恢复的例外（已知 5 个）**：2026-10-02 服务器 `data/` 清理删掉了 T19 的原始件 `selfcheck-t19.md`、`soak-t19-1h.{csv,json,meta.json,out.log}` —— 无 git 历史、只能重跑复现；相关报告已就地标注，数字以 `20261002-t19-merge-deploy.md` 为准。
 - **归档约定**：`data/` 被 `.gitignore` 忽略，关键验收报告一律归档到本目录；命名 `\<里程碑\>-\<主题\>-\<日期\>.md`（日期 `YYYYMMDD`）。
 
 ## 1. 索引
