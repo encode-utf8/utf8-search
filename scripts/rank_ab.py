@@ -12,7 +12,7 @@
 
 用法：
     python scripts/rank_ab.py --snapshot-out data/rank-ab-candidates.json
-    python scripts/rank_ab.py --snapshot-in data/rank-ab-candidates.json --out docs/reports/m5-5.3-rank-ab.md
+    python scripts/rank_ab.py --snapshot-in data/rank-ab-candidates.json --out docs/reports/<日期>-rank-ab.md
 """
 
 from __future__ import annotations

@@ -1,4 +1,6 @@
 # 引擎集合优化 阶段 1：现网复测 + 候选评估 + 替换方案（2026-09-28）
+<!-- refs-policy: cleaned-2026-10-02 -->
+> ⚠️ 引用提示：本文提到的部分过程明细已在 2026-10-02 仓库瘦身中清理（清单：`docs/reports/cleaned-files-20261002.txt`）；这些路径不是现存文件，需要时用 `git log --diff-filter=D -- <path>` 取回；规则见 `docs/reports/README.md`。
 
 > **本阶段只测量与出方案**：**未改动 `searxng/settings.yml`，未改产品代码，未提交**。
 > 背景：`docs/reports/m6-engine-inventory-20260928.md` 的结论是「先换引擎（补中文源）→ 再谈重排」，

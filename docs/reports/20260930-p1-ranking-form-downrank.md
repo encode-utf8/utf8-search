@@ -1,4 +1,6 @@
 # P1 排序层形态降权 + P5 英文时新意图硬过滤（2026-09-30）
+<!-- refs-policy: cleaned-2026-10-02 -->
+> ⚠️ 引用提示：本文提到的部分过程明细已在 2026-10-02 仓库瘦身中清理（清单：`docs/reports/cleaned-files-20261002.txt`）；这些路径不是现存文件，需要时用 `git log --diff-filter=D -- <path>` 取回；规则见 `docs/reports/README.md`。
 
 > 分支 `chore/p1-ranking-20260930`（**未合并 main**）。**只改 rank 层 + pipeline 的排序段**；
 > 未改闸门参数、未改 `settings.yml`、未加 `.env` 键。
