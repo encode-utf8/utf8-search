@@ -141,7 +141,8 @@ run2/run3 上游池漂移到 `nocache` 工具页（0 条切题）但**如实降�
 ## 7. 产物
 
 * 本报告；2-9 三轮明细/模板/判定：`m29-t19-20261002-run{1..3}-{brief.md,meta.json,scores.csv,scores-judge.md}`
-  （过程明细已按 2026-10-02 清理轮删除，数字保留在本报告；清单见 `docs/reports/cleaned-files-20261002.txt`）；
+  （过程明细已按 2026-10-02 清理轮删除，数字保留在本报告；清单见 `docs/reports/cleaned-files-20261002.txt`；
+  取回：`git log --diff-filter=D -- docs/reports/<文件名>` → `git show <删除提交>^:<路径>`）；
 * 自检报告 `docs/reports/selfcheck-t19-20261003.md`（2026-10-03 重生成，24/24）；
   1h 长稳原始文件 `data/soak-t19-1h.{csv,json,meta.json}` 已在清理轮删除（`data/` 不入库、不可恢复），
   结论（可用率 100%、P50 1353ms / P95 2598ms、429=0）保留在 §4.3；
