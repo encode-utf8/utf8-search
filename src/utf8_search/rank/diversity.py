@@ -357,6 +357,23 @@ _REGISTRY_HOSTS = {
     "packagist.org", "hub.docker.com", "anaconda.org", "conda.anaconda.org",
 }
 _REGISTRY_PATH = re.compile(r"^/(project|projects|package|packages|formula|formulae|crates|gems|r)(/|$)", re.IGNORECASE)
+# 路径/标题形态（2026-10-02 T15，治 docker.aityp.com 这类**镜像/包索引页**）：
+# 只认域名白名单会漏掉自建镜像站（实测 `https://docker.aityp.com/image/docker.io/python:3.13.9-slim`，
+# 标题「docker.io/python:3.13.9-slim - 镜像下载 | docker.io」、正文只有一行 117 字的 sed 命令）。
+# 现在改为「**路径或标题形态** + **版本号 token**」判定（无站点黑名单、无查询特判）：
+#   * 路径段：/image(s)/、/mirror(s)/、/package(s)/、/project(s)/、/download(s)/、/artifact(s)/、/repository|repositories/、/library/ 等；
+#   * 标题词：镜像下载 / 镜像源 / 镜像仓库 / 包索引 / package / formula / docker.io/ / pypi / crates.io / npmjs；
+#   * 版本号：3.13.9 这类语义版本，或 `python:3.13` 这类 tag。
+# 仍然只作用于 `looks_like_offtopic_index_page`（**形态**层），是否剔除由既有
+# 「形态命中 **且** 正文无实质内容」的 `is_offtopic_index_page` 决定 —— 带实质内容的页面照旧保留。
+_REGISTRY_PATH_FORM = re.compile(
+    r"^/(formula|formulae|packages?|projects?|pypi|crates|gems|mirrors?|images?|downloads?|artifacts?|repositor(?:y|ies)|library)(/|$)",
+    re.IGNORECASE,
+)
+_REGISTRY_TITLE_FORM = re.compile(
+    r"(镜像下载|镜像源|镜像仓库|包索引|package|formula|docker\.io/|pypi|crates\.io|npmjs)", re.IGNORECASE
+)
+_REGISTRY_VERSION_TOKEN = re.compile(r"\d+\.\d+(?:\.\d+)?|[A-Za-z0-9._-]+:\d")
 _IMAGE_BOARD_HOSTS = {
     "pinterest.com", "pinterest.co.uk", "pinterest.de", "pinterest.fr", "pinterest.jp", "pinterest.ru",
 }
@@ -375,6 +392,10 @@ def looks_like_offtopic_index_page(result: SearchResult) -> bool:
         return True
     if host in _REGISTRY_HOSTS or any(host.endswith("." + item) for item in _REGISTRY_HOSTS):
         return _REGISTRY_PATH.search(path) is not None
+    # T15：路径/标题形态的镜像、包索引页（不再依赖域名白名单）
+    if _REGISTRY_PATH_FORM.search(path) or _REGISTRY_TITLE_FORM.search(result.title or ""):
+        if _REGISTRY_VERSION_TOKEN.search(f"{result.title or ''} {path}"):
+            return True
     if host in _IMAGE_BOARD_HOSTS or any(host.endswith("." + item) for item in _IMAGE_BOARD_HOSTS):
         return _IMAGE_BOARD_PATH.search(path) is not None
     return False
@@ -608,6 +629,10 @@ def apply_rank_filters(
             id(result) for name, removed in by_stage if name == "news_non_content" for result in removed
         }
         stats["news_non_content_refilled"] = sum(1 for r in kept if id(r) in news_dropped_ids)
+        offtopic_dropped_ids = {
+            id(result) for name, removed in by_stage if name == "offtopic_page" for result in removed
+        }
+        stats["offtopic_page_refilled"] = sum(1 for r in kept if id(r) in offtopic_dropped_ids)
 
     if spec_tokens:
         # 部分匹配（iPhone 17 对 iPhone 17 Pro）**降权**：不动剔除逻辑，只把它们挪到同组末尾。
