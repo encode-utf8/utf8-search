@@ -118,6 +118,28 @@ services:
       - caddy_data:/data
       - caddy_config:/config
 
+  # 使用说明站：纯静态前端（生成物在 docs/site/，由 scripts/build_docs_site.py 维护）
+  # 与 search 服务同栈启动；只绑回环 8080，公网访问由 Caddy 的 /guide/* 反代提供
+  docs:
+    image: caddy:2-alpine
+    container_name: utf8-search-docs
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    command: ["caddy", "file-server", "--root", "/srv", "--listen", ":80"]
+    volumes:
+      - ./docs/site:/srv:ro
+    ports:
+      - "127.0.0.1:8080:80"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:80/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
 volumes:
   caddy_data:
   caddy_config:
