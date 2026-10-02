@@ -38,6 +38,11 @@
 		}
 	}
 
+	# 使用说明站（纯静态）：/guide/* 转到 docs 服务（handle_path 会剥掉 /guide 前缀）
+	handle_path /guide/* {
+		reverse_proxy docs:80
+	}
+
 	# 访问日志留痕，便于排查客户端联调与限流问题
 	log {
 		output file /data/access.log {
