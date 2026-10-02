@@ -38,7 +38,8 @@
 		}
 	}
 
-	# 使用说明站（纯静态）：/guide/* 转到 docs 服务（handle_path 会剥掉 /guide 前缀）
+	# 使用说明站（纯静态）：/guide 补尾斜杠后转到 docs 服务（handle_path 会剥掉 /guide 前缀）
+	redir /guide /guide/ 308
 	handle_path /guide/* {
 		reverse_proxy docs:80
 	}
